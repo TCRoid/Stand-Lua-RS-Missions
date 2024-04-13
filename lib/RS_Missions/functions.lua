@@ -150,12 +150,6 @@ function GET_NIGHTCLUB_PROPERTY_ID()
     return STAT_GET_INT(ADD_MP_INDEX("NIGHTCLUB_OWNED"))
 end
 
---- joaat("brickade2") = -1576586413
---- @return integer
-function GET_ACID_LAB_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("XM22_LAB_OWNED"))
-end
-
 --- @return integer
 function GET_ARCADE_PROPERTY_ID()
     return STAT_GET_INT(ADD_MP_INDEX("ARCADE_OWNED"))
@@ -178,7 +172,12 @@ end
 
 --- @return integer
 function GET_FACILITY_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("BASE_OWNED"))
+    return STAT_GET_INT(ADD_MP_INDEX("DBASE_OWNED"))
+end
+
+--- @return integer
+function DOES_PLAYER_OWN_ACID_LAB()
+    return STAT_GET_INT(ADD_MP_INDEX("XM22_LAB_OWNED")) == util.joaat("brickade2") -- -1576586413
 end
 
 --------------------------------
@@ -244,6 +243,26 @@ function START_SCRIPT(script, arg_count)
     SYSTEM.START_NEW_SCRIPT(script, arg_count or 0)
     SCRIPT.SET_SCRIPT_AS_NO_LONGER_NEEDED(script)
     return true
+end
+
+--- @return boolean
+function IS_MISSION_CONTROLLER_SCRIPT_RUNNING()
+    return IS_SCRIPT_RUNNING("fm_mission_controller") or IS_SCRIPT_RUNNING("fm_mission_controller_2020")
+end
+
+--- @return string|nil
+function GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    local script = "fm_mission_controller"
+    if IS_SCRIPT_RUNNING(script) then
+        return script
+    end
+
+    script = "fm_mission_controller_2020"
+    if IS_SCRIPT_RUNNING(script) then
+        return script
+    end
+
+    return nil
 end
 
 --------------------------------

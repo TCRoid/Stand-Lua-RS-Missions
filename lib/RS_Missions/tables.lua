@@ -357,7 +357,33 @@ Tables = {
         [1] = get_label_text("BKR_FACTORY_1"),
         [2] = get_label_text("BKR_FACTORY_2"),
         [3] = get_label_text("BKR_FACTORY_3"),
-        [4] = get_label_text("BKR_FACTORY_4"),
+        [4] = get_label_text("BKR_FACTORY_4")
+    },
+    BikerFactoryType = {
+        -- [FACTORY_ID]
+        [1]  = 3, -- FACTORY_TYPE_METH
+        [2]  = 1, -- FACTORY_TYPE_WEED
+        [3]  = 4, -- FACTORY_TYPE_CRACK
+        [4]  = 2, -- FACTORY_TYPE_FAKE_MONEY
+        [5]  = 0, -- FACTORY_TYPE_FAKE_IDS
+
+        [6]  = 3,
+        [7]  = 1,
+        [8]  = 4,
+        [9]  = 2,
+        [10] = 0,
+
+        [11] = 3,
+        [12] = 1,
+        [13] = 4,
+        [14] = 2,
+        [15] = 0,
+
+        [16] = 3,
+        [17] = 1,
+        [18] = 4,
+        [19] = 2,
+        [20] = 0
     },
 
     ------------------------
@@ -591,6 +617,7 @@ Tables = {
         [7] = { "MPPLY_GANGOPS_CRIMMASMD", "MPPLY_AWD_GANGOPS_CRIMMASMD" },
         [8] = { "MPPLY_GANGOPS_SUPPORT", "MPPLY_AWD_GANGOPS_SUPPORT" }
     },
+
     DoomsdayHeistPrepListData = {
         { menu = "divider", name = get_label_text("CELEB_ACT_1") },
         { menu = "toggle",  name = get_label_text("HPPREP_MIS_0"),  bit = 0,  help_text = "" },

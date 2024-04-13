@@ -2,9 +2,15 @@
 -- Author: Rostal
 --------------------------------
 
+if not util.is_session_started() or util.is_session_transition_active() then
+    util.toast("[RS Missions] 脚本仅在线上模式可用")
+    return false
+end
+
+
 util.require_natives("3095a", "init")
 
-local SCRIPT_VERSION <const> = "2024/4/9"
+local SCRIPT_VERSION <const> = "2024/4/13"
 
 local SUPPORT_GTAO <const> = 1.68
 
@@ -154,7 +160,7 @@ Tunables.SaveFloatDefaults_T(TunablesF)
 -- Functions
 ------------------------
 
---- Instant Finish Mission (fm_content_xxx)
+--- Instant Finish Mission `fm_content_xxx`
 --- @param script string
 --- @param iGenericBitset integer
 --- @param eEndReason integer
@@ -163,11 +169,12 @@ local function INSTANT_FINISH_FM_CONTENT_MISSION(script, iGenericBitset, eEndRea
     LOCAL_SET_INT(script, eEndReason, 3)              -- SET_END_REASON(eENDREASON_MISSION_PASSED)
 end
 
---- Instant Finish `fm_mission_controller`
----
---- Check if the script is running before calling this!
+--- Instant Finish `fm_mission_controller` and `fm_mission_controller_2020`
 local function INSTANT_FINISH_FM_MISSION_CONTROLLER()
-    local script = "fm_mission_controller"
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
+        return
+    end
 
     -- String Null, get out
     for i = 0, 5 do
@@ -177,7 +184,7 @@ local function INSTANT_FINISH_FM_MISSION_CONTROLLER()
         end
     end
     -- More than max (FMMC_MAX_STRAND_MISSIONS), get out
-    LOCAL_SET_INT(script, Locals.MissionController.iNextMission, 6)
+    LOCAL_SET_INT(script, Locals[script].iNextMission, 6)
 
     if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
         GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
@@ -186,51 +193,16 @@ local function INSTANT_FINISH_FM_MISSION_CONTROLLER()
     end
 
     -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
-    LOCAL_SET_BIT(script, Locals.MissionController.iLocalBoolCheck11, 7)
+    LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
 
     for i = 0, 3 do
         -- MC_serverBD.iTeamScore[iTeam]
-        LOCAL_SET_INT(script, Locals.MissionController.iTeamScore + i, 999999)
+        LOCAL_SET_INT(script, Locals[script].iTeamScore + i, 999999)
     end
 
     -- SSBOOL_TEAMx_FINISHED, SBBOOL_MISSION_OVER
-    LOCAL_SET_BITS(script, Locals.MissionController.iServerBitSet, 9, 10, 11, 12, 16)
+    LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12, 16)
 end
-
---- Instant Finish `fm_mission_controller_2020`
----
---- Check if the script is running before calling this!
-local function INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
-    local script = "fm_mission_controller_2020"
-
-    -- String Null, get out
-    for i = 0, 5 do
-        local tl23NextContentID = GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6)
-        if tl23NextContentID ~= "" then
-            GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
-        end
-    end
-    -- More than max (FMMC_MAX_STRAND_MISSIONS), get out
-    LOCAL_SET_INT(script, Locals.MissionController2020.iNextMission, 6)
-
-    if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstStrandNoReset, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bLastMission, true)
-    end
-
-    -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
-    LOCAL_SET_BIT(script, Locals.MissionController2020.iLocalBoolCheck11, 7)
-
-    for i = 0, 3 do
-        -- MC_serverBD.iTeamScore[iTeam]
-        LOCAL_SET_INT(script, Locals.MissionController2020.iTeamScore + i, 999999)
-    end
-
-    -- SSBOOL_TEAMx_FINISHED, SBBOOL_MISSION_OVER
-    LOCAL_SET_BITS(script, Locals.MissionController2020.iServerBitSet, 9, 10, 11, 12, 16)
-end
-
 
 --- Start Mission (By Script Event)
 --- @param iMission integer
@@ -324,7 +296,14 @@ local START_APP = {
     end,
     BIKER_FACTORY = function(eFactoryID)
         -- GLOBAL_SET_BOOL(Globals.bBrowserVisible, true)
-        GLOBAL_SET_INT(BusAppManagement.iPropertyID, GET_FACTORY_PROPERTY_ID(eFactoryID))
+        local iPropertyID = 0
+        for i = 0, 4 do
+            local tempFactoryID = GET_FACTORY_PROPERTY_ID(i)
+            if Tables.BikerFactoryType[tempFactoryID] == eFactoryID then
+                iPropertyID = tempFactoryID
+            end
+        end
+        GLOBAL_SET_INT(BusAppManagement.iPropertyID, iPropertyID)
         START_SCRIPT("appBikerBusiness", APP_INTERNET_STACK_SIZE)
     end
 }
@@ -1044,7 +1023,7 @@ menu.textslider(Club_Source, Labels.LaunchMission, {}, "", {
     end
 end)
 
-menu.action(Club_Source, "已送达货物到夜总会", {}, "增加夜总会货物数量, 可以无限次送达", function()
+menu.action(Club_Source, "已送达货物到夜总会", {}, "直接增加夜总会货物数量, 可以无限次送达", function()
     local script = "fm_content_club_source"
     if not IS_SCRIPT_RUNNING(script) then
         return
@@ -1540,7 +1519,7 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
     end
 
     -- Acid Lab
-    if GET_ACID_LAB_PROPERTY_ID() == util.joaat("brickade2") then
+    if DOES_PLAYER_OWN_ACID_LAB() then
         text = GET_FACTORY_SUPPLIES(6) .. "%"
         menu.set_value(BusinessMonitor.Menu.AcidLab.supplies, text)
 
@@ -1577,19 +1556,19 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
 
     -- Biker
     for i = 0, 4 do
-        if GET_FACTORY_PROPERTY_ID(i) > 0 then
+        local iFactoryID = GET_FACTORY_PROPERTY_ID(i)
+        if iFactoryID > 0 then
+            local eFactoryType = Tables.BikerFactoryType[iFactoryID]
+
             text = GET_FACTORY_SUPPLIES(i) .. "%"
-            menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, text)
+            menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].supplies, text)
 
             product = GET_FACTORY_PRODUCT(i)
-            text = product .. "/" .. BusinessMonitor.Caps.Biker[i]
-            if product >= BusinessMonitor.Caps.Biker[i] then
+            text = product .. "/" .. BusinessMonitor.Caps.Biker[eFactoryType]
+            if product >= BusinessMonitor.Caps.Biker[eFactoryType] then
                 text = "[!] " .. text
             end
-            menu.set_value(BusinessMonitor.Menu.Biker[i].product, text)
-        else
-            menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, "")
-            menu.set_value(BusinessMonitor.Menu.Biker[i].product, "")
+            menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].product, text)
         end
     end
 
@@ -2465,49 +2444,34 @@ end)
 
 local Heist_Mission_Helper = menu.list(Heist_Mission, "抢劫任务助手", {}, "")
 
-menu.action(Heist_Mission_Helper, "跳到下一个检查点", {}, "", function()
-    local script = "fm_mission_controller"
-    if IS_SCRIPT_RUNNING(script) then
-        -- SBBOOL1_PROGRESS_OBJECTIVE_FOR_TEAM_0
-        LOCAL_SET_BIT(script, Locals.MissionController.iServerBitSet1, 17)
+menu.action(Heist_Mission_Helper, "跳到下一个检查点", {}, "解决单人进行任务卡关问题", function()
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
         return
     end
 
-    script = "fm_mission_controller_2020"
-    if IS_SCRIPT_RUNNING(script) then
-        -- SBBOOL1_PROGRESS_OBJECTIVE_FOR_TEAM_0
-        LOCAL_SET_BIT(script, Locals.MissionController2020.iServerBitSet1, 17)
-    end
+    -- SBBOOL1_PROGRESS_OBJECTIVE_FOR_TEAM_0
+    LOCAL_SET_BIT(script, Locals[script].iServerBitSet1, 17)
 end)
 
 menu.toggle_loop(Heist_Mission_Helper, "禁止因触发惊动而任务失败", {}, "", function()
-    local script = "fm_mission_controller"
-    if IS_SCRIPT_RUNNING(script) then
-        -- SBBOOL1_AGGRO_TRIGGERED_FOR_TEAM_0, SBBOOL1_AGGRO_WILL_FAIL_FOR_TEAM_0
-        LOCAL_CLEAR_BITS(script, Locals.MissionController.iServerBitSet1, 24, 28)
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
         return
     end
 
-    script = "fm_mission_controller_2020"
-    if IS_SCRIPT_RUNNING(script) then
-        -- SBBOOL1_AGGRO_TRIGGERED_FOR_TEAM_0, SBBOOL1_AGGRO_WILL_FAIL_FOR_TEAM_0
-        LOCAL_CLEAR_BITS(script, Locals.MissionController2020.iServerBitSet1, 24, 28)
-    end
+    -- SBBOOL1_AGGRO_TRIGGERED_FOR_TEAM_0, SBBOOL1_AGGRO_WILL_FAIL_FOR_TEAM_0
+    LOCAL_CLEAR_BITS(script, Locals[script].iServerBitSet1, 24, 28)
 end)
 
 menu.toggle_loop(Heist_Mission_Helper, "禁止任务失败", {}, "", function()
-    local script = "fm_mission_controller"
-    if IS_SCRIPT_RUNNING(script) then
-        -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
-        LOCAL_SET_BIT(script, Locals.MissionController.iLocalBoolCheck11, 7)
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
         return
     end
 
-    script = "fm_mission_controller_2020"
-    if IS_SCRIPT_RUNNING(script) then
-        -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
-        LOCAL_SET_BIT(script, Locals.MissionController2020.iLocalBoolCheck11, 7)
-    end
+    -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
+    LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
 end)
 
 local Heist_Mission_Vehicle
@@ -2519,12 +2483,9 @@ Heist_Mission_Vehicle = menu.list(Heist_Mission_Helper, "传送任务载具到�
         end
     end
 
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        script = "fm_mission_controller_2020"
-        if not IS_SCRIPT_RUNNING(script) then
-            return
-        end
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
+        return
     end
 
     for _, vehicle in pairs(entities.get_all_vehicles_as_handles()) do
@@ -2590,13 +2551,8 @@ menu.action(Heist_Mission, "重新加载抢劫计划面板", { "ReloadHeistBoard
 end)
 
 menu.action(Heist_Mission, "直接完成任务 (通用)", { "InsFinJob" }, "联系人任务", function()
-    if IS_SCRIPT_RUNNING("fm_mission_controller_2020") then
-        -- menu.trigger_commands("scripthost")
-        INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
-    elseif IS_SCRIPT_RUNNING("fm_mission_controller") then
-        -- menu.trigger_commands("scripthost")
-        INSTANT_FINISH_FM_MISSION_CONTROLLER()
-    end
+    menu.trigger_commands("scripthost")
+    INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
 
@@ -2618,8 +2574,8 @@ local function HANDLE_HEIST_ELITE_CHALLENGE(script, eEliteChallenge)
     GLOBAL_SET_BOOL(TransitionSessionNonResetVars.bHasQuickRestartedDuringStrandMission, false)
 
     GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_HARD)
-    LOCAL_SET_INT(script, Locals.MissionController.iTeamKills, 150)
-    LOCAL_SET_INT(script, Locals.MissionController.iTeamHeadshots, 150)
+    LOCAL_SET_INT(script, Locals[script].iTeamKills, 150)
+    LOCAL_SET_INT(script, Locals[script].iTeamHeadshots, 150)
 end
 
 --------------------------------
@@ -2718,7 +2674,7 @@ menu.action(Apartment_Heist, "直接完成 公寓抢劫", {}, "", function()
         Tunables.SetIntList("HeistFinalCashReward", ApartmentHeistVars.iCashTotalTake)
     end
     if ApartmentHeistVars.iCashTotalTake ~= -1 then
-        LOCAL_SET_INT(script, Locals.MissionController.iCashGrabTotalTake, ApartmentHeistVars.iCashTotalTake)
+        LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, ApartmentHeistVars.iCashTotalTake)
     end
 
     HANDLE_HEIST_ELITE_CHALLENGE(script, ApartmentHeistVars.eEliteChallenge)
@@ -2814,6 +2770,10 @@ end)
 menu.divider(Doomsday_Heist, "")
 
 menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 终章", {}, "", Tables.DoomsdayHeistFinalRootContent, function(value)
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
     if GET_FACILITY_PROPERTY_ID() <= 0 then
         util.toast("你需要拥有设施")
         return
@@ -2836,6 +2796,10 @@ menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 终章", {}, "", Ta
     util.toast("请稍等...")
 end)
 menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 准备任务", {}, "", Tables.DoomsdayHeistSetupRootContent, function(value)
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
     if GET_FACILITY_PROPERTY_ID() <= 0 then
         util.toast("你需要拥有设施")
         return
@@ -3101,7 +3065,7 @@ menu.list_action(Casino_Heist, "直接完成 赌场抢劫", {}, "", Tables.Casin
     end
 
     if CasinoHeistVars.iCashTotalTake ~= -1 then
-        LOCAL_SET_INT(script, Locals.MissionController.iCashGrabTotalTake, CasinoHeistVars.iCashTotalTake)
+        LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, CasinoHeistVars.iCashTotalTake)
     end
 
     HANDLE_HEIST_ELITE_CHALLENGE(script, CasinoHeistVars.eEliteChallenge)
@@ -3170,7 +3134,7 @@ menu.action(Island_Heist, "直接完成 佩里科岛抢劫", {}, "", function()
         GLOBAL_SET_INT(FMMC_STRUCT.iRootContentIDHash, 1601836271) -- H4_STEALTH_3
     end
 
-    INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
+    INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
 
@@ -3216,6 +3180,10 @@ end)
 menu.divider(Tuner_Robbery, Labels.FINALE)
 
 menu.list_action(Tuner_Robbery, "启动差事: 改装铺抢劫", {}, "", Tables.TunerRobberyFinalRootContent, function(value)
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
     if GET_AUTO_SHOP_PROPERTY_ID() <= 0 then
         util.toast("你需要拥有改装铺")
         return
@@ -3253,7 +3221,8 @@ menu.action(Tuner_Robbery, "直接完成 改装铺抢劫", {}, "", function()
     if TunerRobberyVars.iCashReward ~= -1 then
         Tunables.SetIntList("TunerRobberyLeaderCashReward", TunerRobberyVars.iCashReward)
     end
-    INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
+
+    INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
 
@@ -3299,6 +3268,10 @@ end)
 menu.divider(Fixer_VIP, Labels.FINALE)
 
 menu.action(Fixer_VIP, "启动差事: 别惹德瑞", {}, "", function()
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
     if GET_AGENCY_PROPERTY_ID() <= 0 then
         util.toast("你需要拥有事务所")
         return
@@ -3332,7 +3305,8 @@ menu.action(Fixer_VIP, "直接完成 别惹德瑞", {}, "", function()
     if FixerVipVars.iCashReward ~= -1 then
         Tunables.SetInt("FIXER_FINALE_LEADER_CASH_REWARD", FixerVipVars.iCashReward)
     end
-    INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
+
+    INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
 
@@ -3347,6 +3321,10 @@ menu.list_action(Chicken_Factory_Raid, "启动差事: 犯罪现场", {}, "", {
     { 13546844, "潜行" },
     { 2107866924, "强攻" },
 }, function(value)
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
     local Data = {
         iRootContentID = value,
         iMissionType = 0,        -- FMMC_TYPE_MISSION
@@ -3370,7 +3348,8 @@ menu.action(Chicken_Factory_Raid, "直接完成 当当钟农场突袭", {}, "", 
     if cash_reward ~= -1 then
         Tunables.SetInt("-2000196818", cash_reward)
     end
-    INSTANT_FINISH_FM_MISSION_CONTROLLER_2020()
+
+    INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
 
@@ -3390,9 +3369,9 @@ local TunableOptionVars = {}
 local Tunable_Mission_Earning = menu.list(Tunable_Options, "限制差事收入", {}, "")
 
 local Tunable_Mission_Earning_High = menu.slider(Tunable_Mission_Earning, "最高收入", { "MissionHighEarningModifier" }, "",
-    0, 10000000, 0, 10000, function(value) end)
+    0, 15000000, 0, 10000, function(value) end)
 local Tunable_Mission_Earning_Low = menu.slider(Tunable_Mission_Earning, "最低收入", { "MissionLowEarningModifier" }, "",
-    0, 10000000, 0, 10000, function(value) end)
+    0, 15000000, 0, 10000, function(value) end)
 
 menu.toggle_loop(Tunable_Mission_Earning, "限制差事收入", {}, "", function()
     local high_earning = menu.get_value(Tunable_Mission_Earning_High)
@@ -3460,7 +3439,7 @@ end
 
 local Stat_Casino_Heist = menu.list(Stat_Options, "赌场抢劫", {}, "")
 
-menu.textslider(Stat_Casino_Heist, "解锁莱斯特电话取消抢劫", {}, "", {
+menu.textslider(Stat_Casino_Heist, "解锁莱斯特取消抢劫", {}, "", {
     "Set", "Reset"
 }, function(value)
     local iStatInt = STAT_GET_INT(ADD_MP_INDEX("CAS_HEIST_FLOW"))
@@ -3508,6 +3487,38 @@ menu.textslider(Stat_Casino_Heist, "已购买赌场模型保安门禁等", {}, "
     -- ciCASINO_HEIST_FLOW_STAT_BITSET__VAULT_DOOR_PURCHASED    6
     -- ciCASINO_HEIST_FLOW_STAT_BITSET__KEYPAD_PURCHASED        7
     -- ciCASINO_HEIST_FLOW_STAT_BITSET__MODEL_PURCHASED         8
+end)
+
+
+local Stat_Doomsday_Heist = menu.list(Stat_Options, "末日豪劫", {}, "")
+
+menu.textslider(Stat_Doomsday_Heist, "解锁莱斯特取消抢劫", {}, "解锁重玩面板", {
+    "Set", "Reset"
+}, function(value)
+    local iStatInt = STAT_GET_INT(ADD_MP_INDEX("GANGOPS_HEIST_STATUS"))
+    if value == 1 then
+        iStatInt = SET_BIT(iStatInt, 13)
+    else
+        iStatInt = CLEAR_BIT(iStatInt, 13)
+    end
+    STAT_SET_INT(ADD_MP_INDEX("GANGOPS_HEIST_STATUS"), iStatInt)
+    util.toast("写入完成!")
+
+    -- GANG_OPS_BD_HEIST_STATUS_BITSET_UNLOCKED_REPLAY_BOARD    13
+end)
+menu.textslider(Stat_Doomsday_Heist, "解锁莱斯特免费移除通缉", {}, "", {
+    "Set", "Reset"
+}, function(value)
+    local iStatInt = STAT_GET_INT(ADD_MP_INDEX("GANGOPS_HEIST_STATUS"))
+    if value == 1 then
+        iStatInt = SET_BIT(iStatInt, 19)
+    else
+        iStatInt = CLEAR_BIT(iStatInt, 19)
+    end
+    STAT_SET_INT(ADD_MP_INDEX("GANGOPS_HEIST_STATUS"), iStatInt)
+    util.toast("写入完成!")
+
+    -- GANG_OPS_BD_HEIST_STATUS_BITSET_COMPLETED_SILO_FINALE_AS_LEADER  19
 end)
 
 
@@ -4325,12 +4336,27 @@ menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
 end)
 
 menu.action(Freemode_Test, "Toast Info", {}, "", function()
-    util.toast(GET_PACKED_STAT_INT_CODE(16011))
+    -- IS_ARRAYED_BIT_ENUM_SET(GlobalplayerBD_FM_2[NATIVE_TO_INT(playerID)].RandomEvents.Events[iEvent].iBitset, eBitset)
+    -- return func_1026(&(Global_1882422[bParam0 /*142*/].f_78.f_1[iParam1 /*3*/].f_1), iParam2);
+
+    local text = GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + 273 * 3 + 1)
+    util.toast(text)
 end)
 
 
-menu.toggle(Freemode_Test, "is sourcing cargo", {}, "", function(toggle)
-    SET_PACKED_STAT_BOOL_CODE(32359, toggle)
+
+menu.divider(Freemode_Test, "")
+menu.action(Freemode_Test, "iMaterialsTotal = 0", {}, "", function()
+    local pid = players.user()
+    for i = 0, 6 do
+        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 2, 0)
+    end
+end)
+menu.action(Freemode_Test, "iProductTotal = 100", {}, "", function()
+    local pid = players.user()
+    for i = 0, 6 do
+        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 1, 100)
+    end
 end)
 
 
@@ -4488,11 +4514,6 @@ menu.toggle_loop(Job_Mission_Test, "最小玩家数为1", {}, "强制任务单�
         GLOBAL_SET_INT(FMMC_STRUCT.iNumPlayersPerTeam + i, 1)
         GLOBAL_SET_INT(FMMC_STRUCT.iCriticalMinimumForTeam + i, 0)
     end
-
-
-    -- SSBOOL_TEAM0_FAILED, SSBOOL_TEAM1_FAILED
-    -- GLOBAL_CLEAR_BIT(Locals.MissionController.iServerBitSet, 20)
-    -- GLOBAL_CLEAR_BIT(Locals.MissionController.iServerBitSet, 21)
 end)
 
 local SetMissionMaxTeams2 = menu.toggle_loop(Job_Mission_Test, "最大团队数为1", {}, "用于多团队任务", function()
@@ -4534,7 +4555,7 @@ menu.click_slider(Job_Mission_Test, "iTeam", {}, "", 0, 3, 0, 1, function(value)
     end
 
     -- SET_BIT(iLocalBoolCheck11, LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION)
-    LOCAL_SET_BIT(script, 15149, 7)
+    -- LOCAL_SET_BIT(script, 15149, 7)
 
     -- Local_19728.f_1004[0]
     -- MC_serverBD.iNumberOfPlayingPlayers[iteam]
@@ -4553,22 +4574,20 @@ menu.click_slider(Job_Mission_Test, "iTeam", {}, "", 0, 3, 0, 1, function(value)
     -- LOCAL_SET_INT(script, 19728 + 1764, value)
 end)
 
-menu.toggle(Job_Mission_Test, "satmpSpecialActivityType", {}, "", function(toggle)
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    if toggle then
-        GLOBAL_SET_INT(2657921 + 1 + players.user() * 463 + 121, 0)
-    else
-        GLOBAL_SET_INT(2657921 + 1 + players.user() * 463 + 121, 7)
-    end
-end)
-
 
 
 menu.divider(Job_Mission_Test, "fmmc_launcher")
+
+menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
+    local text = string.format(
+        "iPlayerOrder: %s\nsHeistRoles.ePlayerRoles: %s\nbLaunchTimerExpired: %s",
+        GLOBAL_GET_INT(1928233 + 12 + 1 + 0), -- GlobalServerBD_HeistPlanning.iPlayerOrder[index]
+        GLOBAL_GET_INT(1928233 + 7 + 1 + 0),  -- GlobalServerBD_HeistPlanning.sHeistRoles.ePlayerRoles[index]
+        GLOBAL_GET_INT(1930201 + 2812)        -- g_HeistPlanningClient.bLaunchTimerExpired
+    )
+
+    draw_text(text)
+end)
 
 menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     local script = "fmmc_launcher"
@@ -4687,32 +4706,7 @@ menu.toggle_loop(Menu_Root, "Get Script Event", {}, "", function()
                 eventHash,
                 eventType
             )
-            util.toast(text, TOAST_ALL)
+            toast(text)
         end
-    end
-end)
-
-
-
-
-
-menu.divider(Menu_Root, "")
-
-----------------------------------------
---    FSL Test
-----------------------------------------
-
-local FSL_Test <const> = menu.list(Menu_Root, "FSL Test", {}, "")
-
-menu.action(FSL_Test, "iMaterialsTotal = 0", {}, "", function()
-    local pid = players.user()
-    for i = 0, 6 do
-        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 2, 0)
-    end
-end)
-menu.action(FSL_Test, "iProductTotal = 100", {}, "", function()
-    local pid = players.user()
-    for i = 0, 6 do
-        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 1, 100)
     end
 end)

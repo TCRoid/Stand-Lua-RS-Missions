@@ -45,6 +45,9 @@ GlobalplayerBD_FM_3.sMagnateGangBossData = {
     iMissionToLaunch = function()
         return GlobalplayerBD_FM_3._sMagnateGangBossData() + 32
     end,
+    iNumGoonsInGang = function()
+        return GlobalplayerBD_FM_3._sMagnateGangBossData() + 19
+    end,
 }
 
 -- CONTRABAND_MISSION_DATA
@@ -371,18 +374,19 @@ Locals = {
         iScriptStage = 510,
     },
 
-    MissionController = {
+    ["fm_mission_controller"] = {
         iNextMission = 19728 + 1062,
         iTeamScore = 19728 + 1232 + 1, -- +[0~3]
         iServerBitSet = 19728 + 1,
         iServerBitSet1 = 19728 + 2,
+
         iCashGrabTotalTake = 19728 + 2686,
         iTeamKills = 19728 + 1725 + 1,
         iTeamHeadshots = 19728 + 1740 + 1,
 
         iLocalBoolCheck11 = 15149
     },
-    MissionController2020 = {
+    ["fm_mission_controller_2020"] = {
         iNextMission = 48513 + 1578,
         iTeamScore = 48513 + 1765 + 1, -- +[0~3]
         iServerBitSet = 48513 + 1,
@@ -686,14 +690,15 @@ TunablesI = {
         22964, -- SMUG_STEAL_ADDITIONAL_CRATE_COOLDOWN_TIME
         23002, -- SMUG_SELL_SELL_COOLDOWN_TIMER
 
-        24659, -- BB_CLUB_MANAGEMENT_CLUB_MANAGEMENT_MISSION_COOLDOWN
-        24701, -- BB_SELL_MISSIONS_MISSION_COOLDOWN
         32024, -- FIXER_SECURITY_CONTRACT_COOLDOWN_TIME
         32105, -- REQUEST_FRANKLIN_PAYPHONE_HIT_COOLDOWN
         33198, -- BUNKER_SOURCE_RESEARCH_CD_TIME
         33199, -- NIGHTCLUB_SOURCE_GOODS_CD_TIME
         27510, -- VC_WORK_REQUEST_COOLDOWN
         34195, -- JUGALLO_BOSS_WORK_COOLDOWN_TIME
+
+        24659, -- BB_CLUB_MANAGEMENT_CLUB_MANAGEMENT_MISSION_COOLDOWN
+        24701, -- BB_SELL_MISSIONS_MISSION_COOLDOWN
 
         24848, -- BB_HACKER_WORK_CLIENT_WORK_GLOBAL_COOLDOWN
         24849, -- BB_HACKER_WORK_CLIENT_WORK_COOLDOWN_BANK_JOB
@@ -704,6 +709,11 @@ TunablesI = {
         24853, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_GLOBAL_COOLDOWN
         24854, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_SECURITY_VANS
         24855, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_TARGET_PURSUIT
+
+        19043, -- BIKER_CHALLENGES_COOLDOWN_GLOBAL
+        19044, -- BIKER_CHALLENGES_COOLDOWN_SPECIFIC
+        18841, -- BIKER_CLUBHOUSE_COOLDOWN
+        18956, -- BIKER_CLUB_WORK_COOLDOWN_GLOBAL
     },
 
     ["RequestCooldowns"] = {
@@ -786,7 +796,7 @@ function LAUNCH_MISSION(Data)
     GLOBAL_SET_INT(1057441, Data.iMissionEnteryType)
 
     -- FMMC_TYPE_TUNER_ROBBERY_FINALE
-    if iMissionType == 274 then
+    if Data.iMissionType == 274 then
         -- SET_TRANSITION_SESSIONS_LAUNCHING_TUNER_ROBBERY_FROM_BOARD()
         ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_LAUNCHING_TUNER_ROBBERY_FROM_BOARD)
         GLOBAL_SET_BIT(g_sTransitionSessionData + 3, 13)
@@ -943,6 +953,12 @@ function COMPLETE_DAILY_CHALLENGE()
 end
 
 function COMPLETE_WEEKLY_CHALLENGE()
-    local target = GLOBAL_GET_INT(2737646 + 1 + 0 * 6 + 2)
-    GLOBAL_SET_INT(2737646 + 1 + 0 * 6 + 1, target)
+    local g_sWeeklyChallenge = 2737646
+
+    local target = GLOBAL_GET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 2)
+    if GLOBAL_GET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 1) < target then
+        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 3, 0)
+        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 4, 0)
+        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 1, target)
+    end
 end
