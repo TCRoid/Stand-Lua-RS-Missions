@@ -10,9 +10,9 @@ end
 
 util.require_natives("3095a", "init")
 
-local SCRIPT_VERSION <const> = "2024/4/13"
+local SCRIPT_VERSION <const> = "2024/4/15"
 
-local SUPPORT_GTAO <const> = 1.68
+local SUPPORT_GAME_VERSION <const> = "1.68-3095"
 
 
 --#region Consts
@@ -353,21 +353,27 @@ end
 -- Start Menu
 ------------------------
 
-local GTAO <const> = tonumber(NETWORK.GET_ONLINE_VERSION())
-if SUPPORT_GTAO ~= GTAO then
-    util.toast(string.format(
-        "支持的GTA线上版本: %s\n当前GTA线上版本: %s\n不支持当前版本,建议停止使用!",
-        SUPPORT_GTAO, GTAO))
-end
-
-
 local Menu_Root <const> = menu.my_root()
 
 menu.divider(Menu_Root, "RS Missions")
 
+-- Check Game Version
+local CURRENT_GAME_VERSION <const> = menu.get_version().game
+if SUPPORT_GAME_VERSION ~= CURRENT_GAME_VERSION then
+    local state_text = string.format(
+        "支持的游戏版本: %s\n当前游戏版本: %s\n不支持当前游戏版本, 建议停止使用!",
+        SUPPORT_GAME_VERSION, CURRENT_GAME_VERSION)
+    util.toast(state_text)
+
+    menu.action(Menu_Root, "不支持当前游戏版本, 建议停止使用!", {}, state_text, function()
+        util.toast(state_text)
+    end)
+end
+
 menu.action(Menu_Root, "Restart Script", {}, "", function()
     util.restart_script()
 end)
+
 
 
 
@@ -2372,7 +2378,6 @@ end)
 
 
 
-
 ------------------------
 --    Other
 ------------------------
@@ -2442,7 +2447,7 @@ end)
 --    Heist Mission Helper
 --------------------------------
 
-local Heist_Mission_Helper = menu.list(Heist_Mission, "抢劫任务助手", {}, "")
+local Heist_Mission_Helper <const> = menu.list(Heist_Mission, "抢劫任务助手", {}, "")
 
 menu.action(Heist_Mission_Helper, "跳到下一个检查点", {}, "解决单人进行任务卡关问题", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
@@ -2452,6 +2457,14 @@ menu.action(Heist_Mission_Helper, "跳到下一个检查点", {}, "解决单人�
 
     -- SBBOOL1_PROGRESS_OBJECTIVE_FOR_TEAM_0
     LOCAL_SET_BIT(script, Locals[script].iServerBitSet1, 17)
+end)
+
+menu.list_action(Heist_Mission_Helper, "更改任务难度", {}, "", {
+    { 0, get_label_text("LBD_DIF_0") }, -- DIFF_EASY
+    { 1, get_label_text("LBD_DIF_1") }, -- DIFF_NORMAL
+    { 2, get_label_text("LBD_DIF_2") }  -- DIFF_HARD
+}, function(value)
+    GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, value)
 end)
 
 menu.toggle_loop(Heist_Mission_Helper, "禁止因触发惊动而任务失败", {}, "", function()
@@ -3390,12 +3403,17 @@ end)
 
 
 
-menu.toggle_loop(Tunable_Options, "移除任务冷却时间", {}, "", function()
+menu.toggle_loop(Tunable_Options, "移除任务冷却时间", {}, Lang.E_B_S_M, function()
     Tunables.SetIntList("MissionCooldowns", 0)
 end, function()
     Tunables.RestoreIntDefaults("MissionCooldowns")
 end)
-menu.toggle_loop(Tunable_Options, "移除NPC分红", {}, "", function()
+menu.toggle_loop(Tunable_Options, "移除抢劫任务冷却时间", {}, Lang.E_B_S_M, function()
+    Tunables.SetIntList("HeistCooldowns", 0)
+end, function()
+    Tunables.RestoreIntDefaults("HeistCooldowns")
+end)
+menu.toggle_loop(Tunable_Options, "移除NPC分红", {}, Lang.E_B_S_M, function()
     Tunables.SetIntList("NpcCut", 0)
     Tunables.SetFloatList("NpcCut", 0)
 end, function()
@@ -3418,23 +3436,57 @@ end)
 
 local Stat_Options <const> = menu.list(Menu_Root, "统计数据选项", {}, "")
 
-local StatCooldownList = {
-    "BUNKER_CRATE_COOLDOWN",
-    "XM22JUGGALOWORKCDTIMER",
-    "SOURCE_RESEARCH_CDTIMER",
-    "SOURCE_GOODS_CDTIMER",
-    "NCLUB_EVENT_POSSIX",
-    "PAYPHONE_HIT_CDTIMER",
-}
 
 local Stat_Cooldown = menu.list(Stat_Options, "立即移除冷却时间", {}, "")
 
-for _, item in pairs(StatCooldownList) do
-    menu.action(Stat_Cooldown, item, {}, "", function()
-        STAT_SET_INT(ADD_MP_INDEX(item))
+local CooldownStatList = {
+    { name = "公寓抢劫 手机匹配", stat = "HESIT_LAUNCH_TIME" },
+
+    { name = "末日豪劫", stat = { "HEISTCOOLDOWNTIMER0", "HEISTCOOLDOWNTIMER1", "HEISTCOOLDOWNTIMER2" } },
+    { name = "末日豪劫 手机匹配", stat = "GANGOPS_LAUNCH_TIME" },
+
+    { name = "赌场抢劫", stat = "H3_COMPLETEDPOSIX" },
+    { name = "赌场抢劫 手机匹配", stat = "MPPLY_H3_COOLDOWN" },
+
+    { name = "佩里科岛抢劫", stat = { "H4_COOLDOWN", "H4_COOLDOWN_HARD" } },
+    { name = "佩里科岛抢劫 手机匹配", stat = "MPPLY_H4_COOLDOWN" },
+
+    {
+        name = "改装铺抢劫",
+        stat = { "TUNER_CONTRACT0_POSIX", "TUNER_CONTRACT1_POSIX", "TUNER_CONTRACT2_POSIX", "TUNER_CONTRACT3_POSIX", "TUNER_CONTRACT4_POSIX", "TUNER_CONTRACT5_POSIX", "TUNER_CONTRACT6_POSIX", "TUNER_CONTRACT7_POSIX" }
+    },
+    { name = "改装铺合约 刷新", stat = "TUNER_REFRESH_POSIX" },
+
+    { name = "合约德瑞博士", stat = "FIXER_STORY_COOLDOWN" },
+    { name = "回收站抢劫", stat = "SALV23_VEHROB_CD" },
+    { name = "当当钟农场突袭", stat = "SALV23_CFR_COOLDOWN" },
+
+    { name = "富兰克林 请求电话暗杀", stat = "PAYPHONE_HIT_CDTIMER" },
+    { name = "达克斯 蠢人帮差事", stat = "XM22JUGGALOWORKCDTIMER" },
+    { name = "14号探员 请求地堡研究", stat = "SOURCE_RESEARCH_CDTIMER" },
+    { name = "尤汗 请求夜总会货物", stat = "SOURCE_GOODS_CDTIMER" },
+    { name = "地堡 武器零件", stat = "BUNKER_CRATE_COOLDOWN" },
+    { name = "夜总会 人气任务", stat = "NCLUB_EVENT_POSSIX" },
+    { name = "办公室 出口混合货物", stat = "EXEC_EXP_CARGO_CD" },
+    { name = "贝克女士 赌场工作任务", stat = "CASINO_MISSION_CDTIMER" },
+}
+
+for _, item in pairs(CooldownStatList) do
+    menu.action(Stat_Cooldown, item.name, {}, "", function()
+        local stats = { item.stat }
+        if type(item.stat) == "table" then
+            stats = item.stat
+        end
+
+        for _, stat in pairs(stats) do
+            if string.sub(stat, 1, 6) == "MPPLY_" then
+                STAT_SET_INT(stat, 0)
+            else
+                STAT_SET_INT(ADD_MP_INDEX(stat), 0)
+            end
+        end
     end)
 end
-
 
 
 local Stat_Casino_Heist = menu.list(Stat_Options, "赌场抢劫", {}, "")
@@ -3519,6 +3571,28 @@ menu.textslider(Stat_Doomsday_Heist, "解锁莱斯特免费移除通缉", {}, ""
     util.toast("写入完成!")
 
     -- GANG_OPS_BD_HEIST_STATUS_BITSET_COMPLETED_SILO_FINALE_AS_LEADER  19
+end)
+
+
+local Packed_Stat_Bool = menu.list(Stat_Options, "PACKED_STAT_BOOL", {}, "")
+
+menu.textslider(Packed_Stat_Bool, get_label_text("WT_CANDYCANE"), {}, "", {
+    "True", "False"
+}, function(value)
+    if value == 1 then
+        SET_PACKED_STAT_BOOL_CODE(42249, true)
+    else
+        SET_PACKED_STAT_BOOL_CODE(42249, false)
+    end
+end)
+menu.textslider(Packed_Stat_Bool, get_label_text("WT_SNOWLNCHR"), {}, "", {
+    "True", "False"
+}, function(value)
+    if value == 1 then
+        SET_PACKED_STAT_BOOL_CODE(42148, true)
+    else
+        SET_PACKED_STAT_BOOL_CODE(42148, false)
+    end
 end)
 
 
@@ -4336,12 +4410,102 @@ menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
 end)
 
 menu.action(Freemode_Test, "Toast Info", {}, "", function()
-    -- IS_ARRAYED_BIT_ENUM_SET(GlobalplayerBD_FM_2[NATIVE_TO_INT(playerID)].RandomEvents.Events[iEvent].iBitset, eBitset)
-    -- return func_1026(&(Global_1882422[bParam0 /*142*/].f_78.f_1[iParam1 /*3*/].f_1), iParam2);
+    -- sFMREdata = Local_15544
 
-    local text = GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + 273 * 3 + 1)
-    util.toast(text)
+    -- sFMREdata.sFMREScriptEventdata.Events[iEvent].iType
+    -- uParam0->f_241.f_1[iParam1]
+
+    -- sFMREdata.sFMREScriptEventdata.iNumEvents
+    -- uParam0->f_241
+
+    local script = "freemode"
+
+    local sFMREScriptEventdata = 15544 + 241
+
+    local iNumEvents = LOCAL_GET_INT(script, sFMREScriptEventdata)
+
+    local iEvent = 3
+
+    local text = string.format(
+        "iNumEvents: %s\nFMRE_GET_STATE: %s\nFMRE_GET_PLAYER_STATE: %s\nFMRE_GET_CLIENT_LAUNCHER_STATE: %s",
+        iNumEvents,
+        GLOBAL_GET_INT(1882037 + 1 + 1 + iEvent * 15),
+        GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3),
+        GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 0)
+    )
+
+    -- local iEvent = 0
+    -- while iEvent < iNumEvents do
+    --     local iEventType = LOCAL_GET_INT(script, sFMREScriptEventdata + 1 + 1 + iEvent)
+    --     text = text .. string.format("\niEvent: %s, iEventType: %s", iEvent, iEventType)
+
+    --     iEvent = iEvent + 1
+    -- end
+
+
+    toast(text)
 end)
+
+
+menu.click_slider(Freemode_Test, "Trigger Random Event", {}, "", 0, 19, 0, 1, function(value)
+    local iEvent = value
+
+    -- GlobalServerBD_RandomEvents.Events[iEvent].eState
+    -- Global_1882037.f_1[iParam0 /*15*/];
+    GLOBAL_SET_INT(1882037 + 1 + 1 + iEvent * 15, 1) -- eFMRESTATE_AVAILABLE
+
+    -- GlobalplayerBD_FM_2[NETWORK_PLAYER_ID_TO_INT()].RandomEvents.Events[iEvent].eState = eState
+    -- Global_1882422[PLAYER::NETWORK_PLAYER_ID_TO_INT() /*142*/].f_78.f_1[iParam0 /*3*/] = iParam1;
+    GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3, 1) -- eFMREPLAYERSTATE_LAUNCHING
+end)
+
+menu.action(Freemode_Test, "Cleanup Random Event", {}, "", function()
+    local iEvent = 0
+    while iEvent < 20 do
+        GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3, 3) -- eFMREPLAYERSTATE_CLEANUP
+        iEvent = iEvent + 1
+    end
+end)
+
+
+
+
+------------------------------------
+--    Random Event
+------------------------------------
+
+local Random_Event <const> = menu.list(Freemode_Test, get_label_text("RE_TITLE"), {}, "")
+
+-- Exotic Exports Vehicle
+menu.divider(Random_Event, get_label_text("CBV_BLP_VEH"))
+
+menu.action(Random_Event, "Trigger Random Event", {}, "", function()
+    local iEvent = 3
+
+    if GLOBAL_GET_INT(Globals.GlobalplayerBD_FM_2() + 78 + 1 + 1 + iEvent * 3) > 0 then
+        return
+    end
+
+    -- GlobalServerBD_RandomEvents.Events[iEvent].eState
+    GLOBAL_SET_INT(1882037 + 1 + 1 + iEvent * 15, 1) -- eFMRESTATE_AVAILABLE
+
+    -- GlobalplayerBD_FM_2[NETWORK_PLAYER_ID_TO_INT()].RandomEvents.Events[iEvent].eState = eState
+    GLOBAL_SET_INT(Globals.GlobalplayerBD_FM_2() + 78 + 1 + 1 + iEvent * 3, 1) -- eFMREPLAYERSTATE_LAUNCHING
+end)
+menu.action(Random_Event, "出口载具 传送到我", {}, "", function()
+    local blip = HUD.GET_NEXT_BLIP_INFO_ID(143)
+    if HUD.DOES_BLIP_EXIST(blip) then
+        local ent = HUD.GET_BLIP_INFO_ID_ENTITY_INDEX(blip)
+        if ENTITY.IS_ENTITY_A_VEHICLE(ent) then
+            TP_VEHICLE_TO_ME(ent)
+        end
+    end
+end)
+menu.action(Random_Event, "传送到 载具出口码头", {}, "", function()
+    TELEPORT(v3(1171.784, -2974.434, 6.502))
+end)
+
+
 
 
 
@@ -4419,6 +4583,20 @@ menu.action(Test_Start_Mission, "Launch Mission", {}, "", function()
 
     LAUNCH_MISSION(Data)
     util.toast("请稍等...")
+end)
+
+
+menu.divider(Test_Start_Mission, "Terminate Script")
+
+local TestTerminateScript = menu.text_input(Test_Start_Mission, "Script Name",
+    { "rs_TerminateScript" }, "", function(value) end)
+menu.action(Test_Start_Mission, "TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME", {}, "", function()
+    local value = menu.get_value(TestTerminateScript)
+    if value == "" then
+        return
+    end
+
+    MISC.TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(value)
 end)
 
 

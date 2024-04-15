@@ -29,7 +29,9 @@ Labels = {
     AcidLab = get_label_text("CELL_ACID_LAB"),
     Arcade = get_label_text("CELL_ARCADE"),
     Agency = get_label_text("CELL_FIX_HQ"),
+    AutoShop = get_label_text("CELL_AUTO_SHP"),
     MotorcycleClub = get_label_text("HP_GANG_MC"),
+    BikerClubhouse = get_label_text("BLIP_492"),
     SalvageYard = get_label_text("CELL_SLVG_YRD"),
     SpecialCargo = get_label_text("SCONTRA_CTRA"),
     SpecialItem = get_label_text("CONTRASPECIAL"),
@@ -55,15 +57,17 @@ Labels = {
     ACT_3_DOOMSDAY_SCENARIO = get_label_text("CELEB_ACT_3"),
 }
 
+
 Labels.LaunchMissionByTerrorbyte = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Terrorbyte, Labels.Computer)
 Labels.LaunchMissionByBunker = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Bunker, Labels.Computer)
 Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Hangar, Labels.Computer)
-Labels.LaunchMissionByMasterControl = string.format("%s (%s)", Labels.LaunchMission, Labels.MasterControlTerminal)
+
 
 
 Lang = {
     O_W_F_INS_FIN = "仅在直接完成任务生效",
     E_B_S_M = "确保在任务开启前启用",
+    
     SelectMission = "选择任务",
     CashReward = "收入奖励",
     MissionReward = "任务奖励",

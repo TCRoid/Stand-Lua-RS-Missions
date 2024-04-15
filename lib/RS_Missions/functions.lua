@@ -320,29 +320,30 @@ end
 --- @param global integer
 --- @param bit integer
 function GLOBAL_SET_BIT(global, bit)
-    local script_global = memory.script_global(global)
-    memory.write_int(script_global, SET_BIT(memory.read_int(script_global), bit))
+    local addr = memory.script_global(global)
+    memory.write_int(addr, SET_BIT(memory.read_int(addr), bit))
 end
 
 --- @param global integer
 --- @param bit integer
 function GLOBAL_CLEAR_BIT(global, bit)
-    local script_global = memory.script_global(global)
-    memory.write_int(script_global, CLEAR_BIT(memory.read_int(script_global), bit))
+    local addr = memory.script_global(global)
+    memory.write_int(addr, CLEAR_BIT(memory.read_int(addr), bit))
 end
 
 --- @param global integer
 --- @param bit integer
 --- @return boolean
 function GLOBAL_BIT_TEST(global, bit)
-    return BIT_TEST(GLOBAL_GET_INT(global), bit)
+    local addr = memory.script_global(global)
+    return BIT_TEST(memory.read_int(addr), bit)
 end
 
 --- @param global integer
 --- @param ... bits
 function GLOBAL_SET_BITS(global, ...)
-    local script_global = memory.script_global(global)
-    memory.write_int(script_global, SET_BITS(memory.read_int(script_global), ...))
+    local addr = memory.script_global(global)
+    memory.write_int(addr, SET_BITS(memory.read_int(addr), ...))
 end
 
 --------------------------------
@@ -372,10 +373,7 @@ end
 ---@return integer
 function LOCAL_GET_INT(script, script_local)
     if memory.script_local(script, script_local) ~= 0 then
-        local value = memory.read_int(memory.script_local(script, script_local))
-        if value ~= nil then
-            return value
-        end
+        return memory.read_int(memory.script_local(script, script_local))
     end
 end
 
@@ -384,10 +382,7 @@ end
 ---@return float
 function LOCAL_GET_FLOAT(script, script_local)
     if memory.script_local(script, script_local) ~= 0 then
-        local value = memory.read_float(memory.script_local(script, script_local))
-        if value ~= nil then
-            return value
-        end
+        return memory.read_float(memory.script_local(script, script_local))
     end
 end
 
