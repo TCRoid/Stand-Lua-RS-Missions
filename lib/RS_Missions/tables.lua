@@ -23,6 +23,14 @@ Labels = {
     FINALE = get_label_text("H4P_FINALE_TAB"),
     SETUP = get_label_text("TR_STSTART_T2"),
 
+    Office = get_label_text("PM_SPAWN_OFFICE"),
+    Warehouse = get_label_text("MP_WHOUSE_BLP1"),
+    SpecialCargo = get_label_text("SCONTRA_CTRA"),
+    SpecialItem = get_label_text("CONTRASPECIAL"),
+    VehicleWarehouse = get_label_text("IE_WHOUSE_BLIP1"),
+    VehicleCargo = get_label_text("BBB_VEHCARGO"),
+
+    Facility = get_label_text("CELL_DBASE"),
     Bunker = get_label_text("CELL_BUNKER"),
     Hangar = get_label_text("CELL_HANGAR"),
     Nightclub = get_label_text("CELL_CLUB"),
@@ -30,14 +38,18 @@ Labels = {
     Arcade = get_label_text("CELL_ARCADE"),
     Agency = get_label_text("CELL_FIX_HQ"),
     AutoShop = get_label_text("CELL_AUTO_SHP"),
-    MotorcycleClub = get_label_text("HP_GANG_MC"),
-    BikerClubhouse = get_label_text("BLIP_492"),
     SalvageYard = get_label_text("CELL_SLVG_YRD"),
-    SpecialCargo = get_label_text("SCONTRA_CTRA"),
-    SpecialItem = get_label_text("CONTRASPECIAL"),
-    VehicleCargo = get_label_text("BBB_VEHCARGO"),
     Terrorbyte = get_label_text("TERBYTE"),
     MasterControlTerminal = get_label_text("ARC_MCT_BLIP"),
+
+    MotorcycleClub = get_label_text("HP_GANG_MC"),
+    BikerClubhouse = get_label_text("BLIP_492"),
+    DocumentForgeryOffice = get_label_text("BKR_FACTORY_0"),
+    WeedFarm = get_label_text("BKR_FACTORY_1"),
+    CounterfeitCashFactory = get_label_text("BKR_FACTORY_2"),
+    MethLab = get_label_text("BKR_FACTORY_3"),
+    CocaineLockup = get_label_text("BKR_FACTORY_4"),
+
 
     LaunchMission = get_label_text("HEIST_IB_LAUNCH"),
     EliteChallenge = get_label_text("CH_END_9ST"),
@@ -57,7 +69,7 @@ Labels = {
     ACT_3_DOOMSDAY_SCENARIO = get_label_text("CELEB_ACT_3"),
 }
 
-
+Labels.SpecialCargoWarehouse = string.format("%s %s", Labels.SpecialCargo, Labels.Warehouse)
 Labels.LaunchMissionByTerrorbyte = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Terrorbyte, Labels.Computer)
 Labels.LaunchMissionByBunker = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Bunker, Labels.Computer)
 Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Hangar, Labels.Computer)
@@ -67,7 +79,7 @@ Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission,
 Lang = {
     O_W_F_INS_FIN = "仅在直接完成任务生效",
     E_B_S_M = "确保在任务开启前启用",
-    
+
     SelectMission = "选择任务",
     CashReward = "收入奖励",
     MissionReward = "任务奖励",
@@ -336,11 +348,11 @@ Tables = {
     },
 
     BikerFactory = {
-        { 0, get_label_text("BKR_FACTORY_0") }, -- Document Forgery Office
-        { 1, get_label_text("BKR_FACTORY_1") }, -- Weed Farm
-        { 2, get_label_text("BKR_FACTORY_2") }, -- Counterfeit Cash Factory
-        { 3, get_label_text("BKR_FACTORY_3") }, -- Meth Lab
-        { 4, get_label_text("BKR_FACTORY_4") }, -- Cocaine Lockup
+        { 0, Labels.DocumentForgeryOffice },
+        { 1, Labels.WeedFarm },
+        { 2, Labels.CounterfeitCashFactory },
+        { 3, Labels.MethLab },
+        { 4, Labels.CocaineLockup }
     },
 
     ------------------------
@@ -357,11 +369,11 @@ Tables = {
         [6] = get_label_text("CLUB_STOCK6")  -- Cash Creation
     },
     BikerFactoryName = {
-        [0] = get_label_text("BKR_FACTORY_0"),
-        [1] = get_label_text("BKR_FACTORY_1"),
-        [2] = get_label_text("BKR_FACTORY_2"),
-        [3] = get_label_text("BKR_FACTORY_3"),
-        [4] = get_label_text("BKR_FACTORY_4")
+        [0] = Labels.DocumentForgeryOffice,
+        [1] = Labels.WeedFarm,
+        [2] = Labels.CounterfeitCashFactory,
+        [3] = Labels.MethLab,
+        [4] = Labels.CocaineLockup
     },
     BikerFactoryType = {
         -- [FACTORY_ID]

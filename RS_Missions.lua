@@ -7,17 +7,16 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
+local SCRIPT_VERSION <const> = "2024/5/10"
 
-util.require_natives("3095a", "init")
-
-local SCRIPT_VERSION <const> = "2024/4/15"
-
-local SUPPORT_GAME_VERSION <const> = "1.68-3095"
+local SUPPORT_GAME_VERSION <const> = "1.68-3179"
 
 
 --#region Consts
 
 -- MISSION DIFFICULTY
+DIFF_EASY = 0
+DIFF_NORMAL = 1
 DIFF_HARD = 2
 
 HIGHEST_INT = 2147483647
@@ -29,6 +28,7 @@ APP_INTERNET_STACK_SIZE = 4592
 
 --#endregion
 
+util.require_natives("3095a", "init")
 
 require("RS_Missions.functions")
 require("RS_Missions.tables")
@@ -2386,10 +2386,12 @@ menu.action(Freemode_Mission, "完成每日挑战", {}, "", function()
     COMPLETE_DAILY_CHALLENGE()
 end)
 
-menu.action(Freemode_Mission, "完成每周挑战", {}, "", function()
-    COMPLETE_WEEKLY_CHALLENGE()
+menu.textslider(Freemode_Mission, "每周挑战", {}, "", { "Complete", "Reset" }, function(value)
+    if value == 1 then
+        bComplete = true
+    end
+    COMPLETE_WEEKLY_CHALLENGE(bComplete)
 end)
-
 
 
 
@@ -2487,6 +2489,17 @@ menu.toggle_loop(Heist_Mission_Helper, "禁止任务失败", {}, "", function()
     LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
 end)
 
+menu.click_slider(Heist_Mission_Helper, "增加团队生命数", { "HeistTeamLives" }, "", -1, 30000, 0, 1, function(value)
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
+        return
+    end
+
+    for i = 0, 3 do
+        LOCAL_SET_INT(script, Locals[script].iAdditionalTeamLives + i, value)
+    end
+end)
+
 local Heist_Mission_Vehicle
 Heist_Mission_Vehicle = menu.list(Heist_Mission_Helper, "传送任务载具到我", {}, "", function()
     local menu_children = menu.get_children(Heist_Mission_Vehicle)
@@ -2537,6 +2550,8 @@ end)
 
 
 
+
+
 menu.action(Heist_Mission, "重新加载抢劫计划面板", { "ReloadHeistBoard" }, "无需再重新进入室内来刷新面板了", function()
     if not INTERIOR.IS_INTERIOR_SCENE() then
         return
@@ -2566,6 +2581,19 @@ end)
 menu.action(Heist_Mission, "直接完成任务 (通用)", { "InsFinJob" }, "联系人任务", function()
     menu.trigger_commands("scripthost")
     INSTANT_FINISH_FM_MISSION_CONTROLLER()
+end)
+
+menu.action(Heist_Mission, "成为任务脚本主机", {}, "", function()
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
+        return
+    end
+
+    if util.request_script_host(script) then
+        util.toast("成为任务脚本主机 成功")
+    else
+        util.toast("成为任务脚本主机 失败")
+    end
 end)
 
 
@@ -2859,203 +2887,7 @@ local CasinoHeistVars = {
     eEliteChallenge = 0,
     iCashTotalTake = -1,
     bResetPrepStats = false,
-
-    Config = {
-        eChosenApproachType = 1,
-        eTarget = 1,
-        bHardMode = true,
-
-        bSecurityCameraLocationsScoped = true,
-        bGuardPatrolRoutesScoped = true,
-        eShipmentDisruptionLevel = 2,
-        bStealthNightVisionAcquired = true,
-        bHandheldDrillAcquired = true,
-        bEMPAcquired = true,
-
-        eDropoffLocation = 6,
-        eDropoffSubLocation = 0,
-        bDecoyCrewMemberPurchased = true,
-        bSwitchGetawayVehiclePurchased = true,
-        eVehicleModPresetChosen = 3,
-
-        eCrewWeaponsExpertChosen = 1,
-        eCrewWeaponsLoadoutChosen = 0,
-        eCrewDriverChosen = 1,
-        eCrewVehiclesLoadoutChosen = 0,
-        eCrewHackerChosen = 1,
-
-        eCrewKeyAccessLevel = 2,
-        eEntranceChosen = 1,
-        eExitChosen = 1,
-        eMasksChosen = 0,
-
-        eSubterfugeOutfitsIn = 1,
-        eSubterfugeOutfitsOut = 6,
-        bOfficeInfested = true,
-
-        bRappelGearAcquired = true,
-    },
 }
-
-local Casino_Heist_Mission_Config = menu.list(Casino_Heist, "Casino Heist Mission Config", {}, "尝试用来解决单人启动终章问题")
-
---#region
-
-menu.toggle_loop(Casino_Heist_Mission_Config, "Set Mission Config", {}, Lang.E_B_S_M, function()
-    -- look at these beautiful code... :)
-
-    local Data = CasinoHeistVars.Config
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eChosenApproachType, Data.eChosenApproachType)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eTarget, Data.eTarget)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bHardMode, Data.bHardMode)
-
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bSecurityCameraLocationsScoped, true)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bGuardPatrolRoutesScoped, true)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eShipmentDisruptionLevel, 3)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bStealthNightVisionAcquired, true)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bHandheldDrillAcquired, true)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bEMPAcquired, true)
-
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eDropoffLocation, Data.eDropoffLocation)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eDropoffSubLocation, Data.eDropoffSubLocation)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bDecoyCrewMemberPurchased, true)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bSwitchGetawayVehiclePurchased, true)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eVehicleModPresetChosen, 3)
-
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewWeaponsExpertChosen, Data.eCrewWeaponsExpertChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewWeaponsLoadoutChosen, Data.eCrewWeaponsLoadoutChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewDriverChosen, Data.eCrewDriverChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewVehiclesLoadoutChosen, Data.eCrewVehiclesLoadoutChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewHackerChosen, Data.eCrewHackerChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewKeyAccessLevel, 2)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eEntranceChosen, Data.eEntranceChosen)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eExitChosen, Data.eExitChosen)
-    -- GLOBAL_SET_INT(CasinoHeistMissionConfigData.eMasksChosen, Data.eMasksChosen)
-
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eSubterfugeOutfitsIn, Data.eSubterfugeOutfitsIn)
-    GLOBAL_SET_INT(CasinoHeistMissionConfigData.eSubterfugeOutfitsOut, Data.eSubterfugeOutfitsOut)
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bOfficeInfested, true)
-
-    GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bRappelGearAcquired, true)
-end)
-
-menu.divider(Casino_Heist_Mission_Config, "")
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_APPROACH"), {}, "",
-    Tables.CasinoHeistApproach, 1, function(value)
-        CasinoHeistVars.Config.eChosenApproachType = value
-    end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_TARGET"), {}, "",
-    Tables.CasinoHeistTarget, 1, function(value)
-        CasinoHeistVars.Config.eTarget = value
-    end)
-menu.toggle(Casino_Heist_Mission_Config, "Hard Mode", {}, "", function(toggle)
-    CasinoHeistVars.Config.bHardMode = toggle
-end, true)
-
-
-menu.divider(Casino_Heist_Mission_Config, "")
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_ENTRANCE"), {}, "", {
-    { 0,  get_label_text("CH_ACCPNT_0") },  -- MAIN_ENTRANCE
-    { 1,  get_label_text("CH_ACCPNT_1") },  -- STAFF_ENTRANCE
-    { 2,  get_label_text("CH_ACCPNT_2") },  -- GARBAGE_ENTRANCE
-    { 3,  get_label_text("CH_ACCPNT_3") },  -- SOUTH_WEST_ROOF_TERRACE_ENTRANCE
-    { 4,  get_label_text("CH_ACCPNT_4") },  -- NORTH_WEST_ROOF_TERRACE_ENTRANCE
-    { 5,  get_label_text("CH_ACCPNT_5") },  -- SOUTH_EAST_ROOF_TERRACE_ENTRANCE
-    { 6,  get_label_text("CH_ACCPNT_6") },  -- NORTH_EAST_ROOF_TERRACE_ENTRANCE
-    { 7,  get_label_text("CH_ACCPNT_7") },  -- SOUTH_HELIPAD_ENTRANCE
-    { 8,  get_label_text("CH_ACCPNT_8") },  -- NORTH_HELIPAD_ENTRANCE
-    { 9,  get_label_text("CH_ACCPNT_9") },  -- SECURITY_VEHICLE_ENTRANCE
-    { 10, get_label_text("CH_ACCPNT_10") }, -- SEWER_ENTRANCE
-}, 1, function(value)
-    CasinoHeistVars.Config.eEntranceChosen = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_EXIT"), {}, "", {
-    { 0, get_label_text("CH_ACCPNT_0") }, -- MAIN_ENTRANCE
-    { 1, get_label_text("CH_ACCPNT_1") }, -- STAFF_ENTRANCE
-    { 2, get_label_text("CH_ACCPNT_2") }, -- GARBAGE_ENTRANCE
-    { 3, get_label_text("CH_ACCPNT_3") }, -- SOUTH_WEST_ROOF_TERRACE_ENTRANCE
-    { 4, get_label_text("CH_ACCPNT_4") }, -- NORTH_WEST_ROOF_TERRACE_ENTRANCE
-    { 5, get_label_text("CH_ACCPNT_5") }, -- SOUTH_EAST_ROOF_TERRACE_ENTRANCE
-    { 6, get_label_text("CH_ACCPNT_6") }, -- NORTH_EAST_ROOF_TERRACE_ENTRANCE
-    { 7, get_label_text("CH_ACCPNT_7") }, -- SOUTH_HELIPAD_ENTRANCE
-    { 8, get_label_text("CH_ACCPNT_8") }, -- NORTH_HELIPAD_ENTRANCE
-}, 1, function(value)
-    CasinoHeistVars.Config.eExitChosen = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_DROP_OFF"), {}, "", {
-    { 0, "Short 1",  {}, "", get_label_text("CH_DROPOFF_0") },
-    { 1, "Short 2",  {}, "", get_label_text("CH_DROPOFF_0") },
-    { 2, "Short 3",  {}, "", get_label_text("CH_DROPOFF_0") },
-
-    { 3, "Medium 1", {}, "", get_label_text("CH_DROPOFF_1") },
-    { 4, "Medium 2", {}, "", get_label_text("CH_DROPOFF_1") },
-    { 5, "Medium 3", {}, "", get_label_text("CH_DROPOFF_1") },
-
-    { 6, "Long 1",   {}, "", get_label_text("CH_DROPOFF_2") },
-    { 7, "Long 2",   {}, "", get_label_text("CH_DROPOFF_2") },
-    { 8, "Long 3",   {}, "", get_label_text("CH_DROPOFF_2") },
-}, 6, function(value)
-    CasinoHeistVars.Config.eDropoffLocation = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, "Force Dropoff Sub Location", {}, "", {
-    { 0, Labels.None },
-    { 1, "Location 1" },
-    { 2, "Location 2" },
-    { 3, "Location 3" },
-}, 0, function(value)
-    CasinoHeistVars.Config.eDropoffSubLocation = value
-end)
-
-menu.divider(Casino_Heist_Mission_Config, "")
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_GUNMAN"), {}, "",
-    Tables.CasinoHeistGunman, 1, function(value)
-        CasinoHeistVars.Config.eCrewWeaponsExpertChosen = value
-    end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_WEAP"), {}, "", {
-    { 0, Labels.Default },
-    { 1, "Alternate" },
-}, 0, function(value)
-    CasinoHeistVars.Config.eCrewWeaponsLoadoutChosen = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_DRIVER"), {}, "",
-    Tables.CasinoHeistDriver, 1, function(value)
-        CasinoHeistVars.Config.eCrewDriverChosen = value
-    end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_VEH"), {}, "", {
-    { 0, Labels.Default },
-    { 1, "Alternate 1" },
-    { 2, "Alternate 2" },
-    { 3, "Alternate 3" },
-}, 0, function(value)
-    CasinoHeistVars.Config.eCrewVehiclesLoadoutChosen = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_HACKER"), {}, "",
-    Tables.CasinoHeistHacker, 1, function(value)
-        CasinoHeistVars.Config.eCrewHackerChosen = value
-    end)
-
-menu.divider(Casino_Heist_Mission_Config, get_label_text("CHB_APPROACH_2"))
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_OUTFIT_IN"), {}, "", {
-    { 0, Labels.None },
-    { 1, get_label_text("CH_OUTFIT_0") }, -- BUGSTAR
-    { 2, get_label_text("CH_OUTFIT_1") }, -- MECHANIC
-    { 3, get_label_text("CH_OUTFIT_2") }, -- GRUPPE_SECHS
-    { 4, get_label_text("CH_OUTFIT_3") }, -- CELEBRITY
-}, 1, function(value)
-    CasinoHeistVars.Config.eSubterfugeOutfitsIn = value
-end)
-menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_OUTFIT_OUT"), {}, "", {
-    { 5, Labels.None },
-    { 6, get_label_text("CH_OUTFIT_4") }, -- SWAT
-    { 7, get_label_text("CH_OUTFIT_5") }, -- FIREMAN
-    { 8, get_label_text("CH_OUTFIT_6") }, -- HIGH_ROLLER
-}, 6, function(value)
-    CasinoHeistVars.Config.eSubterfugeOutfitsOut = value
-end)
-
---#endregion
-
-
 
 menu.list_select(Casino_Heist, Labels.EliteChallenge, {}, "", Tables.EliteChallenge, 0, function(value)
     CasinoHeistVars.eEliteChallenge = value
@@ -3091,6 +2923,238 @@ menu.list_action(Casino_Heist, "直接完成 赌场抢劫", {}, "", Tables.Casin
 
     INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
+
+
+menu.divider(Casino_Heist, "")
+
+local Casino_Heist_Mission_Config <const> = menu.list(Casino_Heist, "终章面板设置", {}, "尝试用来解决单人进行任务无法设置面板的问题")
+
+--#region
+
+CasinoHeistVars.sConfig = {
+    eChosenApproachType = 1,
+    eTarget = 1,
+    bHardMode = true,
+
+    bSecurityCameraLocationsScoped = true,
+    bGuardPatrolRoutesScoped = true,
+    eShipmentDisruptionLevel = 3,
+    bStealthNightVisionAcquired = true,
+    bHandheldDrillAcquired = true,
+    bEMPAcquired = true,
+
+    eDropoffLocation = 6,
+    eDropoffSubLocation = 0,
+    bDecoyCrewMemberPurchased = true,
+    bSwitchGetawayVehiclePurchased = true,
+    eVehicleModPresetChosen = 3,
+
+    eCrewWeaponsExpertChosen = 1,
+    eCrewWeaponsLoadoutChosen = 0,
+    eCrewDriverChosen = 1,
+    eCrewVehiclesLoadoutChosen = 0,
+    eCrewHackerChosen = 1,
+    eCrewKeyAccessLevel = 2,
+    eEntranceChosen = 1,
+    eExitChosen = 1,
+    eMasksChosen = 0,
+
+    eSubterfugeOutfitsIn = 1,
+    eSubterfugeOutfitsOut = 6,
+    bOfficeInfested = true,
+
+    bRappelGearAcquired = true,
+}
+
+menu.toggle_loop(Casino_Heist_Mission_Config, "设置终章面板", {},
+    "1.确保在任务开启前启用\n2.确保采取方式选择正确\n3.其它的部分选项直接默认设置了", function()
+        local Data = CasinoHeistVars.sConfig
+
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eChosenApproachType, Data.eChosenApproachType)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eTarget, Data.eTarget)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bHardMode, Data.bHardMode)
+
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bSecurityCameraLocationsScoped, Data.bSecurityCameraLocationsScoped)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bGuardPatrolRoutesScoped, Data.bGuardPatrolRoutesScoped)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eShipmentDisruptionLevel, Data.eShipmentDisruptionLevel)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bStealthNightVisionAcquired, Data.bStealthNightVisionAcquired)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bHandheldDrillAcquired, Data.bHandheldDrillAcquired)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bEMPAcquired, Data.bEMPAcquired)
+
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eDropoffLocation, Data.eDropoffLocation)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eDropoffSubLocation, Data.eDropoffSubLocation)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bDecoyCrewMemberPurchased, Data.bDecoyCrewMemberPurchased)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bSwitchGetawayVehiclePurchased, Data.bSwitchGetawayVehiclePurchased)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eVehicleModPresetChosen, Data.eVehicleModPresetChosen)
+
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewWeaponsExpertChosen, Data.eCrewWeaponsExpertChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewWeaponsLoadoutChosen, Data.eCrewWeaponsLoadoutChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewDriverChosen, Data.eCrewDriverChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewVehiclesLoadoutChosen, Data.eCrewVehiclesLoadoutChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewHackerChosen, Data.eCrewHackerChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eCrewKeyAccessLevel, Data.eCrewKeyAccessLevel)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eEntranceChosen, Data.eEntranceChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eExitChosen, Data.eExitChosen)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eMasksChosen, Data.eMasksChosen)
+
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eSubterfugeOutfitsIn, Data.eSubterfugeOutfitsIn)
+        GLOBAL_SET_INT(CasinoHeistMissionConfigData.eSubterfugeOutfitsOut, Data.eSubterfugeOutfitsOut)
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bOfficeInfested, Data.bOfficeInfested)
+
+        GLOBAL_SET_BOOL(CasinoHeistMissionConfigData.bRappelGearAcquired, Data.bRappelGearAcquired)
+    end)
+
+menu.divider(Casino_Heist_Mission_Config, "")
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_APPROACH"), {}, "",
+    Tables.CasinoHeistApproach, 1, function(value)
+        CasinoHeistVars.sConfig.eChosenApproachType = value
+    end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_TARGET"), {}, "",
+    Tables.CasinoHeistTarget, 1, function(value)
+        CasinoHeistVars.sConfig.eTarget = value
+    end)
+menu.toggle(Casino_Heist_Mission_Config, "Hard Mode", {}, "", function(toggle)
+    CasinoHeistVars.sConfig.bHardMode = toggle
+end, true)
+
+
+menu.divider(Casino_Heist_Mission_Config, "")
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_ENTRANCE"), {}, "", {
+    { 0,  get_label_text("CH_ACCPNT_0") },  -- MAIN_ENTRANCE
+    { 1,  get_label_text("CH_ACCPNT_1") },  -- STAFF_ENTRANCE
+    { 2,  get_label_text("CH_ACCPNT_2") },  -- GARBAGE_ENTRANCE
+    { 3,  get_label_text("CH_ACCPNT_3") },  -- SOUTH_WEST_ROOF_TERRACE_ENTRANCE
+    { 4,  get_label_text("CH_ACCPNT_4") },  -- NORTH_WEST_ROOF_TERRACE_ENTRANCE
+    { 5,  get_label_text("CH_ACCPNT_5") },  -- SOUTH_EAST_ROOF_TERRACE_ENTRANCE
+    { 6,  get_label_text("CH_ACCPNT_6") },  -- NORTH_EAST_ROOF_TERRACE_ENTRANCE
+    { 7,  get_label_text("CH_ACCPNT_7") },  -- SOUTH_HELIPAD_ENTRANCE
+    { 8,  get_label_text("CH_ACCPNT_8") },  -- NORTH_HELIPAD_ENTRANCE
+    { 9,  get_label_text("CH_ACCPNT_9") },  -- SECURITY_VEHICLE_ENTRANCE
+    { 10, get_label_text("CH_ACCPNT_10") }, -- SEWER_ENTRANCE
+}, 1, function(value)
+    CasinoHeistVars.sConfig.eEntranceChosen = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_EXIT"), {}, "", {
+    { 0, get_label_text("CH_ACCPNT_0") }, -- MAIN_ENTRANCE
+    { 1, get_label_text("CH_ACCPNT_1") }, -- STAFF_ENTRANCE
+    { 2, get_label_text("CH_ACCPNT_2") }, -- GARBAGE_ENTRANCE
+    { 3, get_label_text("CH_ACCPNT_3") }, -- SOUTH_WEST_ROOF_TERRACE_ENTRANCE
+    { 4, get_label_text("CH_ACCPNT_4") }, -- NORTH_WEST_ROOF_TERRACE_ENTRANCE
+    { 5, get_label_text("CH_ACCPNT_5") }, -- SOUTH_EAST_ROOF_TERRACE_ENTRANCE
+    { 6, get_label_text("CH_ACCPNT_6") }, -- NORTH_EAST_ROOF_TERRACE_ENTRANCE
+    { 7, get_label_text("CH_ACCPNT_7") }, -- SOUTH_HELIPAD_ENTRANCE
+    { 8, get_label_text("CH_ACCPNT_8") }, -- NORTH_HELIPAD_ENTRANCE
+}, 1, function(value)
+    CasinoHeistVars.sConfig.eExitChosen = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_DROP_OFF"), {}, "", {
+    { 0, "Short 1",  {}, "", get_label_text("CH_DROPOFF_0") },
+    { 1, "Short 2",  {}, "", get_label_text("CH_DROPOFF_0") },
+    { 2, "Short 3",  {}, "", get_label_text("CH_DROPOFF_0") },
+
+    { 3, "Medium 1", {}, "", get_label_text("CH_DROPOFF_1") },
+    { 4, "Medium 2", {}, "", get_label_text("CH_DROPOFF_1") },
+    { 5, "Medium 3", {}, "", get_label_text("CH_DROPOFF_1") },
+
+    { 6, "Long 1",   {}, "", get_label_text("CH_DROPOFF_2") },
+    { 7, "Long 2",   {}, "", get_label_text("CH_DROPOFF_2") },
+    { 8, "Long 3",   {}, "", get_label_text("CH_DROPOFF_2") },
+}, 6, function(value)
+    CasinoHeistVars.sConfig.eDropoffLocation = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, "Force Dropoff Sub Location", {}, "", {
+    { 0, Labels.None },
+    { 1, "Location 1" },
+    { 2, "Location 2" },
+    { 3, "Location 3" },
+}, 0, function(value)
+    CasinoHeistVars.sConfig.eDropoffSubLocation = value
+end)
+
+menu.divider(Casino_Heist_Mission_Config, get_label_text("CHB_CREW"))
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_GUNMAN"), {}, "",
+    Tables.CasinoHeistGunman, 1, function(value)
+        CasinoHeistVars.sConfig.eCrewWeaponsExpertChosen = value
+    end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_WEAP"), {}, "", {
+    { 0, Labels.Default },
+    { 1, "Alternate" },
+}, 0, function(value)
+    CasinoHeistVars.sConfig.eCrewWeaponsLoadoutChosen = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_DRIVER"), {}, "",
+    Tables.CasinoHeistDriver, 1, function(value)
+        CasinoHeistVars.sConfig.eCrewDriverChosen = value
+    end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_VEH"), {}, "", {
+    { 0, Labels.Default },
+    { 1, "Alternate 1" },
+    { 2, "Alternate 2" },
+    { 3, "Alternate 3" },
+}, 0, function(value)
+    CasinoHeistVars.sConfig.eCrewVehiclesLoadoutChosen = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_HACKER"), {}, "",
+    Tables.CasinoHeistHacker, 1, function(value)
+        CasinoHeistVars.sConfig.eCrewHackerChosen = value
+    end)
+
+menu.divider(Casino_Heist_Mission_Config, get_label_text("CHB_APPROACH_2"))
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_OUTFIT_IN"), {}, "", {
+    { 0, Labels.None },
+    { 1, get_label_text("CH_OUTFIT_0") }, -- BUGSTAR
+    { 2, get_label_text("CH_OUTFIT_1") }, -- MECHANIC
+    { 3, get_label_text("CH_OUTFIT_2") }, -- GRUPPE_SECHS
+    { 4, get_label_text("CH_OUTFIT_3") }, -- CELEBRITY
+}, 1, function(value)
+    CasinoHeistVars.sConfig.eSubterfugeOutfitsIn = value
+end)
+menu.list_select(Casino_Heist_Mission_Config, get_label_text("CHB_OUTFIT_OUT"), {}, "", {
+    { 5, Labels.None },
+    { 6, get_label_text("CH_OUTFIT_4") }, -- SWAT
+    { 7, get_label_text("CH_OUTFIT_5") }, -- FIREMAN
+    { 8, get_label_text("CH_OUTFIT_6") }, -- HIGH_ROLLER
+}, 6, function(value)
+    CasinoHeistVars.sConfig.eSubterfugeOutfitsOut = value
+end)
+
+--#endregion
+
+
+menu.list_action(Casino_Heist, "启动差事: 赌场抢劫 终章", {},
+    "1.开始任务后会出生在游戏厅里面\n2.使用直接完成任务会出错", {
+        { -1323726821, get_label_text("CHB_APPROACH_1") }, -- Silent & Sneaky
+        { -1105714937, get_label_text("CHB_APPROACH_2") }, -- The Big Con
+        { 14334224,    get_label_text("CHB_APPROACH_3") }  -- Aggressive
+    }, function(value)
+        if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+            return
+        end
+
+        if GET_ARCADE_PROPERTY_ID() <= 0 then
+            util.toast("你需要拥有游戏厅")
+            return
+        end
+        if players.get_org_type(players.user()) == -1 then
+            util.toast("你需要注册为老大")
+            return
+        end
+        if INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) ~= 278529 then
+            util.toast("你需要在游戏厅里面")
+            return
+        end
+
+        local Data = {
+            iRootContentID = value,
+            iMissionType = 158,      -- FMMC_TYPE_GB_CASINO_HEIST
+            iMissionEnteryType = 65, -- ciMISSION_ENTERY_TYPE_CASINO_HEIST_BOARD
+        }
+
+        LAUNCH_MISSION(Data)
+        util.toast("请稍等...")
+    end)
+
+
 
 
 
@@ -3149,6 +3213,195 @@ menu.action(Island_Heist, "直接完成 佩里科岛抢劫", {}, "", function()
 
     INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
+
+
+menu.divider(Island_Heist, "")
+
+menu.action(Island_Heist, "启动差事: 佩里科岛抢劫 终章", {},
+    "1.如果没有完成必需前置,需要手动设置终章面板后才可以开启任务\n2.启动的差事使用直接完成任务会出现报错", function()
+        if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+            return
+        end
+
+        if not DOES_PLAYER_OWN_KOSATKA() then
+            util.toast("你需要拥有虎鲸")
+            return
+        end
+        if players.get_org_type(players.user()) == -1 then
+            util.toast("你需要注册为老大")
+            return
+        end
+        if INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) ~= 281345 then
+            util.toast("你需要在虎鲸里面")
+            return
+        end
+
+
+        local Data = {
+            iRootContentID = -1172878953, -- HIM_STUB
+            iMissionType = 260,           -- FMMC_TYPE_HEIST_ISLAND_FINALE
+            iMissionEnteryType = 67,      -- ciMISSION_ENTERY_TYPE_HEIST_ISLAND_TABLE
+        }
+
+        LAUNCH_MISSION(Data)
+        util.toast("请稍等...")
+    end)
+
+
+local Island_Heist_Final_Config <const> = menu.list(Island_Heist, "终章面板设置", {}, "")
+
+--#region
+
+IslandHeistVars.sConfig = {
+    ePrimaryTarget = 3,
+    bHardModeEnabled = false,
+
+    eApproachVehicle = 6,
+    eInfiltrationPoint = 3,
+    eCompoundEntrance = 0,
+    eEscapePoint = 1,
+    eTimeOfDay = 1,
+
+    eWeaponLoadout = 1,
+    bUseSuppressors = true,
+    iAbilitiesBitset = 0,
+
+    bDemolitionChargesAcquired = false,
+    bAcetyleneTorchAcquired = false,
+}
+
+menu.action(Island_Heist_Final_Config, "设置终章面板", {}, "", function()
+    local sConfig = GlobalPlayerBD_HeistIsland.sConfig()
+
+    local Data = IslandHeistVars.sConfig
+
+
+    GLOBAL_SET_INT(sConfig + 9, Data.ePrimaryTarget)
+
+    GLOBAL_SET_INT(sConfig + 35, Data.eWeaponLoadout)
+    GLOBAL_SET_BOOL(sConfig + 36, Data.bDemolitionChargesAcquired)
+    GLOBAL_SET_BOOL(sConfig + 37, Data.bAcetyleneTorchAcquired)
+    GLOBAL_SET_BOOL(sConfig + 38, Data.bHardModeEnabled)
+    if Data.bHardModeEnabled then
+        GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_HARD)
+    else
+        GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_NORMAL)
+    end
+
+    GLOBAL_SET_INT(sConfig + 39, Data.eApproachVehicle)
+    GLOBAL_SET_INT(sConfig + 40, Data.eInfiltrationPoint)
+    GLOBAL_SET_INT(sConfig + 41, Data.eCompoundEntrance)
+    GLOBAL_SET_INT(sConfig + 42, Data.eEscapePoint)
+    GLOBAL_SET_INT(sConfig + 43, Data.eTimeOfDay)
+    GLOBAL_SET_BOOL(sConfig + 44, Data.bUseSuppressors)
+    GLOBAL_SET_INT(sConfig + 45, Data.iAbilitiesBitset)
+end)
+
+menu.divider(Island_Heist_Final_Config, "")
+
+menu.list_select(Island_Heist_Final_Config, get_label_text("IHB_MAIN_PAYOUT"), {}, "", {
+    { 0, get_label_text("H4_LOOT_TEQ") },   -- SINSIMITO TEQUILA
+    { 1, get_label_text("H4_LOOT_NKLC") },  -- RUBY NECKLACE
+    { 2, get_label_text("H4_LOOT_BONDS") }, -- BEARER BONDS
+    { 3, get_label_text("H4_LOOT_DIAM") },  -- PINK DIAMOND
+    { 4, get_label_text("H4_LOOT_FILES") }, -- MADRAZO FILES
+    { 5, get_label_text("H4_LOOT_STAT") },  -- PANTHER STATUE
+}, IslandHeistVars.sConfig.ePrimaryTarget, function(value)
+    IslandHeistVars.sConfig.ePrimaryTarget = value
+end)
+menu.toggle(Island_Heist_Final_Config, get_label_text("IHB_HARD_MODE"), {}, "", function(toggle)
+    IslandHeistVars.sConfig.bHardModeEnabled = toggle
+end, IslandHeistVars.sConfig.bHardModeEnabled)
+
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_FIN0_APRV_T"), {}, "", {
+    { 1, get_label_text("H4P_FIN1_SUBM_T") }, -- KOSATKA
+    { 2, get_label_text("H4P_FIN1_BOMB_T") }, -- ALKONOST
+    { 3, get_label_text("H4P_FIN1_SMPL_T") }, -- VELUM
+    { 4, get_label_text("H4P_FIN1_SHEL_T") }, -- STEALTH ANNIHILATOR
+    { 5, get_label_text("H4P_FIN1_PBOA_T") }, -- PATROL BOAT
+    { 6, get_label_text("H4P_FIN1_SBOA_T") }, -- LONGFIN
+}, IslandHeistVars.sConfig.eApproachVehicle, function(value)
+    IslandHeistVars.sConfig.eApproachVehicle = value
+end)
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_INT0_ENTR_T"), {}, "", {
+    { 0, get_label_text("H4P_FIN2_AIRS_T") }, -- AIRSTRIP
+    { 1, get_label_text("H4P_FIN2_PARA_T") }, -- HALO JUMP
+    { 2, get_label_text("H4P_FIN2_WBEA_T") }, -- WEST BEACH
+    { 3, get_label_text("H4P_FIN2_MDOC_T") }, -- MAIN DOCK
+    { 4, get_label_text("H4P_FIN2_NDOC_T") }, -- NORTH DOCK
+    { 5, get_label_text("H4P_FIN2_NDRP_T") }, -- NORTH DROP ZONE
+    { 6, get_label_text("H4P_FIN2_SDRP_T") }, -- SOUTH DROP ZONE
+    { 7, get_label_text("H4P_FIN2_DTUN_T") }, -- DRAINAGE TUNNEL
+}, IslandHeistVars.sConfig.eInfiltrationPoint, function(value)
+    IslandHeistVars.sConfig.eInfiltrationPoint = value
+end)
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_INT0_COMP_T"), {}, "", {
+    { 0, get_label_text("H4P_INT5_MGAT_T") }, -- MAIN GATE
+    { 1, get_label_text("H4P_INT5_NWAL_T") }, -- NORTH WALL
+    { 2, get_label_text("H4P_INT5_NSGT_T") }, -- NORTH GATE
+    { 3, get_label_text("H4P_INT5_SWAL_T") }, -- SOUTH WALL
+    { 4, get_label_text("H4P_INT5_SSGT_T") }, -- SOUTH GATE
+    { 5, get_label_text("H4P_INT5_DTUN_T") }, -- DRAINAGE TUNNEL
+}, IslandHeistVars.sConfig.eCompoundEntrance, function(value)
+    IslandHeistVars.sConfig.eCompoundEntrance = value
+end)
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_INT0_EXIT_T"), {}, "", {
+    { 0, get_label_text("H4P_FIN4_AIRS_T") }, -- AIRSTRIP
+    { 1, get_label_text("H4P_FIN4_MDOC_T") }, -- MAIN DOCK
+    { 2, get_label_text("H4P_FIN4_NDOC_T") }, -- NORTH DOCK
+    { 3, get_label_text("H4P_FIN4_SUBM_T") }, -- KOSATKA
+}, IslandHeistVars.sConfig.eEscapePoint, function(value)
+    IslandHeistVars.sConfig.eEscapePoint = value
+end)
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_FIN0_TIMD_T"), {}, "", {
+    { 1, get_label_text("H4P_FIN5_TDAY_T") }, -- DAY
+    { 2, get_label_text("H4P_FIN5_TNGT_T") }, -- NIGHT
+}, IslandHeistVars.sConfig.eTimeOfDay, function(value)
+    IslandHeistVars.sConfig.eTimeOfDay = value
+end)
+
+menu.list_select(Island_Heist_Final_Config, get_label_text("H4P_FIN0_WEAP_T"), {}, "", {
+    { 1, get_label_text("H4P_FIN6_SHOT_T"), {}, get_label_text("H4P_FIN6_SHOT_I") }, -- AGGRESSOR
+    { 2, get_label_text("H4P_FIN6_RIFL_T"), {}, get_label_text("H4P_FIN6_RIFL_I") }, -- CONSPIRATOR
+    { 3, get_label_text("H4P_FIN6_SNIP_T"), {}, get_label_text("H4P_FIN6_SNIP_I") }, -- CRACK SHOT
+    { 4, get_label_text("H4P_FIN6_MKSM_T"), {}, get_label_text("H4P_FIN6_MKSM_I") }, -- SABOTEUR
+    { 5, get_label_text("H4P_FIN6_MKAR_T"), {}, get_label_text("H4P_FIN6_MKAR_I") }, -- MARKSMAN
+}, IslandHeistVars.sConfig.eWeaponLoadout, function(value)
+    IslandHeistVars.sConfig.eWeaponLoadout = value
+end)
+menu.toggle(Island_Heist_Final_Config, get_label_text("H4P_FIN6_SUPP_T"), {}, "", function(toggle)
+    IslandHeistVars.sConfig.bUseSuppressors = toggle
+end, IslandHeistVars.sConfig.bUseSuppressors)
+
+local Island_Heist_Final_Config_Ability = menu.list(Island_Heist_Final_Config, get_label_text("H4P_FIN0_SUPP_T"), {}, "")
+local Island_Heist_Final_Support_Crew = {
+    { bit = 0, name = get_label_text("H4P_FIN7_AIRS_T"), help = get_label_text("H4P_FIN7_AIRS_I") }, -- AIRSTRIKE
+    { bit = 1, name = get_label_text("H4P_FIN7_WDRP_T"), help = get_label_text("H4P_FIN7_WDRP_I") }, -- SUPPLY DROP
+    { bit = 2, name = get_label_text("H4P_FIN7_SNIP_T"), help = get_label_text("H4P_FIN7_SNIP_I") }, -- SNIPER
+    { bit = 3, name = get_label_text("H4P_FIN7_HELI_T"), help = get_label_text("H4P_FIN7_HELI_I") }, -- HELICOPTER BACKUP
+    { bit = 4, name = get_label_text("H4P_FIN7_SPYD_T"), help = get_label_text("H4P_FIN7_SPYD_I") }, -- RECON DRONE
+    { bit = 5, name = get_label_text("H4P_FIN7_WEAP_T"), help = get_label_text("H4P_FIN7_WEAP_I") }, -- WEAPON STASH
+}
+for _, item in pairs(Island_Heist_Final_Support_Crew) do
+    menu.toggle(Island_Heist_Final_Config_Ability, item.name, {}, item.help, function(toggle)
+        if toggle then
+            IslandHeistVars.sConfig.iAbilitiesBitset = SET_BIT(IslandHeistVars.sConfig.iAbilitiesBitset, item.bit)
+        else
+            IslandHeistVars.sConfig.iAbilitiesBitset = CLEAR_BIT(IslandHeistVars.sConfig.iAbilitiesBitset, item.bit)
+        end
+    end)
+end
+
+menu.divider(Island_Heist_Final_Config, "")
+menu.toggle(Island_Heist_Final_Config, get_label_text("H4P_PRP2_DEMC_T"), {}, "", function(toggle)
+    IslandHeistVars.sConfig.bDemolitionChargesAcquired = toggle
+end, IslandHeistVars.sConfig.bDemolitionChargesAcquired)
+menu.toggle(Island_Heist_Final_Config, get_label_text("H4P_PRP2_ATOR_T"), {}, "", function(toggle)
+    IslandHeistVars.sConfig.bAcetyleneTorchAcquired = toggle
+end, IslandHeistVars.sConfig.bAcetyleneTorchAcquired)
+
+--#endregion
+
 
 
 
@@ -3436,6 +3689,9 @@ end)
 
 local Stat_Options <const> = menu.list(Menu_Root, "统计数据选项", {}, "")
 
+------------------------
+-- Remove Cooldown
+------------------------
 
 local Stat_Cooldown = menu.list(Stat_Options, "立即移除冷却时间", {}, "")
 
@@ -3488,6 +3744,45 @@ for _, item in pairs(CooldownStatList) do
     end)
 end
 
+------------------------
+-- Remove Cutscene
+------------------------
+
+local Stat_Cutscene = menu.list(Stat_Options, "移除首次进入资产的动画教程", {}, "")
+
+local BusinessCutsceneBitList = {
+    { name = Labels.Office,                 bits = { 13 } }, -- biFmCut_OfficeCutscene
+    { name = Labels.SpecialCargoWarehouse,  bits = { 14 } },
+    { name = Labels.BikerClubhouse,         bits = { 15 } },
+    { name = Labels.MethLab,                bits = { 16, 21 } },
+    { name = Labels.CocaineLockup,          bits = { 17, 22 } },
+    { name = Labels.WeedFarm,               bits = { 18, 23 } },
+    { name = Labels.DocumentForgeryOffice,  bits = { 19, 24 } },
+    { name = Labels.CounterfeitCashFactory, bits = { 20, 25 } },
+    { name = Labels.VehicleWarehouse,       bits = { 26 } },
+    { name = Labels.Bunker,                 bits = { 27, 28 } },
+    { name = Labels.Hangar,                 bits = { 29, 30 } },
+    { name = Labels.Facility,               bits = { 31 } },
+}
+
+for _, item in pairs(BusinessCutsceneBitList) do
+    menu.textslider(Stat_Cutscene, item.name, {}, "", {
+        "Set", "Reset"
+    }, function(value)
+        local iStatInt = STAT_GET_INT(ADD_MP_INDEX("FM_CUT_DONE"))
+        if value == 1 then
+            iStatInt = SET_BITS(iStatInt, table.unpack(item.bits))
+        else
+            iStatInt = CLEAR_BITS(iStatInt, table.unpack(item.bits))
+        end
+        STAT_SET_INT(ADD_MP_INDEX("FM_CUT_DONE"), iStatInt)
+        util.toast("写入完成!")
+    end)
+end
+
+------------------------
+-- Casino Heist
+------------------------
 
 local Stat_Casino_Heist = menu.list(Stat_Options, "赌场抢劫", {}, "")
 
@@ -3541,6 +3836,9 @@ menu.textslider(Stat_Casino_Heist, "已购买赌场模型保安门禁等", {}, "
     -- ciCASINO_HEIST_FLOW_STAT_BITSET__MODEL_PURCHASED         8
 end)
 
+------------------------
+-- Doomsday Heist
+------------------------
 
 local Stat_Doomsday_Heist = menu.list(Stat_Options, "末日豪劫", {}, "")
 
@@ -3573,6 +3871,9 @@ menu.textslider(Stat_Doomsday_Heist, "解锁莱斯特免费移除通缉", {}, ""
     -- GANG_OPS_BD_HEIST_STATUS_BITSET_COMPLETED_SILO_FINALE_AS_LEADER  19
 end)
 
+------------------------
+-- Packed Stat Bool
+------------------------
 
 local Packed_Stat_Bool = menu.list(Stat_Options, "PACKED_STAT_BOOL", {}, "")
 
@@ -3584,6 +3885,7 @@ menu.textslider(Packed_Stat_Bool, get_label_text("WT_CANDYCANE"), {}, "", {
     else
         SET_PACKED_STAT_BOOL_CODE(42249, false)
     end
+    util.toast("写入完成!")
 end)
 menu.textslider(Packed_Stat_Bool, get_label_text("WT_SNOWLNCHR"), {}, "", {
     "True", "False"
@@ -3593,6 +3895,7 @@ menu.textslider(Packed_Stat_Bool, get_label_text("WT_SNOWLNCHR"), {}, "", {
     else
         SET_PACKED_STAT_BOOL_CODE(42148, false)
     end
+    util.toast("写入完成!")
 end)
 
 
@@ -3623,6 +3926,7 @@ menu.action(Menu_Root, "移除自由模式横幅通知", { "clsBigMessage" }, ""
         GLOBAL_SET_BIT(2672741 + 2518 + 1 + i * 80 + 69, 1) -- BIG_MESSAGE_BIT_CLEANUP_ALL
     end
 end)
+
 
 
 
@@ -4599,6 +4903,89 @@ menu.action(Test_Start_Mission, "TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME", {}, "", 
     MISC.TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(value)
 end)
 
+menu.divider(Test_Start_Mission, "")
+
+menu.action(Test_Start_Mission, "启动差事", {}, "", function()
+    local Data = {
+        iRootContentID = -590337633,
+        iMissionEnteryType = 29,
+    }
+
+
+
+    local iArrayPos = MISC.GET_CONTENT_ID_INDEX(Data.iRootContentID)
+
+    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].tlName
+    local tlName = GLOBAL_GET_STRING(Globals.sMissionHeaderVars + iArrayPos * 89)
+    toast(tlName)
+
+
+    -- SET_HEIST_AM_I_HEIST_LEADER_GLOBAL(TRUE)
+    ---- g_TransitionSessionNonResetVars.bAmIHeistLeader = bValue
+    GLOBAL_SET_INT(2685249 + 6357, 1)
+
+    -- SET_HEIST_NONRESET_AUTO_CONFIGURE(FALSE)
+    ---- g_TransitionSessionNonResetVars.bAutoProgressToConfigure = bNewState
+    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6360, 0)
+
+
+    local iMissionIndex = 0 -- ci_HEIST_PRE_PLAN_MISSION_0
+    local net_player_id = PLAYER.NETWORK_PLAYER_ID_TO_INT()
+
+    -- GlobalplayerBD_FM_HeistPlanning[NETWORK_PLAYER_ID_TO_INT()].iPreviousPropertyIndex = GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].propertyDetails.iCurrentlyInsideProperty
+    local iCurrentlyInsideProperty = GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 267 + 34)
+    GLOBAL_SET_INT(1877075 + 1 + net_player_id * 77 + 8, iCurrentlyInsideProperty)
+
+    -- GlobalplayerBD_FM_HeistPlanning[NETWORK_PLAYER_ID_TO_INT()].iCurrentHeistSetupIndex = iMissionIndex
+    GLOBAL_SET_INT(1877075 + 1 + net_player_id * 77 + 9, iMissionIndex)
+
+    -- g_TransitionSessionNonResetVars.iHeistSetupIdx = iMissionIndex
+    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6380, iMissionIndex)
+
+
+
+    -- Setup_My_Heist_Corona_From_ContentID(tlMissionContID)
+    local lhcMyCorona = 2635125 + 3
+
+    GLOBAL_SET_INT(lhcMyCorona, 1)
+    GLOBAL_SET_STRING(lhcMyCorona + 1, tlName)
+    GLOBAL_SET_INT(lhcMyCorona + 7, 0)
+    GLOBAL_SET_INT(lhcMyCorona + 8, 0)
+    GLOBAL_SET_INT(lhcMyCorona + 9, 0)
+    GLOBAL_SET_INT(lhcMyCorona + 10, -1)
+    GLOBAL_SET_INT(lhcMyCorona + 11, 0)
+    GLOBAL_SET_INT(lhcMyCorona + 12, 0)
+    GLOBAL_SET_INT(lhcMyCorona + 13, 0)
+
+
+
+    -- SET_FM_JOB_ENTERY_TYPE(ciMISSION_ENTERY_TYPE_XXX)
+    ---- g_iMissionEnteryType = iType
+    GLOBAL_SET_INT(g_iMissionEnteryType, Data.iMissionEnteryType)
+
+    -- SET_HEIST_CORONA_FROM_PLANNING_BOARD(TRUE)
+    ---- g_TransitionSessionNonResetVars.bCoronaLaunchFromPlanningBoard = bValue
+    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6367, 1)
+
+    -- SET_HEIST_FLOW_TOGGLE_RENDERPHASE_STATE(ci_HEIST_BS_RP_LEADER_LAUNCHED_FROM_BOARD)
+    ---- SET_BIT(g_HeistSharedClient.iRenderphaseBitset, iRenderPhaseBit)
+    GLOBAL_SET_BIT(1933811 + 55, 0)
+    -- g_HeistSharedClient.iRenderphaseWaitCount = 0
+    GLOBAL_SET_INT(1933811 + 56, 0)
+
+    -- SET_HEIST_PREPLAN_STATE(HEIST_PRE_FLOW_UPDATE_APT_THREAD_BUFFER)
+
+    -- SET_HEIST_UPDATE_AVAILABLE(TRUE)
+    -- g_HeistPrePlanningClient.bHeistBoardUpdateReady = bValue
+    GLOBAL_SET_INT(1928268 + 1782, 1)
+    -- g_HeistPrePlanningClient.eHeistFlowState = eNewState
+    GLOBAL_SET_INT(1928268, 5)
+end)
+
+menu.toggle_loop(Test_Start_Mission, "Show mhcContentID", {}, "", function()
+    local text = GLOBAL_GET_STRING(2635125 + 3 + 1)
+    draw_text("mhcContentID: " .. text)
+end)
 
 
 
@@ -4862,6 +5249,47 @@ menu.action(Job_Mission_Test, "Get Content Info (By Globals)", { "getGContentInf
     end
 end)
 
+menu.toggle_loop(Job_Mission_Test, "Show Mission Controller Script", {}, "", function()
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then return end
+
+    local text = ""
+
+    util.spoof_script(script, function()
+        local isHost = NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT()
+        local getHost = players.get_name(NETWORK.NETWORK_GET_HOST_OF_THIS_SCRIPT())
+        local instanceId = NETWORK.NETWORK_GET_INSTANCE_ID_OF_THIS_SCRIPT()
+
+        text = string.format(
+            "Script: %s\nNETWORK_IS_HOST_OF_THIS_SCRIPT: %s\nNETWORK_GET_HOST_OF_THIS_SCRIPT: %s\nNETWORK_GET_INSTANCE_ID_OF_THIS_SCRIPT: %s",
+            script,
+            isHost,
+            getHost,
+            instanceId
+        )
+    end)
+
+    local getHost2 = players.get_name(NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0))
+    local scriptHost = players.get_name(players.get_script_host())
+    text = string.format(
+        "%s\nNETWORK_GET_HOST_OF_SCRIPT: %s\nScript Host: %s",
+        text,
+        getHost2,
+        scriptHost
+    )
+
+    draw_text(text)
+end)
+menu.action(Job_Mission_Test, "Request Mission Controller Script Host", {}, "", function()
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then return end
+
+    if util.request_script_host(script) then
+        util.toast("Success")
+    else
+        util.toast("Fail")
+    end
+end)
 
 
 
@@ -4870,13 +5298,17 @@ end)
 
 
 
+----------------------------------------
+--    Script Event Test
+----------------------------------------
 
+local Script_Event_Test <const> = menu.list(Menu_Root, "Script Event Test", {}, "")
 
-local Details = memory.alloc(8)
-menu.toggle_loop(Menu_Root, "Get Script Event", {}, "", function()
+local ScriptEventDetails = memory.alloc(8)
+menu.toggle_loop(Script_Event_Test, "Get Script Event", {}, "", function()
     for eventIndex = 0, SCRIPT.GET_NUMBER_OF_EVENTS(1) - 1 do
-        if SCRIPT.GET_EVENT_DATA(1, eventIndex, Details, 1) then
-            local eventHash = memory.read_int(Details)
+        if SCRIPT.GET_EVENT_DATA(1, eventIndex, ScriptEventDetails, 1) then
+            local eventHash = memory.read_int(ScriptEventDetails)
             local eventType = SCRIPT.GET_EVENT_AT_INDEX(1, eventIndex)
 
             local text = string.format(
@@ -4887,4 +5319,24 @@ menu.toggle_loop(Menu_Root, "Get Script Event", {}, "", function()
             toast(text)
         end
     end
+end)
+
+
+
+menu.action(Script_Event_Test, "BROADCAST_FMMC_PICKED_UP_LIVES_PICKUP", {}, "", function()
+    -- NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT()
+    -- NETWORK.NETWORK_GET_HOST_OF_THIS_SCRIPT()
+    -- NETWORK.NETWORK_GET_HOST_OF_SCRIPT(scriptName, -1, 0)
+
+    -- g_FMMC_STRUCT.iLivesToTeam[0][0]
+    -- Global_4718592.f_183011[0 /*5*/][0]
+
+    GLOBAL_SET_INT(4718592 + 183011 + 1 + 0 * 5 + 1 + 0, 10)
+
+    util.trigger_script_event(util.get_session_players_bitflag(), {
+        -1248635465,    -- SCRIPT_EVENT_FMMC_PICKED_UP_LIVES_PICKUP
+        players.user(), -- FromPlayerIndex
+        -1,
+        0               -- iTeam
+    })
 end)

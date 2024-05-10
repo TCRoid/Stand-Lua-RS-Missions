@@ -1,5 +1,5 @@
 -- Game Variables
--- 1.68-3095
+-- 1.68-3179
 
 ------------------------
 -- Globals
@@ -9,6 +9,11 @@ Globals = {
     -- GlobalplayerBD[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD = function()
         return 2657921 + 1 + players.user() * 463
+    end,
+
+    -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())]
+    GlobalplayerBD_FM = function()
+        return 1845263 + 1 + players.user() * 877
     end,
 
     -- GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())]
@@ -27,7 +32,7 @@ Globals = {
     bBrowserVisible = 76369,
 
     -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos]
-    sMissionHeaderVars = 794744 + 4 + 1
+    sMissionHeaderVars = 794744 + 4 + 1,
 }
 
 g_sMPTunables = 262145
@@ -101,7 +106,6 @@ FixerFlow = {
 }
 
 
-
 -- FMMC_GLOBAL_STRUCT
 g_FMMC_STRUCT = 4718592
 FMMC_STRUCT = {
@@ -151,22 +155,23 @@ HeistPrePlanningClient = {
 -- CASINO_HEIST_MISSION_CONFIGURATION_DATA
 g_sCasinoHeistMissionConfigData = 1963911
 CasinoHeistMissionConfigData = {
+    -- Not determined by players
     eChosenApproachType = g_sCasinoHeistMissionConfigData,
     eTarget = g_sCasinoHeistMissionConfigData + 1,
-
+    -- Optional Preps that affect the finale, not selected on heist board
     bSecurityCameraLocationsScoped = g_sCasinoHeistMissionConfigData + 2,
     bGuardPatrolRoutesScoped = g_sCasinoHeistMissionConfigData + 3,
     eShipmentDisruptionLevel = g_sCasinoHeistMissionConfigData + 4,
     bStealthNightVisionAcquired = g_sCasinoHeistMissionConfigData + 5,
     bHandheldDrillAcquired = g_sCasinoHeistMissionConfigData + 6,
     bEMPAcquired = g_sCasinoHeistMissionConfigData + 7,
-
+    -- selectable on heist board without Preps
     eDropoffLocation = g_sCasinoHeistMissionConfigData + 8,
     eDropoffSubLocation = g_sCasinoHeistMissionConfigData + 9,
     bDecoyCrewMemberPurchased = g_sCasinoHeistMissionConfigData + 10,
     bSwitchGetawayVehiclePurchased = g_sCasinoHeistMissionConfigData + 11,
     eVehicleModPresetChosen = g_sCasinoHeistMissionConfigData + 12,
-
+    -- FM prep that unlocks the choice on the heist board
     eCrewWeaponsExpertChosen = g_sCasinoHeistMissionConfigData + 13,
     eCrewWeaponsLoadoutChosen = g_sCasinoHeistMissionConfigData + 14,
     eCrewDriverChosen = g_sCasinoHeistMissionConfigData + 15,
@@ -176,15 +181,25 @@ CasinoHeistMissionConfigData = {
     eEntranceChosen = g_sCasinoHeistMissionConfigData + 19,
     eExitChosen = g_sCasinoHeistMissionConfigData + 20,
     eMasksChosen = g_sCasinoHeistMissionConfigData + 21,
-
+    -- Subterfuge approach only
     eSubterfugeOutfitsIn = g_sCasinoHeistMissionConfigData + 22,
     eSubterfugeOutfitsOut = g_sCasinoHeistMissionConfigData + 23,
     bOfficeInfested = g_sCasinoHeistMissionConfigData + 24,
-
+    -- Extra Data
     iAccessPointBitset = g_sCasinoHeistMissionConfigData + 25,
     bRappelGearAcquired = g_sCasinoHeistMissionConfigData + 26,
     bHardMode = g_sCasinoHeistMissionConfigData + 27
 }
+
+-- HEIST_ISLAND_PLAYER_BD_DATA
+GlobalPlayerBD_HeistIsland = {
+    -- HEIST_ISLAND_CONFIG
+    sConfig = function()
+        -- GlobalPlayerBD_HeistIsland[NATIVE_TO_INT(sData.piLeader)].sConfig
+        return 1972721 + 1 + players.user() * 53 + 5
+    end,
+}
+
 
 
 -- WAREHOUSE_CARGO_SOURCING_DATA_STRUCT
@@ -305,6 +320,7 @@ Locals = {
         },
     },
 
+
     SecurityContract = {
         iGenericBitset = 7022,
         eEndReason = 7095 + 1278
@@ -363,6 +379,7 @@ Locals = {
         eModeState = 1961 + 781
     },
 
+
     CasinoHeistPlanning = {
         iScriptStage = 183,
     },
@@ -379,6 +396,7 @@ Locals = {
         iScriptStage = 510,
     },
 
+
     ["fm_mission_controller"] = {
         iNextMission = 19728 + 1062,
         iTeamScore = 19728 + 1232 + 1, -- +[0~3]
@@ -389,7 +407,9 @@ Locals = {
         iTeamKills = 19728 + 1725 + 1,
         iTeamHeadshots = 19728 + 1740 + 1,
 
-        iLocalBoolCheck11 = 15149
+        iLocalBoolCheck11 = 15149,
+
+        iAdditionalTeamLives = 26154 + 1325 + 1, -- +[0~3]
     },
     ["fm_mission_controller_2020"] = {
         iNextMission = 48513 + 1578,
@@ -397,9 +417,10 @@ Locals = {
         iServerBitSet = 48513 + 1,
         iServerBitSet1 = 48513 + 2,
 
-        iLocalBoolCheck11 = 47286
-    },
+        iLocalBoolCheck11 = 47286,
 
+        iAdditionalTeamLives = 55004 + 868 + 1, -- +[0~3]
+    },
 
     CarmodShop = {
         iPersonalCarModShopFlags = 1583
@@ -816,6 +837,9 @@ TunablesF = {
 -- Functions
 ------------------------
 
+g_sCURRENT_UGC_STATUS = 2693219
+g_iMissionEnteryType = 1057441
+
 function LAUNCH_MISSION(Data)
     local iArrayPos = MISC.GET_CONTENT_ID_INDEX(Data.iRootContentID)
 
@@ -829,7 +853,7 @@ function LAUNCH_MISSION(Data)
 
     -- CLEAR_PAUSE_MENU_IS_USING_UGC()
     ---- g_sCURRENT_UGC_STATUS.g_bPAUSE_MENU_USING_UGC = FALSE
-    GLOBAL_SET_INT(2693219 + 1, 0)
+    GLOBAL_SET_INT(g_sCURRENT_UGC_STATUS + 1, 0)
 
     -- SET_TRANSITION_SESSIONS_SKIP_JOB_WARNING()
     ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_SKIP_JOB_WARNING)
@@ -837,18 +861,42 @@ function LAUNCH_MISSION(Data)
 
     -- SET_FM_JOB_ENTERY_TYPE(ciMISSION_ENTERY_TYPE_XXX)
     ---- g_iMissionEnteryType = iType
-    GLOBAL_SET_INT(1057441, Data.iMissionEnteryType)
+    GLOBAL_SET_INT(g_iMissionEnteryType, Data.iMissionEnteryType)
 
-    -- FMMC_TYPE_TUNER_ROBBERY_FINALE
+
+
     if Data.iMissionType == 274 then
+        -- FMMC_TYPE_TUNER_ROBBERY_FINALE
+
         -- SET_TRANSITION_SESSIONS_LAUNCHING_TUNER_ROBBERY_FROM_BOARD()
         ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_LAUNCHING_TUNER_ROBBERY_FROM_BOARD)
         GLOBAL_SET_BIT(g_sTransitionSessionData + 3, 13)
 
         -- SET_PLAYER_LAUNCHING_TUNER_ROBBERY_IN_AUTO_SHOP()
         ---- SET_BIT(GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())].iMissionDataBitSetTwo, ciMISSION_DATA_TWO_LAUNCHING_TUNER_ROBBERY_IN_AUTO_SHOP)
-        GLOBAL_SET_BIT(1882422 + 1 + players.user() * 142 + 30, 28)
+        GLOBAL_SET_BIT(Globals.GlobalplayerBD_FM_2() + 30, 28)
+    elseif Data.iMissionType == 260 then
+        -- FMMC_TYPE_HEIST_ISLAND_FINALE
+
+        -- SET_TRANSITION_SESSIONS_LAUNCHING_ISLAND_HEIST_FROM_BOARD()
+        ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_LAUNCHING_ISLAND_HEIST_FROM_BOARD)
+        GLOBAL_SET_BIT(g_sTransitionSessionData + 3, 11)
+
+        -- HEIST_ISLAND__FLOW_SET_LAUNCHING_HEIST_IN_SUB()
+        ---- SET_BIT(GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())].iMissionDataBitSetTwo, ciMISSION_DATA_TWO_LAUNCHING_ISLAND_HEIST_IN_SUB)
+        GLOBAL_SET_BIT(Globals.GlobalplayerBD_FM_2() + 30, 27)
+    elseif Data.iMissionType == 158 then
+        -- FMMC_TYPE_GB_CASINO_HEIST
+
+        -- SET_TRANSITION_SESSIONS_LAUNCHING_CASINO_HEIST_FROM_BOARD()
+        ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_LAUNCHING_CASINO_HEIST_FROM_BOARD)
+        GLOBAL_SET_BIT(g_sTransitionSessionData + 3, 10)
+
+        -- SMV_FLOW_SET_LAUNCHING_SMV_IN_OFFICE()
+        ---- SET_BIT(GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())].iMissionDataBitSetTwo, ciMISSION_DATA_TWO_LAUNCHING_SMV_IN_OFFICE)
+        GLOBAL_SET_BIT(Globals.GlobalplayerBD_FM_2() + 30, 12)
     end
+
 
     -- SET_TRANSITION_SESSIONS_QUICK_MATCH_TYPE(FMMC_TYPE_XXX)
     ---- g_sTransitionSessionData.iMissionType = iMissionType
@@ -889,7 +937,7 @@ function LAUNCH_MISSION(Data)
 
 
     -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].iFmLauncherGameState = FMMC_LAUNCHER_STATE_LOAD_MISSION_FOR_TRANSITION_SESSION
-    GLOBAL_SET_INT(1845263 + 1 + players.user() * 877 + 95, 8)
+    GLOBAL_SET_INT(Globals.GlobalplayerBD_FM() + 95, 8)
 end
 
 function LAUNCH_DOOMSDAY_HEIST_MISSION(Data)
@@ -954,7 +1002,7 @@ function LAUNCH_DOOMSDAY_HEIST_MISSION(Data)
 
 
     -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].iFmLauncherGameState = FMMC_LAUNCHER_STATE_LOAD_MISSION_FOR_TRANSITION_SESSION
-    GLOBAL_SET_INT(1845263 + 1 + players.user() * 877 + 95, 8)
+    GLOBAL_SET_INT(Globals.GlobalplayerBD_FM() + 95, 8)
 end
 
 function INSTANT_FINISH_CASINO_HEIST_PREPS()
@@ -996,13 +1044,16 @@ function COMPLETE_DAILY_CHALLENGE()
     end
 end
 
-function COMPLETE_WEEKLY_CHALLENGE()
+function COMPLETE_WEEKLY_CHALLENGE(bComplete)
     local g_sWeeklyChallenge = 2737646
 
-    local target = GLOBAL_GET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 2)
-    if GLOBAL_GET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 1) < target then
-        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 3, 0)
-        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 4, 0)
+    GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 3, 0)
+    GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 4, 0)
+
+    if bComplete then
+        local target = GLOBAL_GET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 2)
         GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 1, target)
+    else
+        GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 1, 0)
     end
 end

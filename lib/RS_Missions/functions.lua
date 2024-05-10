@@ -175,9 +175,14 @@ function GET_FACILITY_PROPERTY_ID()
     return STAT_GET_INT(ADD_MP_INDEX("DBASE_OWNED"))
 end
 
---- @return integer
+--- @return boolean
 function DOES_PLAYER_OWN_ACID_LAB()
     return STAT_GET_INT(ADD_MP_INDEX("XM22_LAB_OWNED")) == util.joaat("brickade2") -- -1576586413
+end
+
+--- @return boolean
+function DOES_PLAYER_OWN_KOSATKA()
+    return STAT_GET_INT(ADD_MP_INDEX("IH_SUB_OWNED")) == util.joaat("kosatka") -- 1336872304
 end
 
 --------------------------------
