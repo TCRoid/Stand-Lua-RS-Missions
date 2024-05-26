@@ -1,0 +1,505 @@
+-- Game Variables
+-- 1.68-3179
+
+--------------------------------
+--  Tunables
+--------------------------------
+
+local TunablesI = {
+    ["GR_RESUPPLY_PACKAGE_VALUE"] = 21733,
+    ["GR_RESUPPLY_VEHICLE_VALUE"] = 21734,
+    ["ACID_LAB_RESUPPLY_CRATE_VALUE"] = 33039,
+    ["BIKER_RESUPPLY_PACKAGE_VALUE"] = 18590,
+    ["BIKER_RESUPPLY_VEHICLE_VALUE"] = 18591,
+
+    -- Freemode Mission Cash Reward
+    ["TunerClientVehicleDeliveryPayment"] = {
+        31417, -- TUNER_CLIENT_VEHICLE_DELIVERY_LOW_PAYMENT
+        31418, -- TUNER_CLIENT_VEHICLE_DELIVERY_MID_PAYMENT
+        31419, -- TUNER_CLIENT_VEHICLE_DELIVERY_HIGH_PAYMENT
+    },
+    ["TunerClientVehicleBouns"] = {
+        31429, -- ITUNER_CLIENT_VEHICLE_BONUS_L1
+        31430, -- ITUNER_CLIENT_VEHICLE_BONUS_L2
+        31431, -- ITUNER_CLIENT_VEHICLE_BONUS_L3
+        31432, -- ITUNER_CLIENT_VEHICLE_BONUS_L4
+    },
+    ["CUSTOMER_BIKE_DELIVERY_DEFAULT_CASH_BONUS_REWARD"] = 33209,
+    ["BikerClientVehicleBouns"] = {
+        32949, -- BIKER_CLIENT_VEHICLE_BONUS_L1
+        32950, -- BIKER_CLIENT_VEHICLE_BONUS_L2
+        32951, -- BIKER_CLIENT_VEHICLE_BONUS_L3
+        32952, -- BIKER_CLIENT_VEHICLE_BONUS_L4
+    },
+    ["SecurityContractCashReward"] = {
+        32058 + 1 + 0, -- FIXER_SECURITY_CONTRACT_MIN_REWARD0
+        32058 + 1 + 1, -- FIXER_SECURITY_CONTRACT_MIN_REWARD1
+        32058 + 1 + 2, -- FIXER_SECURITY_CONTRACT_MIN_REWARD2
+        32062 + 1 + 0, -- FIXER_SECURITY_CONTRACT_MAX_REWARD0
+        32062 + 1 + 1, -- FIXER_SECURITY_CONTRACT_MAX_REWARD1
+        32062 + 1 + 2, -- FIXER_SECURITY_CONTRACT_MAX_REWARD2
+    },
+    ["ClientWorkCashReward"] = {
+        24820, -- BB_HACKER_WORK_CLIENT_WORK_CASH_REWARD_BANK_JOB
+        24821, -- BB_HACKER_WORK_CLIENT_WORK_CASH_REWARD_DATA_HACK
+        24822, -- BB_HACKER_WORK_CLIENT_WORK_CASH_REWARD_SURVEILLANCE
+        24823, -- BB_HACKER_WORK_CLIENT_WORK_CASH_REWARD_INFILTRATION
+        24824, -- BB_HACKER_WORK_CLIENT_WORK_CASH_REWARD_JEWEL_STORE_GRAB
+    },
+    ["FIXER_PAYPHONE_HIT_STANDARD_KILL_METHOD_CASH_REWARD"] = 32050,
+    ["FIXER_PAYPHONE_HIT_BONUS_KILL_METHOD_CASH_REWARD"] = 32051,
+    ["XM22_DRUG_LAB_WORK_CASH_REWARD"] = 34209,
+    ["VC_WORK_CASH_REWARD"] = 27346,
+    ["VC_WORK_CHIP_REWARD"] = 27353,
+
+
+    -- Heist Mission Cash Reward
+    ["HeistFinalCashReward"] = {
+        9314, -- HEIST_FLEECA_JOB_CASH_REWARD
+        9315, -- HEIST_PRISON_BREAK_CASH_REWARD
+        9316, -- HEIST_HUMANE_LABS_RAID_CASH_REWARD
+        9317, -- HEIST_SERIES_A_FUNDING_CASH_REWARD
+        9318, -- HEIST_PACIFIC_STANDARD_JOB_CASH_REWARD
+    },
+    ["GangopsFinalCashReward"] = {
+        9319, -- GANGOPS_THE_IAA_JOB_CASH_REWARD
+        9320, -- GANGOPS_THE_SUBMARINE_JOB_CASH_REWARD
+        9321, -- GANGOPS_THE_MISSILE_SILO_JOB_CASH_REWARD
+    },
+    ["GangopsPrepCashReward"] = {
+        9322, -- GANGOPS_PREP_THE_IAA_JOB_CASH_REWARD
+        9323, -- GANGOPS_PREP_THE_SUBMARINE_JOB_CASH_REWARD
+        9324, -- GANGOPS_PREP_THE_MISSILE_SILO_JOB_CASH_REWARD
+    },
+    ["IslandHeistPrimaryTargetValue"] = {
+        30259, -- IH_PRIMARY_TARGET_VALUE_TEQUILA
+        30260, -- IH_PRIMARY_TARGET_VALUE_PEARL_NECKLACE
+        30261, -- IH_PRIMARY_TARGET_VALUE_BEARER_BONDS
+        30262, -- IH_PRIMARY_TARGET_VALUE_PINK_DIAMOND
+        30263, -- IH_PRIMARY_TARGET_VALUE_MADRAZO_FILES
+        30264, -- IH_PRIMARY_TARGET_VALUE_SAPPHIRE_PANTHER_STATUE
+    },
+    ["TunerRobberyLeaderCashReward"] = {
+        31323 + 1 + 0, -- TUNER_ROBBERY_LEADER_CASH_REWARD0
+        31323 + 1 + 1, -- TUNER_ROBBERY_LEADER_CASH_REWARD1
+        31323 + 1 + 2, -- TUNER_ROBBERY_LEADER_CASH_REWARD2
+        31323 + 1 + 3, -- TUNER_ROBBERY_LEADER_CASH_REWARD3
+        31323 + 1 + 4, -- TUNER_ROBBERY_LEADER_CASH_REWARD4
+        31323 + 1 + 5, -- TUNER_ROBBERY_LEADER_CASH_REWARD5
+        31323 + 1 + 6, -- TUNER_ROBBERY_LEADER_CASH_REWARD6
+        31323 + 1 + 7, -- TUNER_ROBBERY_LEADER_CASH_REWARD7
+    },
+    ["FIXER_FINALE_LEADER_CASH_REWARD"] = 32071,
+    ["-2000196818"] = 7339,
+
+    -- Reward
+    ["NightclubSourceRewardAmount"] = {
+        32941, -- NC_SOURCE_CARGO_UNIT_REWARD_AMOUNT
+        32942, -- NC_SOURCE_WEAPONS_UNIT_REWARD_AMOUNT
+        32943, -- NC_SOURCE_COKE_UNIT_REWARD_AMOUNT
+        32944, -- NC_SOURCE_METH_UNIT_REWARD_AMOUNT
+        32945, -- NC_SOURCE_WEED_UNIT_REWARD_AMOUNT
+        32946, -- NC_SOURCE_FORGED_DOCS_UNIT_REWARD_AMOUNT
+        32947, -- NC_SOURCE_COUNTERFEIT_CASH_UNIT_REWARD_AMOUNT
+    },
+
+    -- Product Sale Value
+    ["SpecialCargoSaleValue"] = {
+        15991, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD1
+        15992, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD2
+        15993, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD3
+        15994, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD4
+        15995, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD5
+        15996, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD6
+        15997, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD7
+        15998, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD8
+        15999, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD9
+        16000, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD10
+        16001, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD11
+        16002, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD12
+        16003, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD13
+        16004, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD14
+        16005, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD15
+        16006, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD16
+        16007, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD17
+        16008, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD18
+        16009, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD19
+        16010, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD20
+        16011, -- EXEC_CONTRABAND_SALE_VALUE_THRESHOLD21
+    },
+    ["SpecialItemSaleValue"] = {
+        16190, -- EXEC_CONTRABAND_FILM_REEL_VALUE
+        16192, -- EXEC_CONTRABAND_SASQUATCH_HIDE_VALUE
+        16194, -- EXEC_CONTRABAND_GOLDEN_MINIGUN_VALUE
+        16196, -- EXEC_CONTRABAND_ORNAMENTAL_EGG_VALUE
+        16198, -- EXEC_CONTRABAND_XL_DIAMOND_VALUE
+        16200, -- EXEC_CONTRABAND_POCKET_WATCH_VALUE
+    },
+    ["GunrunProductSaleValue"] = {
+        21747, -- GR_MANU_PRODUCT_VALUE
+        21748, -- GR_MANU_PRODUCT_VALUE_STAFF_UPGRADE
+        21749, -- GR_MANU_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+    },
+    ["SmugProductSaleValue"] = {
+        23020, -- SMUG_SELL_PRICE_PER_CRATE_MIXED
+        23021, -- SMUG_SELL_PRICE_PER_CRATE_ANIMAL_MATERIALS
+        23022, -- SMUG_SELL_PRICE_PER_CRATE_ART_AND_ANTIQUES
+        23023, -- SMUG_SELL_PRICE_PER_CRATE_CHEMICALS
+        23024, -- SMUG_SELL_PRICE_PER_CRATE_COUNTERFEIT_GOODS
+        23025, -- SMUG_SELL_PRICE_PER_CRATE_JEWELRY_AND_GEMSTONES
+        23026, -- SMUG_SELL_PRICE_PER_CRATE_MEDICAL_SUPPLIES
+        23027, -- SMUG_SELL_PRICE_PER_CRATE_NARCOTICS
+        23028, -- SMUG_SELL_PRICE_PER_CRATE_TOBACCO_AND_ALCOHOL
+    },
+    ["AcidProductSaleValue"] = {
+        17633, -- BIKER_ACID_PRODUCT_VALUE
+        17639, -- BIKER_ACID_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+    },
+    ["NightclubProductSaleValue"] = {
+        24593, -- BB_BUSINESS_BASIC_VALUE_WEAPONS
+        24594, -- BB_BUSINESS_BASIC_VALUE_COKE
+        24595, -- BB_BUSINESS_BASIC_VALUE_METH
+        24596, -- BB_BUSINESS_BASIC_VALUE_WEED
+        24597, -- BB_BUSINESS_BASIC_VALUE_FORGED_DOCUMENTS
+        24598, -- BB_BUSINESS_BASIC_VALUE_COUNTERFEIT_CASH
+        24599, -- BB_BUSINESS_BASIC_VALUE_CARGO
+    },
+    ["BikerProductSaleValue"] = {
+        17629, -- BIKER_COUNTERCASH_PRODUCT_VALUE
+        17635, -- BIKER_COUNTERCASH_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+        17641, -- BIKER_COUNTERCASH_PRODUCT_VALUE_STAFF_UPGRADE
+        17630, -- BIKER_CRACK_PRODUCT_VALUE
+        17636, -- BIKER_CRACK_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+        17642, -- BIKER_CRACK_PRODUCT_VALUE_STAFF_UPGRADE
+        17628, -- BIKER_FAKEIDS_PRODUCT_VALUE
+        17634, -- BIKER_FAKEIDS_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+        17640, -- BIKER_FAKEIDS_PRODUCT_VALUE_STAFF_UPGRADE
+        17631, -- BIKER_METH_PRODUCT_VALUE
+        17637, -- BIKER_METH_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+        17643, -- BIKER_METH_PRODUCT_VALUE_STAFF_UPGRADE
+        17632, -- BIKER_WEED_PRODUCT_VALUE
+        17638, -- BIKER_WEED_PRODUCT_VALUE_EQUIPMENT_UPGRADE
+        17644, -- BIKER_WEED_PRODUCT_VALUE_STAFF_UPGRADE
+    },
+
+
+    -- Import Export
+    ["ImpExpWantedCap"] = {
+        16872, -- EXEC_BUY_LOSE_THE_COPS_WANTED_CAP
+        19533, -- IMPEXP_STEAL_HARD_WANTED_CAP
+        19537, -- IMPEXP_STEAL_MEDIUM_WANTED_CAP
+        19543, -- IMPEXP_STEAL_EASY_WANTED_CAP
+        19562, -- IMPEXP_POLICE_CHASE_WANTED_CAP
+    },
+    ["ImpExpReduction"] = {
+        19868, -- IMPEXP_STEAL_REDUCTION_HARD
+        19869, -- IMPEXP_STEAL_REDUCTION_MEDIUM
+        19870, -- IMPEXP_STEAL_REDUCTION_EASY
+        19613, -- IMPEXP_SELL_REDUCTION_BUYER1_HARD
+        19614, -- IMPEXP_SELL_REDUCTION_BUYER1_MEDIUM
+        19615, -- IMPEXP_SELL_REDUCTION_BUYER1_EASY
+        19616, -- IMPEXP_SELL_REDUCTION_BUYER2_HARD
+        19617, -- IMPEXP_SELL_REDUCTION_BUYER2_MEDIUM
+        19618, -- IMPEXP_SELL_REDUCTION_BUYER2_EASY
+        19619, -- IMPEXP_SELL_REDUCTION_BUYER3_HARD
+        19620, -- IMPEXP_SELL_REDUCTION_BUYER3_MEDIUM
+        19621, -- IMPEXP_SELL_REDUCTION_BUYER3_EASY
+    },
+    ["ImpExpGangChase"] = {
+        19534, -- IMPEXP_STEAL_HARD_GANG_CHASE
+        19540, -- IMPEXP_STEAL_MEDIUM_GANG_CHASE
+        19546, -- IMPEXP_STEAL_EASY_GANG_CHASE
+        19593, -- IMPEXP_SELL_GANG_CHASE_SMALL_SESSIONS
+    },
+    ["ImpExpSellOffer"] = {
+        19624, -- IMPEXP_SELL_BUYER1_OFFER_EASY
+        19623, -- IMPEXP_SELL_BUYER1_OFFER_MED
+        19622, -- IMPEXP_SELL_BUYER1_OFFER_HARD
+    },
+
+
+    ["DisableBusinessRaid"] = {
+        15879, -- EXEC_DISABLE_DEFEND_MISSIONS
+        15880, -- EXEC_DISABLE_DEFEND_FLEEING
+        15881, -- EXEC_DISABLE_DEFEND_UNDER_ATTACK
+        18806, -- BIKER_DISABLE_DEFEND_POLICE_RAID
+        18810, -- BIKER_DISABLE_DEFEND_SHOOTOUT
+        18812, -- BIKER_DISABLE_DEFEND_GETAWAY
+        18814, -- BIKER_DISABLE_DEFEND_CRASH_DEAL
+        18816, -- BIKER_DISABLE_DEFEND_RETRIEVAL
+        18818, -- BIKER_DISABLE_DEFEND_SNITCH
+        21916, -- GR_DEFEND_VALKYRIE_DISABLE_VALKYRIE
+        21921, -- GR_DEFEND_DISARM_BOMBS_DISABLE_DISARM_BOMBS
+    },
+
+    ["NpcCut"] = {
+        29068, -- CH_LESTER_CUT
+        29094, -- HEIST3_PREPBOARD_GUNMEN_KARL_CUT
+        29095, -- HEIST3_PREPBOARD_GUNMEN_GUSTAVO_CUT
+        29096, -- HEIST3_PREPBOARD_GUNMEN_CHARLIE_CUT
+        29097, -- HEIST3_PREPBOARD_GUNMEN_CHESTER_CUT
+        29098, -- HEIST3_PREPBOARD_GUNMEN_PATRICK_CUT
+        29099, -- HEIST3_DRIVERS_KARIM_CUT
+        29100, -- HEIST3_DRIVERS_TALIANA_CUT
+        29101, -- HEIST3_DRIVERS_EDDIE_CUT
+        29102, -- HEIST3_DRIVERS_ZACH_CUT
+        29103, -- HEIST3_DRIVERS_CHESTER_CUT
+        29104, -- HEIST3_HACKERS_RICKIE_CUT
+        29105, -- HEIST3_HACKERS_CHRISTIAN_CUT
+        29106, -- HEIST3_HACKERS_YOHAN_CUT
+        29107, -- HEIST3_HACKERS_AVI_CUT
+        29108, -- HEIST3_HACKERS_PAIGE_CUT
+    },
+
+
+    ["MissionCooldowns"] = {
+        15756, -- EXEC_BUY_COOLDOWN
+        15757, -- EXEC_SELL_COOLDOWN
+
+        19524, -- IMPEXP_STEAL_COOLDOWN
+        19605, -- IMPEXP_SELL_COOLDOWN
+
+        19892, -- IMPEXP_SELL_1_CAR_COOLDOWN
+        19893, -- IMPEXP_SELL_2_CAR_COOLDOWN
+        19894, -- IMPEXP_SELL_3_CAR_COOLDOWN
+        19895, -- IMPEXP_SELL_4_CAR_COOLDOWN
+
+        22961, -- SMUG_STEAL_EASY_COOLDOWN_TIMER
+        22962, -- SMUG_STEAL_MED_COOLDOWN_TIMER
+        22963, -- SMUG_STEAL_HARD_COOLDOWN_TIMER
+        22964, -- SMUG_STEAL_ADDITIONAL_CRATE_COOLDOWN_TIME
+        23002, -- SMUG_SELL_SELL_COOLDOWN_TIMER
+
+        27510, -- VC_WORK_REQUEST_COOLDOWN
+        32024, -- FIXER_SECURITY_CONTRACT_COOLDOWN_TIME
+        32105, -- REQUEST_FRANKLIN_PAYPHONE_HIT_COOLDOWN
+        32905, -- EXPORT_CARGO_LAUNCH_CD_TIME
+        33019, -- SUM2_BUNKER_DUNELOADER_TIMER
+        33198, -- BUNKER_SOURCE_RESEARCH_CD_TIME
+        33199, -- NIGHTCLUB_SOURCE_GOODS_CD_TIME
+        34195, -- JUGALLO_BOSS_WORK_COOLDOWN_TIME
+
+        24659, -- BB_CLUB_MANAGEMENT_CLUB_MANAGEMENT_MISSION_COOLDOWN
+        24701, -- BB_SELL_MISSIONS_MISSION_COOLDOWN
+        32893, -- NC_TROUBLEMAKER_MIN_DELAY_IN_MINUTES
+        32894, -- NC_TROUBLEMAKER_MAX_DELAY_IN_MINUTES
+
+        24848, -- BB_HACKER_WORK_CLIENT_WORK_GLOBAL_COOLDOWN
+        24849, -- BB_HACKER_WORK_CLIENT_WORK_COOLDOWN_BANK_JOB
+        24850, -- BB_HACKER_WORK_CLIENT_WORK_COOLDOWN_DATA_HACK
+        24851, -- BB_HACKER_WORK_CLIENT_WORK_COOLDOWN_INFILTRATION
+        24852, -- BB_HACKER_WORK_CLIENT_WORK_COOLDOWN_JEWEL_STORE_GRAB
+
+        24853, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_GLOBAL_COOLDOWN
+        24854, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_SECURITY_VANS
+        24855, -- BB_HACKER_WORK_HACKER_CHALLENGE_COOLDOWN_TARGET_PURSUIT
+
+        18841, -- BIKER_CLUBHOUSE_COOLDOWN
+        18956, -- BIKER_CLUB_WORK_COOLDOWN_GLOBAL
+        19043, -- BIKER_CHALLENGES_COOLDOWN_GLOBAL
+        19044, -- BIKER_CHALLENGES_COOLDOWN_SPECIFIC
+        32883, -- BIKER_RESUPPLY_MISSION_COOLDOWN
+    },
+    ["HeistCooldowns"] = {
+        4544,  -- ON_CALL_HEIST_COOLDOWN
+        4549,  -- NEXT_TEXT_DELAY_H
+        4550,  -- PLAYED_NEXT_TEXT_DELAY_H
+
+        4545,  -- H2_ON_CALL_FINALE_COOLDOWN_2_PLAYER
+        4546,  -- H2_ON_CALL_FINALE_COOLDOWN_3_PLAYER
+        4547,  -- H2_ON_CALL_FINALE_COOLDOWN_4_PLAYER
+        23574, -- H2_IAA_REPLAY_COOLDOWN_TIME
+        23575, -- H2_SUB_REPLAY_COOLDOWN_TIME
+        23576, -- H2_REPLAY_COOLDOWN_2_PLAYER_IAA
+        23577, -- H2_REPLAY_COOLDOWN_2_PLAYER_SUB
+        23578, -- H2_REPLAY_COOLDOWN_2_PLAYER_SILO
+        23579, -- H2_REPLAY_COOLDOWN_3_PLAYER_IAA
+        23580, -- H2_REPLAY_COOLDOWN_3_PLAYER_SUB
+        23581, -- H2_REPLAY_COOLDOWN_3_PLAYER_SILO
+        23582, -- H2_REPLAY_COOLDOWN_4_PLAYER_IAA
+        23583, -- H2_REPLAY_COOLDOWN_4_PLAYER_SUB
+        23584, -- H2_REPLAY_COOLDOWN_4_PLAYER_SILO
+        23585, -- H2_SILO_REPLAY_COOLDOWN_TIME
+
+        4526,  -- CASINO_HEIST_ON_CALL_COOL_DOWN
+        29157, -- H3_HEIST_COOLDOWN_BEFORE_REPLAY
+
+        4527,  -- ISLAND_HEIST_ON_CALL_COOL_DOWN
+        30179, -- H4_COOLDOWN_TIME
+        30180, -- H4_COOLDOWN_HARD_TIME
+        30181, -- H4_SOLO_COOLDOWN
+
+        31342, -- TUNER_ROBBERY_COOLDOWN_TIME
+        32022, -- FIXER_STORY_COOLDOWN_POSIX
+        34118, -- SALV23_VEH_ROB_COOLDOWN_TIME
+        34119, -- SALV23_CFR_COOLDOWN_TIME
+    },
+    ["RequestCooldowns"] = {
+        11911, -- PEGASUS_CRIM_COOL_DOWN
+        12151, -- LESTER_VEHICLE_CRIM_COOL_DOWN
+        13032, -- GB_CALL_VEHICLE_COOLDOWN
+        19463, -- PV_MECHANIC_COOLDOWN
+        19464, -- SV_MECHANIC_COOLDOWN
+        21779, -- GR_MOBILE_OPERATIONS_CENTRE_COOLDOWN_TIMER
+        21783, -- AA_TRAILER_EQ_COOLDOWN_TIMER
+        22076, -- ACID_LAB_REQUEST_COOLDOWN
+        22899, -- SMUG_REQUEST_PERSONAL_AIRCRAFT_COOLDOWN
+        23305, -- H2_AVENGER_INTN_MENU_REQUEST_AVENGER_COOLDOWN
+        24702, -- BB_SELL_MISSIONS_DELIVERY_VEHICLE_COOLDOWN_AFTER_SELL_MISSION
+        24875, -- BB_TERRORBYTE_DRONE_COOLDOWN_TIME
+        24908, -- BB_TERRORBYTE_TERRORBYTE_COOLDOWN_TIMER
+        24926, -- BB_SUBMARINE_REQUEST_COOLDOWN_TIMER
+        24927, -- BB_SUBMARINE_DINGHY_REQUEST_COOLDOWN_TIMER
+        26046, -- BANDITO_COOLDOWN_TIME
+        26047, -- TANK_COOLDOWN_TIME
+        28649, -- VC_COOLDOWN_REQUEST_CAR_SERVICE
+        28650, -- VC_COOLDOWN_REQUEST_LIMO_SERVICE
+        28685, -- OPPRESSOR2CD
+        31190, -- IH_MOON_POOL_COOLDOWN
+        32106, -- REQUEST_COMPANY_SUV_SERVICE_COOLDOWN
+        32101, -- IMANI_SOURCE_MOTORCYCLE_COOLDOWN
+        33588, -- TONY_LIMO_COOLDOWN_TIME
+        33589, -- BUNKER_VEHICLE_COOLDOWN_TIME
+        34196, -- JUGALLO_BOSS_VEHICLE_COOLDOWN_TIME
+
+        13034, -- GB_DROP_AMMO_COOLDOWN
+        13035, -- GB_DROP_ARMOR_COOLDOWN
+        13036, -- GB_DROP_BULLSHARK_COOLDOWN
+        13037, -- GB_GHOST_ORG_COOLDOWN
+        13038, -- GB_BRIBE_AUTHORITIES_COOLDOWN
+
+        21393, -- BALLISTICARMOURREQUESTCOOLDOWN
+        24178, -- H2_STRIKE_TEAM_COOLDOWN_TIMER
+        32099, -- FRANKLIN_SUPPLY_STASH_COOLDOWN
+        32103, -- IMANI_OUT_OF_SIGHT_COOLDOWN
+    },
+}
+
+local TunablesF = {
+    ["NpcCut"] = {
+        23003, -- SMUG_SELL_RONS_CUT
+        24708, -- BB_SELL_MISSIONS_TONYS_CUT
+        30269, -- IH_DEDUCTION_PAVEL_CUT
+        31319, -- TUNER_ROBBERY_CONTACT_FEE
+    },
+
+    ["HIGH_ROCKSTAR_MISSIONS_MODIFIER"] = 2430,
+    ["LOW_ROCKSTAR_MISSIONS_MODIFIER"] = 2434,
+}
+
+--------------------------------
+--  Functions
+--------------------------------
+
+Tunables = {}
+
+--- @param tunable_name string
+--- @param value int
+function Tunables.SetInt(tunable_name, value)
+    GLOBAL_SET_INT(g_sMPTunables + TunablesI[tunable_name], value)
+end
+
+--- @param tunable_list_name string
+--- @param value int
+function Tunables.SetIntList(tunable_list_name, value)
+    for _, offset in pairs(TunablesI[tunable_list_name]) do
+        GLOBAL_SET_INT(g_sMPTunables + offset, value)
+    end
+end
+
+--- @param tunable_name string
+--- @param value float
+function Tunables.SetFloat(tunable_name, value)
+    GLOBAL_SET_FLOAT(g_sMPTunables + TunablesF[tunable_name], value)
+end
+
+--- @param tunable_list_name string
+--- @param value float
+function Tunables.SetFloatList(tunable_list_name, value)
+    for _, offset in pairs(TunablesF[tunable_list_name]) do
+        GLOBAL_SET_FLOAT(g_sMPTunables + offset, value)
+    end
+end
+
+--------------------------------
+--  Default Functions
+--------------------------------
+
+local TunableDefaults = {}
+
+--- @param tunable_name string
+function Tunables.SaveIntDefault(tunable_name)
+    local offset = TunablesI[tunable_name]
+    TunableDefaults[offset] = GLOBAL_GET_INT(g_sMPTunables + offset)
+end
+
+--- @param tunable_name string
+function Tunables.RestoreIntDefault(tunable_name)
+    local offset = TunablesI[tunable_name]
+    GLOBAL_SET_INT(g_sMPTunables + offset, TunableDefaults[offset])
+end
+
+--- @param tunable_list_name string
+function Tunables.SaveIntDefaults(tunable_list_name)
+    for name, offset in pairs(TunablesI[tunable_list_name]) do
+        TunableDefaults[offset] = GLOBAL_GET_INT(g_sMPTunables + offset)
+    end
+end
+
+--- @param tunable_list_name string
+function Tunables.RestoreIntDefaults(tunable_list_name)
+    for _, offset in pairs(TunablesI[tunable_list_name]) do
+        GLOBAL_SET_INT(g_sMPTunables + offset, TunableDefaults[offset])
+    end
+end
+
+--- @param tunable_name string
+function Tunables.SaveFloatDefault(tunable_name)
+    local offset = TunablesF[tunable_name]
+    TunableDefaults[offset] = GLOBAL_GET_FLOAT(g_sMPTunables + offset)
+end
+
+--- @param tunable_name string
+function Tunables.RestoreFloatDefault(tunable_name)
+    local offset = TunablesF[tunable_name]
+    GLOBAL_GET_FLOAT(g_sMPTunables + offset, TunableDefaults[offset])
+end
+
+--- @param tunable_list_name string
+function Tunables.SaveFloatDefaults(tunable_list_name)
+    for name, offset in pairs(TunablesF[tunable_list_name]) do
+        TunableDefaults[offset] = GLOBAL_GET_FLOAT(g_sMPTunables + offset)
+    end
+end
+
+--- @param tunable_list_name string
+function Tunables.RestoreFloatDefaults(tunable_list_name)
+    for _, offset in pairs(TunablesF[tunable_list_name]) do
+        GLOBAL_SET_FLOAT(g_sMPTunables + offset, TunableDefaults[offset])
+    end
+end
+
+--- @param list table
+function Tunables.SaveIntDefaults_T(list)
+    for _, item in pairs(list) do
+        if type(item) == "number" then
+            TunableDefaults[item] = GLOBAL_GET_INT(g_sMPTunables + item)
+        elseif type(item) == "table" then
+            Tunables.SaveIntDefaults_T(item)
+        end
+    end
+end
+
+--- @param list table
+function Tunables.SaveFloatDefaults_T(list)
+    for _, item in pairs(list) do
+        if type(item) == "number" then
+            TunableDefaults[item] = GLOBAL_GET_FLOAT(g_sMPTunables + item)
+        elseif type(item) == "table" then
+            Tunables.SaveFloatDefaults_T(item)
+        end
+    end
+end
+
+Tunables.SaveIntDefaults_T(TunablesI)
+Tunables.SaveFloatDefaults_T(TunablesF)
