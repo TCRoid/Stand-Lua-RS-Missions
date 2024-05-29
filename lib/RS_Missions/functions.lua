@@ -623,10 +623,32 @@ function STAT_GET_STRING(stat)
     return STATS.STAT_GET_STRING(util.joaat(stat), -1)
 end
 
+--------------------------------
+-- Packed Stat Functions
+--------------------------------
+
 --- @param statIndex integer
 --- @return integer
 function GET_PACKED_STAT_INT_CODE(statIndex)
     return STATS.GET_PACKED_STAT_INT_CODE(statIndex, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @return boolean
+function GET_PACKED_STAT_BOOL_CODE(statIndex)
+    return STATS.GET_PACKED_STAT_BOOL_CODE(statIndex, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @param value integer
+function SET_PACKED_STAT_INT_CODE(statIndex, value)
+    STATS.SET_PACKED_STAT_INT_CODE(statIndex, value, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @param value boolean
+function SET_PACKED_STAT_BOOL_CODE(statIndex, value)
+    STATS.SET_PACKED_STAT_BOOL_CODE(statIndex, value, util.get_char_slot())
 end
 
 --------------------------------

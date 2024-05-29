@@ -7,7 +7,7 @@
 --     return false
 -- end
 
-local SCRIPT_VERSION <const> = "2024/5/26"
+local SCRIPT_VERSION <const> = "2024/5/29"
 
 local SUPPORT_GAME_VERSION <const> = "1.68-3179"
 
@@ -573,8 +573,60 @@ local SmugglerVars = {
     Sell = {
         eMissionVariation = -1,
         iSaleValue = -1,
-    }
+    },
+    CargoType = {
+        Menu = {},
+    },
 }
+
+
+--#region Hangar Cargo Type
+
+local AirFreight_Cargo_Type = menu.list(AirFreight_Cargo, "机库库存货物类型", {}, "")
+
+menu.list_action(AirFreight_Cargo_Type, "设置全部货物", {}, "", Tables.HangarProductModelPropertyType, function(value)
+    for slot = 0, 49 do
+        local statIndex = PackedStats.PACKED_MP_INT_HANGAR_PRODUCT_0 + slot
+
+        if GET_PACKED_STAT_INT_CODE(statIndex) > 0 then
+            SET_PACKED_STAT_INT_CODE(statIndex, value)
+        end
+    end
+    util.toast("完成！")
+end)
+
+menu.action(AirFreight_Cargo_Type, "刷新", {}, "", function()
+    for slot = 0, 49 do
+        local statIndex = PackedStats.PACKED_MP_INT_HANGAR_PRODUCT_0 + slot
+        local model_index = GET_PACKED_STAT_INT_CODE(statIndex)
+
+        if not SmugglerVars.CargoType.Menu[slot] then
+            SmugglerVars.CargoType.Menu[slot] = menu.list_select(AirFreight_Cargo_Type, "Slot " .. slot, {}, "",
+                Tables.HangarProductModelPropertyType, 1, function(value, menu_name, prev_value, click_type)
+                    if click_type == CLICK_SCRIPTED or click_type == CLICK_BULK then
+                        return
+                    end
+                    if GET_PACKED_STAT_INT_CODE(statIndex) > 0 then
+                        SET_PACKED_STAT_INT_CODE(statIndex, value)
+                    end
+                end)
+        end
+
+        local command = SmugglerVars.CargoType.Menu[slot]
+        if model_index > 0 then
+            menu.set_value(command, model_index)
+            menu.set_visible(command, true)
+        else
+            menu.set_visible(command, false)
+        end
+    end
+end)
+
+menu.divider(AirFreight_Cargo_Type, "货物类型列表")
+
+--#endregion
+
+
 
 menu.divider(AirFreight_Cargo, Labels.Source)
 
@@ -3108,7 +3160,11 @@ local IslandHeistVars = {
     bResetPrepStats = false,
 }
 
--- menu.divider(Island_Heist, Labels.PREP)
+menu.divider(Island_Heist, Labels.PREP)
+
+local Island_Heist_Prep <const> = menu.list(Island_Heist, "前置编辑", {}, "")
+local Island_Heist_Prep_Secondary <const> = menu.list(Island_Heist, "前置编辑 (次要目标)", {}, "")
+
 
 menu.action(Island_Heist, "直接完成 佩里科岛抢劫 前置任务", {}, "", function()
     local script = "fm_content_island_heist"
@@ -3214,8 +3270,6 @@ menu.action(Island_Heist_Final_Config, "设置终章面板", {}, "", function()
     local Data = IslandHeistVars.sConfig
 
 
-    GLOBAL_SET_INT(sConfig + 9, Data.ePrimaryTarget)
-
     GLOBAL_SET_INT(sConfig + 35, Data.eWeaponLoadout)
     GLOBAL_SET_BOOL(sConfig + 36, Data.bDemolitionChargesAcquired)
     GLOBAL_SET_BOOL(sConfig + 37, Data.bAcetyleneTorchAcquired)
@@ -3237,16 +3291,6 @@ end)
 
 menu.divider(Island_Heist_Final_Config, "")
 
-menu.list_select(Island_Heist_Final_Config, get_label_text("IHB_MAIN_PAYOUT"), {}, "", {
-    { 0, get_label_text("H4_LOOT_TEQ") },   -- SINSIMITO TEQUILA
-    { 1, get_label_text("H4_LOOT_NKLC") },  -- RUBY NECKLACE
-    { 2, get_label_text("H4_LOOT_BONDS") }, -- BEARER BONDS
-    { 3, get_label_text("H4_LOOT_DIAM") },  -- PINK DIAMOND
-    { 4, get_label_text("H4_LOOT_FILES") }, -- MADRAZO FILES
-    { 5, get_label_text("H4_LOOT_STAT") },  -- PANTHER STATUE
-}, IslandHeistVars.sConfig.ePrimaryTarget, function(value)
-    IslandHeistVars.sConfig.ePrimaryTarget = value
-end)
 menu.toggle(Island_Heist_Final_Config, get_label_text("IHB_HARD_MODE"), {}, "", function(toggle)
     IslandHeistVars.sConfig.bHardModeEnabled = toggle
 end, IslandHeistVars.sConfig.bHardModeEnabled)
@@ -3875,10 +3919,12 @@ end)
 
 
 
+--------------------------------
+--    Heist Prep Editor
+--------------------------------
 
 
-
---#region Heist Preps Edit
+--#region Apartment Heist Prep
 
 --------------------------------
 -- Apartment Heist Prep
@@ -4028,6 +4074,12 @@ for i = 1, 6 do
         Tables.HeistPrepList, -1, function(value) end)
 end
 
+
+--#endregion
+
+
+
+--#region Doomsday Heist Prep
 
 --------------------------------
 -- Doomsday Heist Prep
@@ -4181,6 +4233,11 @@ for _, item in pairs(Tables.DoomsdayHeistSetupListData) do
 end
 
 
+--#endregion
+
+
+
+--#region Casino Heist Prep
 
 --------------------------------
 -- Casino Heist Prep
@@ -4464,7 +4521,454 @@ CasinoHeistPrepVars.Other["H3OPT_MODVEH"] = menu.list_select(Casino_Heist_Prep_O
     }, 0, function(value) end)
 
 
+--#endregion
 
+
+
+--#region Island Heist Prep
+
+--------------------------------
+-- Island Heist Prep
+--------------------------------
+
+local IslandHeistPrepVars = {
+    H4_MISSIONS = {},
+    BITSET_STATS = {
+        [12] = "H4CNF_WEAPONS",
+        [13] = "H4CNF_WEP_DISRP",
+        [14] = "H4CNF_ARM_DISRP",
+        [15] = "H4CNF_HEL_DISRP"
+    },
+}
+
+
+menu.action(Island_Heist_Prep, "读取", {}, "", function()
+    if not IS_PLAYER_ISLAND_HEIST_ACTIVE() then
+        util.toast("你似乎未进行佩里科岛抢劫")
+        return
+    end
+
+    menu.set_value(IslandHeistPrepVars.MainTarget, STAT_GET_INT(ADD_MP_INDEX("H4CNF_TARGET")))
+
+
+    local h4_progress = STAT_GET_INT(ADD_MP_INDEX("H4_PROGRESS"))
+    menu.set_value(IslandHeistPrepVars.HardMode, BIT_TEST(h4_progress, 12))
+
+
+
+    local h4_missions = STAT_GET_INT(ADD_MP_INDEX("H4_MISSIONS"))
+    for bit = 0, 11, 1 do
+        menu.set_value(IslandHeistPrepVars.H4_MISSIONS[bit], BIT_TEST(h4_missions, bit))
+    end
+
+    for bit, stat in pairs(IslandHeistPrepVars.BITSET_STATS) do
+        if BIT_TEST(h4_missions, bit) then
+            menu.set_value(IslandHeistPrepVars.H4_MISSIONS[bit], STAT_GET_INT(ADD_MP_INDEX(stat)))
+        else
+            menu.set_value(IslandHeistPrepVars.H4_MISSIONS[bit], 0)
+        end
+    end
+end)
+
+menu.action(Island_Heist_Prep, "写入", {}, "", function()
+    if not IS_PLAYER_ISLAND_HEIST_ACTIVE() then
+        util.toast("你似乎未进行佩里科岛抢劫")
+        return
+    end
+
+    STAT_SET_INT(ADD_MP_INDEX("H4CNF_TARGET"), menu.get_value(IslandHeistPrepVars.MainTarget))
+
+
+    local h4_progress = STAT_GET_INT(ADD_MP_INDEX("H4_PROGRESS"))
+    if menu.get_value(IslandHeistPrepVars.HardMode) then
+        STAT_SET_INT(ADD_MP_INDEX("H4_PROGRESS"), SET_BIT(h4_progress, 12))
+    else
+        STAT_SET_INT(ADD_MP_INDEX("H4_PROGRESS"), CLEAR_BIT(h4_progress, 12))
+    end
+
+
+    local h4_missions = 0
+
+    for bit = 0, 11, 1 do
+        if menu.get_value(IslandHeistPrepVars.H4_MISSIONS[bit]) then
+            h4_missions = SET_BIT(h4_missions, bit)
+        end
+    end
+
+    for bit, stat in pairs(IslandHeistPrepVars.BITSET_STATS) do
+        local value = menu.get_value(IslandHeistPrepVars.H4_MISSIONS[bit])
+        if value > 0 then
+            h4_missions = SET_BIT(h4_missions, bit)
+            STAT_SET_INT(ADD_MP_INDEX(stat), value)
+        end
+    end
+
+    STAT_SET_INT(ADD_MP_INDEX("H4_MISSIONS"), h4_missions)
+
+    util.toast("写入完成, 你可能需要重新进入虎鲸来刷新面板")
+end)
+
+
+menu.divider(Island_Heist_Prep, "目标")
+
+IslandHeistPrepVars.MainTarget = menu.list_select(Island_Heist_Prep, get_label_text("IHB_MAIN_PAYOUT"), {}, "",
+    Tables.IslandHeistMainTarget, 0, function(value) end)
+
+IslandHeistPrepVars.HardMode = menu.toggle(Island_Heist_Prep, get_label_text("IHB_HARD_MODE"), {}, "",
+    function(toggle) end)
+
+
+menu.divider(Island_Heist_Prep, "前置")
+
+IslandHeistPrepVars.H4_MISSIONS[0] = menu.toggle(Island_Heist_Prep, get_label_text("H4P_INT0_GATH_T"), {}, "",
+    function(toggle) end)
+
+
+IslandHeistPrepVars.ApproachVehicle = menu.list(Island_Heist_Prep, get_label_text("H4P_PRP0_APVH_T"), {}, "")
+IslandHeistPrepVars.H4_MISSIONS[1] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_SUBM_T"),
+    {}, "", function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[2] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_SBOM_T"),
+    {}, "",
+    function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[3] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_SPLA_T"),
+    {}, "",
+    function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[4] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_SHEL_T"),
+    {}, "",
+    function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[5] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_PBOA_T"),
+    {}, "",
+    function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[6] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_SBOA_T"),
+    {}, "",
+    function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[7] = menu.toggle(IslandHeistPrepVars.ApproachVehicle, get_label_text("H4P_PRP1_HEL2_T"),
+    {}, "",
+    function(toggle) end)
+
+
+IslandHeistPrepVars.Equipment = menu.list(Island_Heist_Prep, get_label_text("H4P_PRP0_EQUI_T"), {}, "")
+IslandHeistPrepVars.H4_MISSIONS[8] = menu.toggle(IslandHeistPrepVars.Equipment, get_label_text("H4P_PRP2_DEMC_T"), {},
+    "", function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[9] = menu.toggle(IslandHeistPrepVars.Equipment, get_label_text("H4P_PRP2_ATOR_T"), {},
+    "", function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[10] = menu.toggle(IslandHeistPrepVars.Equipment,
+    string.format("%s (%s)", get_label_text("H4P_PRP2_TAR1_T"), get_label_text("H4P_PRP2_TAR2_T")),
+    {}, "", function(toggle) end)
+IslandHeistPrepVars.H4_MISSIONS[11] = menu.toggle(IslandHeistPrepVars.Equipment, get_label_text("H4P_PRP2_FING_T"), {},
+    "", function(toggle) end)
+
+
+IslandHeistPrepVars.H4_MISSIONS[12] = menu.list_select(Island_Heist_Prep, get_label_text("H4P_PRP0_WEPL_T"), {}, "", {
+    { 0, Labels.NONE },
+    { 1, get_label_text("H4P_PRP3_SHOT_T"), {}, get_label_text("H4P_FIN6_SHOT_I") }, -- AGGRESSOR
+    { 2, get_label_text("H4P_PRP3_RIFL_T"), {}, get_label_text("H4P_FIN6_RIFL_I") }, -- CONSPIRATOR
+    { 3, get_label_text("H4P_PRP3_SNIP_T"), {}, get_label_text("H4P_FIN6_SNIP_I") }, -- CRACK SHOT
+    { 4, get_label_text("H4P_PRP3_M2SM_T"), {}, get_label_text("H4P_FIN6_M2SM_I") }, -- SABOTEUR
+    { 5, get_label_text("H4P_PRP3_M2RI_T"), {}, get_label_text("H4P_FIN6_M2RI_I") }  -- MARKSMAN
+}, 0, function(value) end)
+
+
+IslandHeistPrepVars.Disruption = menu.list(Island_Heist_Prep, get_label_text("H4P_PRP0_DISR_T"), {}, "")
+IslandHeistPrepVars.H4_MISSIONS[13] = menu.list_select(IslandHeistPrepVars.Disruption,
+    get_label_text("H4P_PRP4_WEAP_T"), {}, "", {
+        { 0, "None" }, { 1, "Low" }, { 2, "Medium" }, { 3, "High" }
+    }, 0, function(value) end)
+IslandHeistPrepVars.H4_MISSIONS[14] = menu.list_select(IslandHeistPrepVars.Disruption,
+    get_label_text("H4P_PRP4_ARMR_T"), {}, "", {
+        { 0, "None" }, { 1, "Low" }, { 2, "Medium" }, { 3, "High" }
+    }, 0, function(value) end)
+IslandHeistPrepVars.H4_MISSIONS[15] = menu.list_select(IslandHeistPrepVars.Disruption,
+    get_label_text("H4P_PRP4_BRES_T"), {}, "", {
+        { 0, "None" }, { 1, "Low" }, { 2, "Medium" }, { 3, "High" }
+    }, 0, function(value) end)
+
+
+
+
+--------------------------------
+-- Island Heist Prep Secondary
+--------------------------------
+
+--
+
+IslandHeistPrepVars.Secondary = {
+    CompoundLoot = {},
+    CompoundPainting = {},
+    IslandLoot = {},
+    LootValue = {},
+
+    ADDITIONAL_LOOT_COMPOUND_LOCATIONS = {
+        { 0, "ONE_1" },
+        { 1, "ONE_2" },
+        { 2, "TWO_1" },
+        { 3, "TWO_2" },
+        { 4, "THREE_1" },
+        { 5, "THREE_2" },
+        { 6, "BASEMENT_1" },
+        { 7, "BASEMENT_2" }
+    },
+    PAINTING_LOCATIONS = {
+        { 0, "ONE" },
+        { 1, "TWO" },
+        { 2, "THREE" },
+        { 3, "FOUR" },
+        { 4, "FIVE" },
+        { 5, "SIX" },
+        { 6, "SEVEN" }
+    },
+    ADDITIONAL_LOOT_ISLAND_LOCATIONS = {
+        AIRSTRIP = {
+            { 0, "AIRSTRIP_HIGHER_1" },
+            { 1, "AIRSTRIP_HIGHER_2" },
+            { 2, "AIRSTRIP_LOWER_1" },
+            { 3, "AIRSTRIP_LOWER_2" },
+            { 4, "AIRSTRIP_RUNWAY_1" },
+            { 5, "AIRSTRIP_RUNWAY_2" }
+        },
+        NORTH_DOCK = {
+            { 6,  "NORTH_DOCK_WAREHOUSE_1" },
+            { 7,  "NORTH_DOCK_WAREHOUSE_2" },
+            { 8,  "NORTH_DOCK_LEVER_1" },
+            { 9,  "NORTH_DOCK_LEVER_2" },
+            { 10, "NORTH_DOCK_LEVER_3" },
+            { 11, "NORTH_DOCK_LOCKUP_1" },
+            { 12, "NORTH_DOCK_LOCKUP_2" }
+        },
+        DRUG_PROCESSING = {
+            { 13, "DRUG_PROCESSING_SOUTH_1" },
+            { 14, "DRUG_PROCESSING_SOUTH_2" },
+            { 15, "DRUG_PROCESSING_NORTH_1" },
+            { 16, "DRUG_PROCESSING_NORTH_2" }
+        },
+        MAIN_DOCK = {
+            { 17, "MAIN_DOCK_EAST_1" },
+            { 18, "MAIN_DOCK_EAST_2" },
+            { 19, "MAIN_DOCK_LEVER_1" },
+            { 20, "MAIN_DOCK_LEVER_2" },
+            { 21, "MAIN_DOCK_LEVER_3" },
+            { 22, "MAIN_DOCK_SOUTH_1" },
+            { 23, "MAIN_DOCK_SOUTH_2" }
+        }
+    }
+
+}
+
+
+local function GET_ISLAND_HEIST_ADDITIONAL_LOOT(locationBitSet, lootLocationsBitSet)
+    if BIT_TEST(lootLocationsBitSet.cash, locationBitSet) then
+        return 1
+    end
+    if BIT_TEST(lootLocationsBitSet.weed, locationBitSet) then
+        return 2
+    end
+    if BIT_TEST(lootLocationsBitSet.coke, locationBitSet) then
+        return 3
+    end
+    if BIT_TEST(lootLocationsBitSet.gold, locationBitSet) then
+        return 4
+    end
+    return 0
+end
+
+local function SET_ISLAND_HEIST_ADDITIONAL_LOOT(locationBitSet, lootLocationsBitSet, lootType)
+    if lootType == 0 then
+        return lootLocationsBitSet
+    end
+    if lootType == 1 then
+        lootLocationsBitSet.cash = SET_BIT(lootLocationsBitSet.cash, locationBitSet)
+        return lootLocationsBitSet
+    end
+    if lootType == 2 then
+        lootLocationsBitSet.weed = SET_BIT(lootLocationsBitSet.weed, locationBitSet)
+        return lootLocationsBitSet
+    end
+    if lootType == 3 then
+        lootLocationsBitSet.coke = SET_BIT(lootLocationsBitSet.coke, locationBitSet)
+        return lootLocationsBitSet
+    end
+    if lootType == 4 then
+        lootLocationsBitSet.gold = SET_BIT(lootLocationsBitSet.gold, locationBitSet)
+        return lootLocationsBitSet
+    end
+end
+
+
+
+menu.action(Island_Heist_Prep_Secondary, "读取", {}, "", function()
+    if not IS_PLAYER_ISLAND_HEIST_ACTIVE() then
+        util.toast("你似乎未进行佩里科岛抢劫")
+        return
+    end
+
+    local lootCompound = {
+        cash = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_CASH_C")),
+        weed = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_WEED_C")),
+        coke = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_COKE_C")),
+        gold = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_GOLD_C"))
+    }
+    local paintings = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_PAINT"))
+    local lootIsland = {
+        cash = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_CASH_I")),
+        weed = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_WEED_I")),
+        coke = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_COKE_I")),
+        gold = STAT_GET_INT(ADD_MP_INDEX("H4LOOT_GOLD_I"))
+    }
+
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.CompoundLoot) do
+        local lootType = GET_ISLAND_HEIST_ADDITIONAL_LOOT(bit, lootCompound)
+        menu.set_value(command, lootType)
+    end
+
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.CompoundPainting) do
+        menu.set_value(command, BIT_TEST(paintings, bit))
+    end
+
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.IslandLoot) do
+        local lootType = GET_ISLAND_HEIST_ADDITIONAL_LOOT(bit, lootIsland)
+        menu.set_value(command, lootType)
+    end
+
+    for stat, command in pairs(IslandHeistPrepVars.Secondary.LootValue) do
+        menu.set_value(command, STAT_GET_INT(ADD_MP_INDEX(stat)))
+    end
+end)
+
+menu.action(Island_Heist_Prep_Secondary, "写入", {}, "", function()
+    if not IS_PLAYER_ISLAND_HEIST_ACTIVE() then
+        util.toast("你似乎未进行佩里科岛抢劫")
+        return
+    end
+
+    local lootCompound = {
+        cash = 0,
+        weed = 0,
+        coke = 0,
+        gold = 0
+    }
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.CompoundLoot) do
+        local lootType = menu.get_value(command)
+        lootCompound = SET_ISLAND_HEIST_ADDITIONAL_LOOT(bit, lootCompound, lootType)
+    end
+
+    local paintings = 0
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.CompoundPainting) do
+        if menu.get_value(command) then
+            paintings = SET_BIT(paintings, bit)
+        end
+    end
+
+    local lootIsland = {
+        cash = 0,
+        weed = 0,
+        coke = 0,
+        gold = 0
+    }
+    for bit, command in pairs(IslandHeistPrepVars.Secondary.IslandLoot) do
+        local lootType = menu.get_value(command)
+        lootIsland = SET_ISLAND_HEIST_ADDITIONAL_LOOT(bit, lootIsland, lootType)
+    end
+
+
+    for stat, command in pairs(IslandHeistPrepVars.Secondary.LootValue) do
+        STAT_SET_INT(ADD_MP_INDEX(stat), menu.get_value(command))
+    end
+
+
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_CASH_C"), lootCompound.cash)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_WEED_C"), lootCompound.weed)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_COKE_C"), lootCompound.coke)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_GOLD_C"), lootCompound.gold)
+
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_PAINT"), paintings)
+
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_CASH_I"), lootIsland.cash)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_WEED_I"), lootIsland.weed)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_COKE_I"), lootIsland.coke)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_GOLD_I"), lootIsland.gold)
+
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_CASH_C_SCOPED"), lootCompound.cash)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_WEED_C_SCOPED"), lootCompound.weed)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_COKE_C_SCOPED"), lootCompound.coke)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_GOLD_C_SCOPED"), lootCompound.gold)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_PAIN_SCOPEDT"), paintings)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_CASH_I_SCOPED"), lootIsland.cash)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_WEED_I_SCOPED"), lootIsland.weed)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_COKE_I_SCOPED"), lootIsland.coke)
+    STAT_SET_INT(ADD_MP_INDEX("H4LOOT_GOLD_I_SCOPED"), lootIsland.gold)
+
+    util.toast("写入完成, 你可能需要重新进入虎鲸来刷新面板")
+end)
+
+
+menu.divider(Island_Heist_Prep_Secondary, "豪宅内")
+
+IslandHeistPrepVars.Secondary.MenuCompoundLoot = menu.list(Island_Heist_Prep_Secondary, get_label_text("IHB_SUB_PAYOUT"),
+    {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.ADDITIONAL_LOOT_COMPOUND_LOCATIONS) do
+    IslandHeistPrepVars.Secondary.CompoundLoot[item[1]] = menu.list_select(
+        IslandHeistPrepVars.Secondary.MenuCompoundLoot,
+        item[2], {}, "", Tables.IslandHeistAdditionalLoot, 0, function(value) end)
+end
+
+IslandHeistPrepVars.Secondary.MenuCompoundPainting = menu.list(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_PAIN_T"), {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.PAINTING_LOCATIONS) do
+    IslandHeistPrepVars.Secondary.CompoundPainting[item[1]] = menu.toggle(
+        IslandHeistPrepVars.Secondary.MenuCompoundPainting,
+        item[2], {}, "", function(toggle) end)
+end
+
+
+menu.divider(Island_Heist_Prep_Secondary, "豪宅外")
+
+IslandHeistPrepVars.Secondary.MenuAirstripLoot = menu.list(Island_Heist_Prep_Secondary, "AIRSTRIP", {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.ADDITIONAL_LOOT_ISLAND_LOCATIONS.AIRSTRIP) do
+    IslandHeistPrepVars.Secondary.IslandLoot[item[1]] = menu.list_select(IslandHeistPrepVars.Secondary.MenuAirstripLoot,
+        item[2], {}, "", Tables.IslandHeistAdditionalLoot, 0, function(value) end)
+end
+
+IslandHeistPrepVars.Secondary.MenuNorthDockLoot = menu.list(Island_Heist_Prep_Secondary, "NORTH DOCK", {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.ADDITIONAL_LOOT_ISLAND_LOCATIONS.NORTH_DOCK) do
+    IslandHeistPrepVars.Secondary.IslandLoot[item[1]] = menu.list_select(IslandHeistPrepVars.Secondary.MenuNorthDockLoot,
+        item[2], {}, "", Tables.IslandHeistAdditionalLoot, 0, function(value) end)
+end
+
+IslandHeistPrepVars.Secondary.MenuDrugProcessingLoot = menu.list(Island_Heist_Prep_Secondary, "DRUG PROCESSING", {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.ADDITIONAL_LOOT_ISLAND_LOCATIONS.DRUG_PROCESSING) do
+    IslandHeistPrepVars.Secondary.IslandLoot[item[1]] = menu.list_select(
+        IslandHeistPrepVars.Secondary.MenuDrugProcessingLoot,
+        item[2], {}, "", Tables.IslandHeistAdditionalLoot, 0, function(value) end)
+end
+
+IslandHeistPrepVars.Secondary.MenuMainDockLoot = menu.list(Island_Heist_Prep_Secondary, "MAIN DOCK", {}, "")
+for _, item in pairs(IslandHeistPrepVars.Secondary.ADDITIONAL_LOOT_ISLAND_LOCATIONS.MAIN_DOCK) do
+    IslandHeistPrepVars.Secondary.IslandLoot[item[1]] = menu.list_select(IslandHeistPrepVars.Secondary.MenuMainDockLoot,
+        item[2], {}, "", Tables.IslandHeistAdditionalLoot, 0, function(value) end)
+end
+
+
+menu.divider(Island_Heist_Prep_Secondary, "次要目标价值")
+
+IslandHeistPrepVars.Secondary.LootValue["H4LOOT_CASH_V"] = menu.slider(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_CASH_T"), { "IslandHeistPrepCashValue" }, "",
+    0, 10000000, 0, 10000, function(value) end)
+
+IslandHeistPrepVars.Secondary.LootValue["H4LOOT_WEED_V"] = menu.slider(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_WEED_T"), { "IslandHeistPrepWeedValue" }, "",
+    0, 10000000, 0, 10000, function(value) end)
+
+IslandHeistPrepVars.Secondary.LootValue["H4LOOT_COKE_V"] = menu.slider(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_COKE_T"), { "IslandHeistPrepCokeValue" }, "",
+    0, 10000000, 0, 10000, function(value) end)
+
+IslandHeistPrepVars.Secondary.LootValue["H4LOOT_GOLD_V"] = menu.slider(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_GOLD_T"), { "IslandHeistPrepGoldValue" }, "",
+    0, 10000000, 0, 10000, function(value) end)
+
+IslandHeistPrepVars.Secondary.LootValue["H4LOOT_PAINT_V"] = menu.slider(Island_Heist_Prep_Secondary,
+    get_label_text("H4P_INT2_PAIN_T"), { "IslandHeistPrepPaintValue" }, "",
+    0, 10000000, 0, 10000, function(value) end)
 
 --#endregion
 
@@ -4642,7 +5146,6 @@ menu.toggle_loop(Freemode_Test, "Show Local Info", {}, "", function()
     draw_text(text)
 end)
 
-
 menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
     local iWarehouseStagger = GLOBAL_GET_INT(1882389 + 3)
     local iWarehouse = GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 267 + 118 + 1 + iWarehouseStagger * 3)
@@ -4655,100 +5158,13 @@ menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
     draw_text(text)
 end)
 
-menu.action(Freemode_Test, "Toast Info", {}, "", function()
-    -- sFMREdata = Local_15544
-
-    -- sFMREdata.sFMREScriptEventdata.Events[iEvent].iType
-    -- uParam0->f_241.f_1[iParam1]
-
-    -- sFMREdata.sFMREScriptEventdata.iNumEvents
-    -- uParam0->f_241
-
-    local script = "freemode"
-
-    local sFMREScriptEventdata = 15544 + 241
-
-    local iNumEvents = LOCAL_GET_INT(script, sFMREScriptEventdata)
-
-    local iEvent = 3
-
-    local text = string.format(
-        "iNumEvents: %s\nFMRE_GET_STATE: %s\nFMRE_GET_PLAYER_STATE: %s\nFMRE_GET_CLIENT_LAUNCHER_STATE: %s",
-        iNumEvents,
-        GLOBAL_GET_INT(1882037 + 1 + 1 + iEvent * 15),
-        GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3),
-        GLOBAL_GET_INT(1882422 + 1 + players.user() * 142 + 78 + 0)
-    )
-
-    -- local iEvent = 0
-    -- while iEvent < iNumEvents do
-    --     local iEventType = LOCAL_GET_INT(script, sFMREScriptEventdata + 1 + 1 + iEvent)
-    --     text = text .. string.format("\niEvent: %s, iEventType: %s", iEvent, iEventType)
-
-    --     iEvent = iEvent + 1
-    -- end
 
 
-    toast(text)
-end)
+menu.action(Freemode_Test, "切换战局 到 虎鲸", {}, "", function()
+    -- MP_SETTING_SPAWN_SUBMARINE
+    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 16)
 
-
-menu.click_slider(Freemode_Test, "Trigger Random Event", {}, "", 0, 19, 0, 1, function(value)
-    local iEvent = value
-
-    -- GlobalServerBD_RandomEvents.Events[iEvent].eState
-    -- Global_1882037.f_1[iParam0 /*15*/];
-    GLOBAL_SET_INT(1882037 + 1 + 1 + iEvent * 15, 1) -- eFMRESTATE_AVAILABLE
-
-    -- GlobalplayerBD_FM_2[NETWORK_PLAYER_ID_TO_INT()].RandomEvents.Events[iEvent].eState = eState
-    -- Global_1882422[PLAYER::NETWORK_PLAYER_ID_TO_INT() /*142*/].f_78.f_1[iParam0 /*3*/] = iParam1;
-    GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3, 1) -- eFMREPLAYERSTATE_LAUNCHING
-end)
-
-menu.action(Freemode_Test, "Cleanup Random Event", {}, "", function()
-    local iEvent = 0
-    while iEvent < 20 do
-        GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 78 + 1 + 1 + iEvent * 3, 3) -- eFMREPLAYERSTATE_CLEANUP
-        iEvent = iEvent + 1
-    end
-end)
-
-
-
-
-------------------------------------
---    Random Event
-------------------------------------
-
-local Random_Event <const> = menu.list(Freemode_Test, get_label_text("RE_TITLE"), {}, "")
-
--- Exotic Exports Vehicle
-menu.divider(Random_Event, get_label_text("CBV_BLP_VEH"))
-
-menu.action(Random_Event, "Trigger Random Event", {}, "", function()
-    local iEvent = 3
-
-    if GLOBAL_GET_INT(Globals.GlobalplayerBD_FM_2() + 78 + 1 + 1 + iEvent * 3) > 0 then
-        return
-    end
-
-    -- GlobalServerBD_RandomEvents.Events[iEvent].eState
-    GLOBAL_SET_INT(1882037 + 1 + 1 + iEvent * 15, 1) -- eFMRESTATE_AVAILABLE
-
-    -- GlobalplayerBD_FM_2[NETWORK_PLAYER_ID_TO_INT()].RandomEvents.Events[iEvent].eState = eState
-    GLOBAL_SET_INT(Globals.GlobalplayerBD_FM_2() + 78 + 1 + 1 + iEvent * 3, 1) -- eFMREPLAYERSTATE_LAUNCHING
-end)
-menu.action(Random_Event, "出口载具 传送到我", {}, "", function()
-    local blip = HUD.GET_NEXT_BLIP_INFO_ID(143)
-    if HUD.DOES_BLIP_EXIST(blip) then
-        local ent = HUD.GET_BLIP_INFO_ID_ENTITY_INDEX(blip)
-        if ENTITY.IS_ENTITY_A_VEHICLE(ent) then
-            TP_VEHICLE_TO_ME(ent)
-        end
-    end
-end)
-menu.action(Random_Event, "传送到 载具出口码头", {}, "", function()
-    TELEPORT(v3(1171.784, -2974.434, 6.502))
+    menu.trigger_commands("go inviteonly")
 end)
 
 
@@ -5051,10 +5467,11 @@ menu.divider(Job_Mission_Test, "fmmc_launcher")
 
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
     local text = string.format(
-        "iPlayerOrder: %s\nsHeistRoles.ePlayerRoles: %s\nbLaunchTimerExpired: %s",
-        GLOBAL_GET_INT(1928233 + 12 + 1 + 0), -- GlobalServerBD_HeistPlanning.iPlayerOrder[index]
-        GLOBAL_GET_INT(1928233 + 7 + 1 + 0),  -- GlobalServerBD_HeistPlanning.sHeistRoles.ePlayerRoles[index]
-        GLOBAL_GET_INT(1930201 + 2812)        -- g_HeistPlanningClient.bLaunchTimerExpired
+        "iPlayerOrder: %s\nsHeistRoles.ePlayerRoles: %s\nbLaunchTimerExpired: %s\nsClientCoronaData.iClientSyncID: %s",
+        GLOBAL_GET_INT(1928233 + 12 + 1 + 0),                        -- GlobalServerBD_HeistPlanning.iPlayerOrder[index]
+        GLOBAL_GET_INT(1928233 + 7 + 1 + 0),                         -- GlobalServerBD_HeistPlanning.sHeistRoles.ePlayerRoles[index]
+        GLOBAL_GET_INT(1930201 + 2812),                              -- g_HeistPlanningClient.bLaunchTimerExpired
+        GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 96 + 31) -- GlobalplayerBD_FM[iMyGBD].sClientCoronaData.iClientSyncID
     )
 
     draw_text(text)
@@ -5069,13 +5486,111 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     -- sLaunchMissionDetails.iMissionVariation Local_19331.f_34
     -- sLaunchMissionDetails.iMinPlayers Local_19331.f_15
 
+    local coronaMenuData = 17208
+
+    local pid = players.user()
+
     local text = string.format(
-        "iMissionVariation: %s, iMinPlayers: %s",
+        "iMissionVariation: %s, iMinPlayers: %s\ncoronaClientSyncData[iPlayer].iClientSyncID: %s\ncoronaClientSyncData[iPlayer].bVoted: %s",
         LOCAL_GET_INT(script, 19331 + 34),
-        LOCAL_GET_INT(script, 19331 + 15)
+        LOCAL_GET_INT(script, 19331 + 15),
+
+        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2),
+        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
     )
 
     draw_text(text)
+end)
+
+
+TestPlayerSelect = menu.list_select(Job_Mission_Test, "Select Player", {}, "", {
+    { -1, "Refresh Player List" }
+}, -1, function(value)
+    if value == -1 then
+        local list_item = { { -1, "Refresh Player List" } }
+        for _, pid in pairs(players.list()) do
+            table.insert(list_item, { pid, players.get_name(pid) })
+        end
+        menu.set_list_action_options(TestPlayerSelect, list_item)
+        util.toast("Refreshed")
+        return
+    end
+end)
+menu.toggle_loop(Job_Mission_Test, "Show Selectd Player Info", {}, "", function()
+    local pid = menu.get_value(TestPlayerSelect)
+    if pid == -1 or not players.exists(pid) then
+        return
+    end
+    local player_name = players.get_name(pid)
+
+    local script = "fmmc_launcher"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    local coronaMenuData = 17208
+
+    local text = string.format(
+        "%s\n\nbHasPlayerVoted: %s\nsClientCoronaData.iClientSyncID: %s\n\ncoronaClientSyncData[iPlayer].bVoted: %s\ncoronaClientSyncData[iPlayer].iClientSyncID: %s",
+        player_name,
+
+        GLOBAL_GET_INT(1882422 + 1 + pid * 142 + 31),
+        GLOBAL_GET_INT(1845263 + 1 + pid * 877 + 96 + 31),
+
+        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2),
+        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
+    )
+
+    draw_text(text)
+end)
+
+
+menu.action(Job_Mission_Test, "Force Ready (Global)", {}, "", function()
+    local pid = menu.get_value(TestPlayerSelect)
+    if pid == -1 or not players.exists(pid) then
+        return
+    end
+
+    menu.trigger_commands("scripthost")
+    util.request_script_host("fmmc_launcher")
+
+
+    GLOBAL_SET_BIT(1882422 + 1 + pid * 142 + 14, 5)
+    local bHasPlayerVoted = GLOBAL_GET_INT(1882422 + 1 + pid * 142 + 31)
+    if bHasPlayerVoted == 1 then
+        bHasPlayerVoted = 0
+    elseif bHasPlayerVoted == 0 then
+        bHasPlayerVoted = 1
+    end
+    GLOBAL_SET_INT(1882422 + 1 + pid * 142 + 31, bHasPlayerVoted)
+
+    local iClientSyncID = GLOBAL_GET_INT(1845263 + 1 + pid * 877 + 96 + 31)
+    GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 96 + 31, iClientSyncID + 1)
+end)
+menu.action(Job_Mission_Test, "Force Ready (Local)", {}, "", function()
+    local pid = menu.get_value(TestPlayerSelect)
+    if pid == -1 or not players.exists(pid) then
+        return
+    end
+
+    local script = "fmmc_launcher"
+
+    menu.trigger_commands("scripthost")
+    util.request_script_host(script)
+
+    local bVoted = LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
+    if bVoted == 1 then
+        bVoted = 0
+    elseif bVoted == 0 then
+        bVoted = 1
+    end
+    LOCAL_SET_INT(script, 17208 + 845 + 1 + pid * 2 + 1, bVoted)
+
+    local iClientSyncID = LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2)
+    LOCAL_SET_INT(script, 17208 + 845 + 1 + pid * 2, iClientSyncID + 1)
+end)
+menu.toggle_loop(Job_Mission_Test, "sCoronaTimer", {}, "", function()
+    GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 32, NETWORK.GET_NETWORK_TIME())
 end)
 
 
@@ -5221,6 +5736,7 @@ menu.toggle_loop(Job_Mission_Test, "Show Mission Controller Script", {}, "", fun
 
     local getHost2 = players.get_name(NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0))
     local scriptHost = players.get_name(players.get_script_host())
+
     text = string.format(
         "%s\nNETWORK_GET_HOST_OF_SCRIPT: %s\nScript Host: %s",
         text,
@@ -5279,25 +5795,14 @@ menu.toggle_loop(Script_Event_Test, "Get Network Script Event", {}, "", function
 end)
 
 
-menu.action(Script_Event_Test, "BROADCST_SCRIPT_EVENT_HEIST_UPDATE_CUTS", {}, "", function()
-    -- iUniqueSessionHash0 = GlobalServerBD_FM_events.iUniqueSessionHash0
-    local var9 = GLOBAL_GET_INT(1916087 + 9)
-    -- iUniqueSessionHash1 = GlobalServerBD_FM_events.iUniqueSessionHash1
-    local var10 = GLOBAL_GET_INT(1916087 + 10)
-
-    util.trigger_script_event(util.get_session_players_bitflag(),
+menu.action(Script_Event_Test, "BROADCAST_DELIVERED_HANGAR_MISSION_PRODUCT", {}, "", function()
+    util.trigger_script_event(1 << players.user(),
         {
-            -712467334, -- SCRIPT_EVENT_HEIST_UPDATE_CUTS
+            446749111, -- SCRIPT_EVENT_DATA_DELIVERED_HANGAR_MISSION_PRODUCT_DATA
             players.user(),
             -1,
-            5,
-            85,
-            85,
-            85,
-            85,
-            85,
-            var9,
-            var10,
+            0,
+            7
         })
 end)
 

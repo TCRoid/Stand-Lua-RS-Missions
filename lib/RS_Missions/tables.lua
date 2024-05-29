@@ -7,6 +7,8 @@ Labels = {
     Complete = get_label_text("AWARD_COMPLETE"),
     Reset = get_label_text("PIM_CRST"),
 
+    NONE = get_label_text("CELEB_NONE"),
+
     Sell = get_label_text("HC_SELL"),
     Source = get_label_text("HC_STEAL"),
     Buy = get_label_text("ITEM_BUY"),
@@ -73,6 +75,7 @@ Labels.SpecialCargoWarehouse = string.format("%s %s", Labels.SpecialCargo, Label
 Labels.LaunchMissionByTerrorbyte = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Terrorbyte, Labels.Computer)
 Labels.LaunchMissionByBunker = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Bunker, Labels.Computer)
 Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Hangar, Labels.Computer)
+
 
 
 
@@ -185,6 +188,32 @@ Tables = {
         { 6,  get_label_text("HAN_CRG_NARC") },   -- Narcotics
         { 7,  get_label_text("HAN_CRG_TOBAC") },  -- Tobacco & Alcohol
         { 8,  get_label_text("HAN_CRG_MIXED") },  -- Cargo
+    },
+    HangarProductModelPropertyType = {
+        -- Medical Supplies
+        { 1,  get_label_text("HAN_CRG_MEDS") },
+        { 2,  get_label_text("HAN_CRG_MEDS") },
+        -- Tobacco & Alcohol
+        { 3,  get_label_text("HAN_CRG_TOBAC") },
+        { 4,  get_label_text("HAN_CRG_TOBAC") },
+        -- Art & Antiques
+        { 5,  get_label_text("HAN_CRG_ART") },
+        { 6,  get_label_text("HAN_CRG_ART") },
+        -- Narcotics
+        { 7,  get_label_text("HAN_CRG_NARC") },
+        { 8,  get_label_text("HAN_CRG_NARC") },
+        -- Jewelry & Gemstones
+        { 9,  get_label_text("HAN_CRG_JEWEL") },
+        { 10, get_label_text("HAN_CRG_JEWEL") },
+        -- Animal Materials
+        { 11, get_label_text("HAN_CRG_ANIMAL") },
+        { 12, get_label_text("HAN_CRG_ANIMAL") },
+        -- Counterfeit Goods
+        { 13, get_label_text("HAN_CRG_GOODS") },
+        { 14, get_label_text("HAN_CRG_GOODS") },
+        -- Chemicals
+        { 15, get_label_text("HAN_CRG_CHEMS") },
+        { 16, get_label_text("HAN_CRG_CHEMS") }
     },
 
     GunrunResupply = {
@@ -804,6 +833,25 @@ Tables = {
         { menu = "toggle",  name = get_label_text("CH_TODO_PREP_6b") .. " (?)", bit = 21, help_text = "" }
     },
 
+    ---- Island Heist
+    IslandHeistMainTarget = {
+        { 0, get_label_text("H4_LOOT_TEQ") },   -- SINSIMITO TEQUILA
+        { 1, get_label_text("H4_LOOT_NKLC") },  -- RUBY NECKLACE
+        { 2, get_label_text("H4_LOOT_BONDS") }, -- BEARER BONDS
+        { 3, get_label_text("H4_LOOT_DIAM") },  -- PINK DIAMOND
+        { 4, get_label_text("H4_LOOT_FILES") }, -- MADRAZO FILES
+        { 5, get_label_text("H4_LOOT_STAT") }   -- PANTHER STATUE
+    },
+    IslandHeistAdditionalLoot = {
+        { 0, Labels.NONE },
+        { 1, get_label_text("H4P_INT2_CASH_T") }, -- CASH
+        { 2, get_label_text("H4P_INT2_WEED_T") }, -- WEED
+        { 3, get_label_text("H4P_INT2_COKE_T") }, -- COCAINE
+        { 4, get_label_text("H4P_INT2_GOLD_T") }, -- GOLD
+        -- { 5, get_label_text("H4P_INT2_PAIN_T") }, -- PAINTINGS
+    },
+
+
     ------------------------
     -- Misc
     ------------------------
@@ -824,4 +872,11 @@ Tables = {
         Labels.Complete,
         Labels.Reset
     },
+}
+
+
+
+
+PackedStats = {
+    PACKED_MP_INT_HANGAR_PRODUCT_0 = 16011, -- ~ PACKED_MP_INT_HANGAR_PRODUCT_49 = 16060
 }
