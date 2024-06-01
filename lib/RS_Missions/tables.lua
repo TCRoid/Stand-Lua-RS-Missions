@@ -430,6 +430,35 @@ Tables = {
         [19] = 2,
         [20] = 0
     },
+    HangarGoodsName = {
+        [0] = get_label_text("HAN_CRG_ANIMAL"), -- Animal Materials
+        [1] = get_label_text("HAN_CRG_ART"),    -- Art & Antiques
+        [2] = get_label_text("HAN_CRG_CHEMS"),  -- Chemicals
+        [3] = get_label_text("HAN_CRG_GOODS"),  -- Counterfeit Goods
+        [4] = get_label_text("HAN_CRG_JEWEL"),  -- Jewelry & Gemstones
+        [5] = get_label_text("HAN_CRG_MEDS"),   -- Medical Supplies
+        [6] = get_label_text("HAN_CRG_NARC"),   -- Narcotics
+        [7] = get_label_text("HAN_CRG_TOBAC"),  -- Tobacco & Alcohol
+        -- [8] = get_label_text("HAN_CRG_MIXED"),  -- Cargo
+    },
+    HangaModelIndexGoodType = {
+        [1] = 5,
+        [2] = 5,
+        [3] = 7,
+        [4] = 7,
+        [5] = 1,
+        [6] = 1,
+        [7] = 6,
+        [8] = 6,
+        [9] = 4,
+        [10] = 4,
+        [11] = 0,
+        [12] = 0,
+        [13] = 3,
+        [14] = 3,
+        [15] = 2,
+        [16] = 2,
+    },
 
     ------------------------
     -- Freemode Mission

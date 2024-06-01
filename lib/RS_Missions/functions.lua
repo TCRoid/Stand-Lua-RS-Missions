@@ -210,6 +210,11 @@ function GET_FACILITY_PROPERTY_ID()
     return STAT_GET_INT(ADD_MP_INDEX("DBASE_OWNED"))
 end
 
+--- @return integer
+function GET_BIKER_CLUBHOUSE_PROPERTY_ID()
+    return STAT_GET_INT(ADD_MP_INDEX("PROP_CLUBHOUSE"))
+end
+
 --- @return boolean
 function DOES_PLAYER_OWN_ACID_LAB()
     return STAT_GET_INT(ADD_MP_INDEX("XM22_LAB_OWNED")) == util.joaat("brickade2") -- -1576586413

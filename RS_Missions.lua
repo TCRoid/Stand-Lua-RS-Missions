@@ -7,7 +7,7 @@
 --     return false
 -- end
 
-local SCRIPT_VERSION <const> = "2024/5/29"
+local SCRIPT_VERSION <const> = "2024/6/1"
 
 local SUPPORT_GAME_VERSION <const> = "1.68-3179"
 
@@ -1368,11 +1368,13 @@ local BusinessMonitor = {
             [21] = 42,  -- "MP_WHOUSE_20",
             [22] = 111, -- "MP_WHOUSE_21",
         },
+        Hangar = 50,
         SafeCash = {
             Nightclub = 250000,
             Arcade = 100000,
             Agency = 250000,
             SalvageYard = 250000,
+            BikerBar = 100000,
         },
     },
 }
@@ -1450,6 +1452,7 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
         menu.set_value(BusinessMonitor.Menu.AcidLab.product, "")
     end
 
+
     -- Safe Cash
     text = STAT_GET_INT(ADD_MP_INDEX("ARCADE_SAFE_CASH_VALUE"))
     if text == BusinessMonitor.Caps.SafeCash.Arcade then
@@ -1470,21 +1473,36 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
     menu.set_value(BusinessMonitor.Menu.SafeCash.salvageYard, text)
 
 
+
     -- Biker
-    for i = 0, 4 do
-        local iFactoryID = GET_FACTORY_PROPERTY_ID(i)
-        if iFactoryID > 0 then
-            local eFactoryType = Tables.BikerFactoryType[iFactoryID]
+    if GET_BIKER_CLUBHOUSE_PROPERTY_ID() > 0 then
+        text = STAT_GET_INT(ADD_MP_INDEX("BIKER_BAR_RESUPPLY_CASH"))
+        if text == BusinessMonitor.Caps.SafeCash.BikerBar then
+            text = "[!] " .. text
+        end
+        menu.set_value(BusinessMonitor.Menu.Biker.barEarning, text)
 
-            text = GET_FACTORY_SUPPLIES(i) .. "%"
-            menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].supplies, text)
+        for i = 0, 4 do
+            local iFactoryID = GET_FACTORY_PROPERTY_ID(i)
+            if iFactoryID > 0 then
+                local eFactoryType = Tables.BikerFactoryType[iFactoryID]
 
-            product = GET_FACTORY_PRODUCT(i)
-            text = product .. "/" .. BusinessMonitor.Caps.Biker[eFactoryType]
-            if product >= BusinessMonitor.Caps.Biker[eFactoryType] then
-                text = "[!] " .. text
+                text = GET_FACTORY_SUPPLIES(i) .. "%"
+                menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].supplies, text)
+
+                product = GET_FACTORY_PRODUCT(i)
+                text = product .. "/" .. BusinessMonitor.Caps.Biker[eFactoryType]
+                if product >= BusinessMonitor.Caps.Biker[eFactoryType] then
+                    text = "[!] " .. text
+                end
+                menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].product, text)
             end
-            menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].product, text)
+        end
+    else
+        menu.set_value(BusinessMonitor.Menu.Biker.barEarning, "")
+        for i = 0, 4 do
+            menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, "")
+            menu.set_value(BusinessMonitor.Menu.Biker[i].product, "")
         end
     end
 
@@ -1507,6 +1525,43 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
         else
             menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], "")
             menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], Labels.None)
+        end
+    end
+
+    -- Hangar
+    if GET_HANGAR_PROPERTY_ID() > 0 then
+        product = STAT_GET_INT(ADD_MP_INDEX("HANGAR_CONTRABAND_TOTAL"))
+        text = product .. "/" .. BusinessMonitor.Caps.Hangar
+        if product >= BusinessMonitor.Caps.Hangar then
+            text = "[!] " .. text
+        end
+        menu.set_value(BusinessMonitor.Menu.Hangar.totalProducts, text)
+
+        local hangar_products = {
+            [0] = 0,
+            [1] = 0,
+            [2] = 0,
+            [3] = 0,
+            [4] = 0,
+            [5] = 0,
+            [6] = 0,
+            [7] = 0
+        }
+        for slot = 0, 49 do
+            local statIndex = PackedStats.PACKED_MP_INT_HANGAR_PRODUCT_0 + slot
+            local model_index = GET_PACKED_STAT_INT_CODE(statIndex)
+            if model_index > 0 then
+                local good_type = Tables.HangaModelIndexGoodType[model_index]
+                hangar_products[good_type] += 1
+            end
+        end
+        for i = 0, 7 do
+            menu.set_value(BusinessMonitor.Menu.Hangar[i], hangar_products[i])
+        end
+    else
+        menu.set_value(BusinessMonitor.Menu.Hangar.totalProducts, "")
+        for i = 0, 7 do
+            menu.set_value(BusinessMonitor.Menu.Hangar[i], "")
         end
     end
 end)
@@ -1536,7 +1591,9 @@ BusinessMonitor.Menu.SafeCash.salvageYard = menu.readonly(Business_Monitor, Labe
 
 menu.divider(Business_Monitor, "")
 
+
 local Business_Monitor_Biker = menu.list(Business_Monitor, Labels.MotorcycleClub, {}, "")
+BusinessMonitor.Menu.Biker.barEarning = menu.readonly(Business_Monitor_Biker, get_label_text("BBR_BLIP"))
 for i = 0, 4 do
     menu.divider(Business_Monitor_Biker, Tables.BikerFactoryName[i])
     BusinessMonitor.Menu.Biker[i] = {
@@ -1545,12 +1602,19 @@ for i = 0, 4 do
     }
 end
 
+
 local Business_Monitor_SpecialCargo = menu.list(Business_Monitor, Labels.SpecialCargo, {}, "括号里是特殊物品数量")
 for i = 0, 4 do
     BusinessMonitor.Menu.SpecialCargo[i] = menu.readonly(Business_Monitor_SpecialCargo, Labels.None)
 end
 
--- local Business_Monitor_Hangar = menu.list(Business_Monitor, Labels.Hangar, {}, "")
+
+local Business_Monitor_Hangar = menu.list(Business_Monitor, Labels.Hangar, {}, "")
+BusinessMonitor.Menu.Hangar.totalProducts = menu.readonly(Business_Monitor_Hangar, get_label_text("HC_TOTAL_STOCK"))
+menu.divider(Business_Monitor_Hangar, get_label_text("HC_STOCK_LEVELS"))
+for i = 0, 7 do
+    BusinessMonitor.Menu.Hangar[i] = menu.readonly(Business_Monitor_Hangar, Tables.HangarGoodsName[i])
+end
 
 
 
