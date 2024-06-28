@@ -524,56 +524,56 @@ end
 -- Bit Functions
 --------------------------------
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function SET_BIT(bits, place)
-    return (bits | (1 << place))
+function SET_BIT(value, position)
+    return (value | (1 << position))
 end
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function CLEAR_BIT(bits, place)
-    return (bits & ~(1 << place))
+function CLEAR_BIT(value, position)
+    return (value & ~(1 << position))
 end
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function BIT_TEST(bits, place)
-    return (bits & (1 << place)) ~= 0
+function BIT_TEST(value, position)
+    return (value & (1 << position)) ~= 0
 end
 
---- @param int integer
---- @param ... bits
+--- @param value integer
+--- @param ... positions
 --- @return integer
-function SET_BITS(int, ...)
-    local bits = { ... }
-    for _, bit in ipairs(bits) do
-        int = int | (1 << bit)
+function SET_BITS(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        value = value | (1 << position)
     end
-    return int
+    return value
 end
 
---- @param int integer
---- @param ... bits
+--- @param value integer
+--- @param ... positions
 --- @return integer
-function CLEAR_BITS(int, ...)
-    local bits = { ... }
-    for ind, bit in ipairs(bits) do
-        int = int & ~(1 << bit)
+function CLEAR_BITS(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        value = value & ~(1 << position)
     end
-    return int
+    return value
 end
 
---- @param int integer
---- @param ... bits
+--- @param value integer
+--- @param ... positions
 --- @return boolean
-function BITS_TEST(int, ...)
-    local bits = { ... }
-    for _, bit in ipairs(bits) do
-        if (int & (1 << bit)) == 0 then
+function BITS_TEST(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        if (value & (1 << position)) == 0 then
             return false
         end
     end
