@@ -12,7 +12,7 @@ local SCRIPT_VERSION <const> = "2024/6/29"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
-local DEBUG <const> = true
+local DEBUG <const> = false
 
 
 --#region Consts
