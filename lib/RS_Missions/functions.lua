@@ -120,6 +120,7 @@ function UNLOCK_VEHICLE(vehicle)
     VEHICLE.SET_DISABLE_WANTED_CONES_RESPONSE(vehicle, true)
 
     VEHICLE.SET_VEHICLE_IS_CONSIDERED_BY_PLAYER(vehicle, true)
+    VEHICLE.SET_VEHICLE_EXCLUSIVE_DRIVER(vehicle, 0, 0)
     ENTITY.FREEZE_ENTITY_POSITION(vehicle, false)
 
     VEHICLE.SET_VEHICLE_ENGINE_ON(vehicle, true, true, false)
@@ -606,12 +607,6 @@ end
 --- @param value string
 function STAT_SET_STRING(stat, value)
     STATS.STAT_SET_STRING(util.joaat(stat), value, true)
-end
-
---- @param statIndex integer
---- @param value boolean
-function SET_PACKED_STAT_BOOL_CODE(statIndex, value)
-    STATS.SET_PACKED_STAT_BOOL_CODE(statIndex, value, util.get_char_slot())
 end
 
 --- @param stat string

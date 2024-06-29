@@ -317,7 +317,8 @@ Locals = {
     },
     ["gb_vehicle_export"] = {
         iExportEntityNetId = 836 + 29,
-        eModeState = 836 + 460,
+        exportEntityIeVehicleEnum = 836 + 39,
+        eModeState = 836 + 459,
         sCarBombStruct = {
             iCarBombBitSet = 369 + 1
         },

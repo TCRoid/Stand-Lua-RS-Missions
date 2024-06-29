@@ -3,12 +3,12 @@
 -- Github: https://github.com/TCRoid/Stand-Lua-RS-Missions
 ----------------------------------------------------------------
 
--- if not util.is_session_started() or util.is_session_transition_active() then
---     util.toast("[RS Missions] 脚本仅在线上模式可用")
---     return false
--- end
+if not util.is_session_started() or util.is_session_transition_active() then
+    util.toast("[RS Missions] 脚本仅在线上模式可用")
+    return false
+end
 
-local SCRIPT_VERSION <const> = "2024/6/28"
+local SCRIPT_VERSION <const> = "2024/6/29"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
@@ -1169,6 +1169,7 @@ local Vehicle_Cargo <const> = menu.list(Business_Mission, Labels.VehicleCargo, {
 local VehicleCargoVars = {
     Steal = {
         eMissionVariation = -1,
+        exportEntityIeVehicleEnum = -1,
     },
     Sell = {
         iSaleValue = -1,
@@ -1196,14 +1197,29 @@ menu.list_select(Vehicle_Cargo, Lang.SelectMission, {}, "",
     Tables.VehicleExportSteal, -1, function(value)
         VehicleCargoVars.Steal.eMissionVariation = value
     end)
+menu.list_select(Vehicle_Cargo, "载具类型", {}, "",
+ Tables.VehicleExportEnum, -1, function(value)
+    VehicleCargoVars.Steal.exportEntityIeVehicleEnum = value
+end)
+
+menu.toggle_loop(Vehicle_Cargo, "设置偷取任务数据", {}, Lang.E_B_S_M, function()
+    if VehicleCargoVars.Steal.eMissionVariation ~= -1 then
+        GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(VehicleCargoVars.Steal.eMissionVariation)
+    end
+
+    local script = "gb_vehicle_export"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    if VehicleCargoVars.Steal.exportEntityIeVehicleEnum ~= -1 then
+        LOCAL_SET_INT(script, Locals[script].exportEntityIeVehicleEnum, VehicleCargoVars.Steal.exportEntityIeVehicleEnum)
+    end
+end)
 
 menu.action(Vehicle_Cargo, Labels.LaunchMissionByTerrorbyte, {}, "", function()
     if IS_SCRIPT_RUNNING("gb_vehicle_export") then
         return
-    end
-
-    if VehicleCargoVars.Steal.eMissionVariation ~= -1 then
-        GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(VehicleCargoVars.Steal.eMissionVariation)
     end
 
     START_APP.TERRORBYTE()
