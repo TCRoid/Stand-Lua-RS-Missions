@@ -2,8 +2,10 @@
 -- Author: Rostal
 --------------------------------
 
+local SUPPORT_GAME_VERSION <const> = "1.69-3258"
+
 local IS_SUPPORT = true
-if menu.get_version().game ~= "1.68-3095" then
+if menu.get_version().game ~= SUPPORT_GAME_VERSION then
     IS_SUPPORT = false
     util.toast("Not support current game version.")
 end
@@ -33,7 +35,7 @@ local NET_SHOP_INVALID_ID <const> = 2147483647
 
 local categoryHash <const> = util.joaat("CATEGORY_SERVICE_WITH_THRESHOLD")
 
-local g_cashTransactionDataCached <const> = 4537212 -- index = 0
+local g_cashTransactionDataCached <const> = 4537311 -- index = 0
 
 
 

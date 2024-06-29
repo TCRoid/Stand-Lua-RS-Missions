@@ -7,6 +7,8 @@ Labels = {
     Complete = get_label_text("AWARD_COMPLETE"),
     Reset = get_label_text("PIM_CRST"),
 
+    NONE = get_label_text("CELEB_NONE"),
+
     Sell = get_label_text("HC_SELL"),
     Source = get_label_text("HC_STEAL"),
     Buy = get_label_text("ITEM_BUY"),
@@ -73,6 +75,7 @@ Labels.SpecialCargoWarehouse = string.format("%s %s", Labels.SpecialCargo, Label
 Labels.LaunchMissionByTerrorbyte = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Terrorbyte, Labels.Computer)
 Labels.LaunchMissionByBunker = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Bunker, Labels.Computer)
 Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission, Labels.Hangar, Labels.Computer)
+
 
 
 
@@ -185,6 +188,32 @@ Tables = {
         { 6,  get_label_text("HAN_CRG_NARC") },   -- Narcotics
         { 7,  get_label_text("HAN_CRG_TOBAC") },  -- Tobacco & Alcohol
         { 8,  get_label_text("HAN_CRG_MIXED") },  -- Cargo
+    },
+    HangarProductModelPropertyType = {
+        -- Medical Supplies
+        { 1,  get_label_text("HAN_CRG_MEDS") },
+        { 2,  get_label_text("HAN_CRG_MEDS") },
+        -- Tobacco & Alcohol
+        { 3,  get_label_text("HAN_CRG_TOBAC") },
+        { 4,  get_label_text("HAN_CRG_TOBAC") },
+        -- Art & Antiques
+        { 5,  get_label_text("HAN_CRG_ART") },
+        { 6,  get_label_text("HAN_CRG_ART") },
+        -- Narcotics
+        { 7,  get_label_text("HAN_CRG_NARC") },
+        { 8,  get_label_text("HAN_CRG_NARC") },
+        -- Jewelry & Gemstones
+        { 9,  get_label_text("HAN_CRG_JEWEL") },
+        { 10, get_label_text("HAN_CRG_JEWEL") },
+        -- Animal Materials
+        { 11, get_label_text("HAN_CRG_ANIMAL") },
+        { 12, get_label_text("HAN_CRG_ANIMAL") },
+        -- Counterfeit Goods
+        { 13, get_label_text("HAN_CRG_GOODS") },
+        { 14, get_label_text("HAN_CRG_GOODS") },
+        -- Chemicals
+        { 15, get_label_text("HAN_CRG_CHEMS") },
+        { 16, get_label_text("HAN_CRG_CHEMS") }
     },
 
     GunrunResupply = {
@@ -346,6 +375,117 @@ Tables = {
         { 30, "Boat Attack",              {}, "", "Old" },
         { 30, "Multiple Moving Vehicles", {}, "", "Old" },
     },
+    VehicleExportEnum = {
+        { -1, Labels.Default },
+        -- Molten Metal Collector: Ronnie Bonelli
+        { 28, get_label_text("IE_VEH_ALPHA_1"),      {}, "", get_label_text("IEW_COLLECTION_METAL") },
+        { 23, get_label_text("IE_VEH_REAPER_2"),     {}, "", get_label_text("IEW_COLLECTION_METAL") },
+        { 90, get_label_text("IE_VEH_MASSACRO_3"),   {}, "", get_label_text("IEW_COLLECTION_METAL") },
+        { 55, get_label_text("IE_VEH_ZENTORNO_1"),   {}, "", get_label_text("IEW_COLLECTION_METAL") },
+        -- Birds of Paradise Collector: Curtis Cray Esq
+        { 76, get_label_text("IE_VEH_CHEETAH_1"),    {}, "", get_label_text("IEW_COLLECTION_TROPICAL") },
+        { 4,  get_label_text("IE_VEH_TYRUS_1"),      {}, "", get_label_text("IEW_COLLECTION_TROPICAL") },
+        { 19, get_label_text("IE_VEH_FMJ_1"),        {}, "", get_label_text("IEW_COLLECTION_TROPICAL") },
+        { 50, get_label_text("IE_VEH_ENTITYXF_2"),   {}, "", get_label_text("IEW_COLLECTION_TROPICAL") },
+        -- Shades of Blue Collector: Cris Formage
+        { 82, get_label_text("IE_VEH_BANSHEE2_1"),   {}, "", get_label_text("IEW_COLLECTION_ELEGANT") },
+        { 42, get_label_text("IE_VEH_FELTZER3_3"),   {}, "", get_label_text("IEW_COLLECTION_ELEGANT") },
+        { 65, get_label_text("IE_VEH_SEVEN70_2"),    {}, "", get_label_text("IEW_COLLECTION_ELEGANT") },
+        { 87, get_label_text("IE_VEH_TURISMOR_3"),   {}, "", get_label_text("IEW_COLLECTION_ELEGANT") },
+        -- Hip to be Square Collector: Tao Cheng
+        { 59, get_label_text("IE_VEH_OMNIS_2"),      {}, "", get_label_text("IEW_COLLECTION_RALLY") },
+        { 48, get_label_text("IE_VEH_TROPOS_3"),     {}, "", get_label_text("IEW_COLLECTION_RALLY") },
+        { 96, get_label_text("IE_VEH_JESTER_3"),     {}, "", get_label_text("IEW_COLLECTION_RALLY") },
+        { 52, get_label_text("IE_VEH_SULTANRS_1"),   {}, "", get_label_text("IEW_COLLECTION_RALLY") },
+        -- Pastel Perfection Collector: Cloe Parker
+        { 73, get_label_text("IE_VEH_COQUETTE2_1"),  {}, "", get_label_text("IEW_COLLECTION_PRETTY") },
+        { 67, get_label_text("IE_VEH_VERLIERER2_1"), {}, "", get_label_text("IEW_COLLECTION_PRETTY") },
+        { 15, get_label_text("IE_VEH_SHEAVA_3"),     {}, "", get_label_text("IEW_COLLECTION_PRETTY") },
+        -- Stay Declasse Collector: Ms. M Schultz
+        { 93, get_label_text("IE_VEH_SABREGT2_3"),   {}, "", get_label_text("IEW_COLLECTION_DECLASSE") },
+        { 34, get_label_text("IE_VEH_TAMPA_1"),      {}, "", get_label_text("IEW_COLLECTION_DECLASSE") },
+        { 32, get_label_text("IE_VEH_MAMBA_2"),      {}, "", get_label_text("IEW_COLLECTION_DECLASSE") },
+        -- Uninsurable Collector: Jay Norris
+        { 2,  get_label_text("IE_VEH_PROTOTIPO_2"),  {}, "", get_label_text("IEW_COLLECTION_DANGEROUS") },
+        { 12, get_label_text("IE_VEH_T20_3"),        {}, "", get_label_text("IEW_COLLECTION_DANGEROUS") },
+        { 18, get_label_text("IE_VEH_OSIRIS_3"),     {}, "", get_label_text("IEW_COLLECTION_DANGEROUS") },
+        -- No Direct Sunlight Collector: DJ Playlist
+        { 70, get_label_text("IE_VEH_FELTZER2_1"),   {}, "", get_label_text("IEW_COLLECTION_MATTE") },
+        { 27, get_label_text("IE_VEH_PFISTER811_3"), {}, "", get_label_text("IEW_COLLECTION_MATTE") },
+        { 7,  get_label_text("IE_VEH_BESTIAGTS_1"),  {}, "", get_label_text("IEW_COLLECTION_MATTE") },
+        -- Fading Power Collector: Keith Collins MD
+        { 61, get_label_text("IE_VEH_COQUETTE3_1"),  {}, "", get_label_text("IEW_COLLECTION_MUSCULAR") },
+        { 80, get_label_text("IE_VEH_NIGHTSHADE_2"), {}, "", get_label_text("IEW_COLLECTION_MUSCULAR") },
+        -- End Of Empires Collector: The Sultan of Amir
+        { 43, get_label_text("IE_VEH_ZTYPE_1"),      {}, "", get_label_text("IEW_COLLECTION_WEALTHY") },
+        { 38, get_label_text("IE_VEH_BTYPE3_2"),     {}, "", get_label_text("IEW_COLLECTION_WEALTHY") },
+
+
+        { 1,  get_label_text("IE_VEH_PROTOTIPO_1"),  {}, "", "" },
+        { 3,  get_label_text("IE_VEH_PROTOTIPO_3"),  {}, "", "" },
+        { 5,  get_label_text("IE_VEH_TYRUS_2"),      {}, "", "" },
+        { 6,  get_label_text("IE_VEH_TYRUS_3"),      {}, "", "" },
+        { 8,  get_label_text("IE_VEH_BESTIAGTS_2"),  {}, "", "" },
+        { 9,  get_label_text("IE_VEH_BESTIAGTS_3"),  {}, "", "" },
+        { 10, get_label_text("IE_VEH_T20_1"),        {}, "", "" },
+        { 11, get_label_text("IE_VEH_T20_2"),        {}, "", "" },
+        { 13, get_label_text("IE_VEH_SHEAVA_1"),     {}, "", "" },
+        { 14, get_label_text("IE_VEH_SHEAVA_2"),     {}, "", "" },
+        { 16, get_label_text("IE_VEH_OSIRIS_1"),     {}, "", "" },
+        { 17, get_label_text("IE_VEH_OSIRIS_2"),     {}, "", "" },
+        { 20, get_label_text("IE_VEH_FMJ_2"),        {}, "", "" },
+        { 21, get_label_text("IE_VEH_FMJ_3"),        {}, "", "" },
+        { 22, get_label_text("IE_VEH_REAPER_1"),     {}, "", "" },
+        { 24, get_label_text("IE_VEH_REAPER_3"),     {}, "", "" },
+        { 25, get_label_text("IE_VEH_PFISTER811_1"), {}, "", "" },
+        { 26, get_label_text("IE_VEH_PFISTER811_2"), {}, "", "" },
+        { 29, get_label_text("IE_VEH_ALPHA_2"),      {}, "", "" },
+        { 30, get_label_text("IE_VEH_ALPHA_3"),      {}, "", "" },
+        { 31, get_label_text("IE_VEH_MAMBA_1"),      {}, "", "" },
+        { 33, get_label_text("IE_VEH_MAMBA_3"),      {}, "", "" },
+        { 35, get_label_text("IE_VEH_TAMPA_2"),      {}, "", "" },
+        { 36, get_label_text("IE_VEH_TAMPA_3"),      {}, "", "" },
+        { 37, get_label_text("IE_VEH_BTYPE3_1"),     {}, "", "" },
+        { 39, get_label_text("IE_VEH_BTYPE3_3"),     {}, "", "" },
+        { 40, get_label_text("IE_VEH_FELTZER3_1"),   {}, "", "" },
+        { 41, get_label_text("IE_VEH_FELTZER3_2"),   {}, "", "" },
+        { 44, get_label_text("IE_VEH_ZTYPE_2"),      {}, "", "" },
+        { 45, get_label_text("IE_VEH_ZTYPE_3"),      {}, "", "" },
+        { 46, get_label_text("IE_VEH_TROPOS_1"),     {}, "", "" },
+        { 47, get_label_text("IE_VEH_TROPOS_2"),     {}, "", "" },
+        { 49, get_label_text("IE_VEH_ENTITYXF_1"),   {}, "", "" },
+        { 51, get_label_text("IE_VEH_ENTITYXF_3"),   {}, "", "" },
+        { 53, get_label_text("IE_VEH_SULTANRS_2"),   {}, "", "" },
+        { 54, get_label_text("IE_VEH_SULTANRS_3"),   {}, "", "" },
+        { 56, get_label_text("IE_VEH_ZENTORNO_2"),   {}, "", "" },
+        { 57, get_label_text("IE_VEH_ZENTORNO_3"),   {}, "", "" },
+        { 58, get_label_text("IE_VEH_OMNIS_1"),      {}, "", "" },
+        { 60, get_label_text("IE_VEH_OMNIS_3"),      {}, "", "" },
+        { 62, get_label_text("IE_VEH_COQUETTE3_2"),  {}, "", "" },
+        { 63, get_label_text("IE_VEH_COQUETTE3_3"),  {}, "", "" },
+        { 64, get_label_text("IE_VEH_SEVEN70_1"),    {}, "", "" },
+        { 66, get_label_text("IE_VEH_SEVEN70_3"),    {}, "", "" },
+        { 68, get_label_text("IE_VEH_VERLIERER2_2"), {}, "", "" },
+        { 69, get_label_text("IE_VEH_VERLIERER2_3"), {}, "", "" },
+        { 71, get_label_text("IE_VEH_FELTZER2_2"),   {}, "", "" },
+        { 72, get_label_text("IE_VEH_FELTZER2_3"),   {}, "", "" },
+        { 74, get_label_text("IE_VEH_COQUETTE2_2"),  {}, "", "" },
+        { 75, get_label_text("IE_VEH_COQUETTE2_3"),  {}, "", "" },
+        { 77, get_label_text("IE_VEH_CHEETAH_2"),    {}, "", "" },
+        { 78, get_label_text("IE_VEH_CHEETAH_3"),    {}, "", "" },
+        { 79, get_label_text("IE_VEH_NIGHTSHADE_1"), {}, "", "" },
+        { 81, get_label_text("IE_VEH_NIGHTSHADE_3"), {}, "", "" },
+        { 83, get_label_text("IE_VEH_BANSHEE2_2"),   {}, "", "" },
+        { 84, get_label_text("IE_VEH_BANSHEE2_3"),   {}, "", "" },
+        { 85, get_label_text("IE_VEH_TURISMOR_1"),   {}, "", "" },
+        { 86, get_label_text("IE_VEH_TURISMOR_2"),   {}, "", "" },
+        { 88, get_label_text("IE_VEH_MASSACRO_1"),   {}, "", "" },
+        { 89, get_label_text("IE_VEH_MASSACRO_2"),   {}, "", "" },
+        { 91, get_label_text("IE_VEH_SABREGT2_1"),   {}, "", "" },
+        { 92, get_label_text("IE_VEH_SABREGT2_2"),   {}, "", "" },
+        { 94, get_label_text("IE_VEH_JESTER_1"),     {}, "", "" },
+        { 95, get_label_text("IE_VEH_JESTER_2"),     {}, "", "" },
+    },
 
     BikerFactory = {
         { 0, Labels.DocumentForgeryOffice },
@@ -400,6 +540,35 @@ Tables = {
         [18] = 4,
         [19] = 2,
         [20] = 0
+    },
+    HangarGoodsName = {
+        [0] = get_label_text("HAN_CRG_ANIMAL"), -- Animal Materials
+        [1] = get_label_text("HAN_CRG_ART"),    -- Art & Antiques
+        [2] = get_label_text("HAN_CRG_CHEMS"),  -- Chemicals
+        [3] = get_label_text("HAN_CRG_GOODS"),  -- Counterfeit Goods
+        [4] = get_label_text("HAN_CRG_JEWEL"),  -- Jewelry & Gemstones
+        [5] = get_label_text("HAN_CRG_MEDS"),   -- Medical Supplies
+        [6] = get_label_text("HAN_CRG_NARC"),   -- Narcotics
+        [7] = get_label_text("HAN_CRG_TOBAC"),  -- Tobacco & Alcohol
+        -- [8] = get_label_text("HAN_CRG_MIXED"),  -- Cargo
+    },
+    HangaModelIndexGoodType = {
+        [1] = 5,
+        [2] = 5,
+        [3] = 7,
+        [4] = 7,
+        [5] = 1,
+        [6] = 1,
+        [7] = 6,
+        [8] = 6,
+        [9] = 4,
+        [10] = 4,
+        [11] = 0,
+        [12] = 0,
+        [13] = 3,
+        [14] = 3,
+        [15] = 2,
+        [16] = 2,
     },
 
     ------------------------
@@ -804,6 +973,25 @@ Tables = {
         { menu = "toggle",  name = get_label_text("CH_TODO_PREP_6b") .. " (?)", bit = 21, help_text = "" }
     },
 
+    ---- Island Heist
+    IslandHeistMainTarget = {
+        { 0, get_label_text("H4_LOOT_TEQ") },   -- SINSIMITO TEQUILA
+        { 1, get_label_text("H4_LOOT_NKLC") },  -- RUBY NECKLACE
+        { 2, get_label_text("H4_LOOT_BONDS") }, -- BEARER BONDS
+        { 3, get_label_text("H4_LOOT_DIAM") },  -- PINK DIAMOND
+        { 4, get_label_text("H4_LOOT_FILES") }, -- MADRAZO FILES
+        { 5, get_label_text("H4_LOOT_STAT") }   -- PANTHER STATUE
+    },
+    IslandHeistAdditionalLoot = {
+        { 0, Labels.NONE },
+        { 1, get_label_text("H4P_INT2_CASH_T") }, -- CASH
+        { 2, get_label_text("H4P_INT2_WEED_T") }, -- WEED
+        { 3, get_label_text("H4P_INT2_COKE_T") }, -- COCAINE
+        { 4, get_label_text("H4P_INT2_GOLD_T") }, -- GOLD
+        -- { 5, get_label_text("H4P_INT2_PAIN_T") }, -- PAINTINGS
+    },
+
+
     ------------------------
     -- Misc
     ------------------------
@@ -824,4 +1012,11 @@ Tables = {
         Labels.Complete,
         Labels.Reset
     },
+}
+
+
+
+
+PackedStats = {
+    PACKED_MP_INT_HANGAR_PRODUCT_0 = 16011, -- ~ PACKED_MP_INT_HANGAR_PRODUCT_49 = 16060
 }

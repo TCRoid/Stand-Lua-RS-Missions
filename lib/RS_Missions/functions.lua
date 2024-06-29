@@ -12,8 +12,8 @@ function TP_ENTITY(entity, coords, heading)
     ENTITY.SET_ENTITY_COORDS_NO_OFFSET(entity, coords.x, coords.y, coords.z, true, false, false)
 end
 
----@param entity Entity
----@return string|nil
+--- @param entity Entity
+--- @return string|nil
 function GET_ENTITY_SCRIPT(entity)
     local entity_script = ENTITY.GET_ENTITY_SCRIPT(entity, 0)
     if entity_script == nil then return "" end
@@ -56,20 +56,29 @@ function TP_VEHICLE_TO_ME(vehicle)
         TASK.CLEAR_PED_TASKS_IMMEDIATELY(driver)
     end
 
-    VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
-    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, false)
-    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_NON_SCRIPT_PLAYERS(vehicle, false)
-    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_TEAMS(vehicle, false)
-    VEHICLE.SET_DONT_ALLOW_PLAYER_TO_ENTER_VEHICLE_IF_LOCKED_FOR_PLAYER(vehicle, false)
-
-    ENTITY.FREEZE_ENTITY_POSITION(vehicle, false)
-
-    VEHICLE.SET_VEHICLE_ENGINE_ON(vehicle, true, true, false)
-    VEHICLE.SET_HELI_BLADES_FULL_SPEED(vehicle)
+    UNLOCK_VEHICLE(vehicle)
 
     ENTITY.SET_ENTITY_HEADING(vehicle, ENTITY.GET_ENTITY_HEADING(players.user_ped()))
     TP_ENTITY_TO_ME(vehicle)
     PED.SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, -1)
+end
+
+--- @param vehicle Vehicle
+--- @param isDriverSeat boolean
+function TP_INTO_VEHICLE(vehicle, isDriverSeat)
+    if isDriverSeat and not VEHICLE.IS_VEHICLE_SEAT_FREE(vehicle, -1, false) then
+        local driver = VEHICLE.GET_PED_IN_VEHICLE_SEAT(vehicle, -1, false)
+        TASK.CLEAR_PED_TASKS_IMMEDIATELY(driver)
+    end
+
+    UNLOCK_VEHICLE(vehicle)
+
+    local seat = -1
+    if not isDriverSeat then
+        seat = -2
+    end
+
+    PED.SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, seat)
 end
 
 --- @param missionScript string
@@ -89,6 +98,33 @@ function TP_MISSION_PICKUPS_TO_ME(missionScript)
             end
         end
     end
+end
+
+--------------------------------
+-- Vehicle Functions
+--------------------------------
+
+--- @param vehicle Vehicle
+function UNLOCK_VEHICLE(vehicle)
+    VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
+    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, false)
+    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_NON_SCRIPT_PLAYERS(vehicle, false)
+    VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_TEAMS(vehicle, false)
+    VEHICLE.SET_DONT_ALLOW_PLAYER_TO_ENTER_VEHICLE_IF_LOCKED_FOR_PLAYER(vehicle, false)
+
+    VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(vehicle, true)
+    VEHICLE.SET_VEHICLE_IS_STOLEN(vehicle, false)
+    VEHICLE.SET_VEHICLE_IS_WANTED(vehicle, false)
+    VEHICLE.SET_POLICE_FOCUS_WILL_TRACK_VEHICLE(vehicle, false)
+    VEHICLE.SET_VEHICLE_INFLUENCES_WANTED_LEVEL(vehicle, false)
+    VEHICLE.SET_DISABLE_WANTED_CONES_RESPONSE(vehicle, true)
+
+    VEHICLE.SET_VEHICLE_IS_CONSIDERED_BY_PLAYER(vehicle, true)
+    VEHICLE.SET_VEHICLE_EXCLUSIVE_DRIVER(vehicle, 0, 0)
+    ENTITY.FREEZE_ENTITY_POSITION(vehicle, false)
+
+    VEHICLE.SET_VEHICLE_ENGINE_ON(vehicle, true, true, false)
+    VEHICLE.SET_HELI_BLADES_FULL_SPEED(vehicle)
 end
 
 --------------------------------
@@ -173,6 +209,11 @@ end
 --- @return integer
 function GET_FACILITY_PROPERTY_ID()
     return STAT_GET_INT(ADD_MP_INDEX("DBASE_OWNED"))
+end
+
+--- @return integer
+function GET_BIKER_CLUBHOUSE_PROPERTY_ID()
+    return STAT_GET_INT(ADD_MP_INDEX("PROP_CLUBHOUSE"))
 end
 
 --- @return boolean
@@ -268,6 +309,24 @@ function GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     end
 
     return nil
+end
+
+--- @param func function
+--- @param script_host boolean
+function FMMC_SCRIPT(func, script_host)
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then
+        return
+    end
+
+    if script_host and NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0) ~= players.user() then
+        if not util.request_script_host(script) then
+            util.toast("请求成为任务脚本主机失败，请重试")
+            return
+        end
+    end
+
+    func(script)
 end
 
 --------------------------------
@@ -375,7 +434,7 @@ end
 
 --- @param script string
 --- @param script_local integer
----@return integer
+--- @return integer
 function LOCAL_GET_INT(script, script_local)
     if memory.script_local(script, script_local) ~= 0 then
         return memory.read_int(memory.script_local(script, script_local))
@@ -384,10 +443,19 @@ end
 
 --- @param script string
 --- @param script_local integer
----@return float
+--- @return float
 function LOCAL_GET_FLOAT(script, script_local)
     if memory.script_local(script, script_local) ~= 0 then
         return memory.read_float(memory.script_local(script, script_local))
+    end
+end
+
+--- @param script string
+--- @param script_local integer
+--- @return boolean
+function LOCAL_GET_BOOL(script, script_local)
+    if memory.script_local(script, script_local) ~= 0 then
+        return memory.read_int(memory.script_local(script, script_local)) == 1
     end
 end
 
@@ -413,6 +481,17 @@ end
 
 --- @param script string
 --- @param script_local integer
+--- @param bit integer
+--- @return boolean
+function LOCAL_BIT_TEST(script, script_local, bit)
+    local addr = memory.script_local(script, script_local)
+    if addr ~= 0 then
+        return BIT_TEST(memory.read_int(addr), bit)
+    end
+end
+
+--- @param script string
+--- @param script_local integer
 --- @param ... bits
 function LOCAL_SET_BITS(script, script_local, ...)
     local addr = memory.script_local(script, script_local)
@@ -431,51 +510,75 @@ function LOCAL_CLEAR_BITS(script, script_local, ...)
     end
 end
 
+--- @param script string
+--- @param script_local integer
+--- @param ... bits
+--- @return boolean
+function LOCAL_BITS_TEST(script, script_local, ...)
+    local addr = memory.script_local(script, script_local)
+    if addr ~= 0 then
+        return BITS_TEST(memory.read_int(addr), ...)
+    end
+end
+
 --------------------------------
 -- Bit Functions
 --------------------------------
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function SET_BIT(bits, place)
-    return (bits | (1 << place))
+function SET_BIT(value, position)
+    return (value | (1 << position))
 end
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function CLEAR_BIT(bits, place)
-    return (bits & ~(1 << place))
+function CLEAR_BIT(value, position)
+    return (value & ~(1 << position))
 end
 
---- @param bits integer
---- @param place integer
+--- @param value integer
+--- @param position integer
 --- @return integer
-function BIT_TEST(bits, place)
-    return (bits & (1 << place)) ~= 0
+function BIT_TEST(value, position)
+    return (value & (1 << position)) ~= 0
 end
 
----@param int integer
----@param ... bits
----@return integer
-function SET_BITS(int, ...)
-    local bits = { ... }
-    for _, bit in ipairs(bits) do
-        int = int | (1 << bit)
+--- @param value integer
+--- @param ... positions
+--- @return integer
+function SET_BITS(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        value = value | (1 << position)
     end
-    return int
+    return value
 end
 
----@param int integer
----@param ... bits
----@return integer
-function CLEAR_BITS(int, ...)
-    local bits = { ... }
-    for ind, bit in ipairs(bits) do
-        int = int & ~(1 << bit)
+--- @param value integer
+--- @param ... positions
+--- @return integer
+function CLEAR_BITS(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        value = value & ~(1 << position)
     end
-    return int
+    return value
+end
+
+--- @param value integer
+--- @param ... positions
+--- @return boolean
+function BITS_TEST(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        if (value & (1 << position)) == 0 then
+            return false
+        end
+    end
+    return true
 end
 
 --------------------------------
@@ -506,12 +609,6 @@ function STAT_SET_STRING(stat, value)
     STATS.STAT_SET_STRING(util.joaat(stat), value, true)
 end
 
---- @param statIndex integer
---- @param value boolean
-function SET_PACKED_STAT_BOOL_CODE(statIndex, value)
-    STATS.SET_PACKED_STAT_BOOL_CODE(statIndex, value, util.get_char_slot())
-end
-
 --- @param stat string
 ---@return integer
 function STAT_GET_INT(stat)
@@ -526,8 +623,64 @@ function STAT_GET_STRING(stat)
     return STATS.STAT_GET_STRING(util.joaat(stat), -1)
 end
 
+--------------------------------
+-- Packed Stat Functions
+--------------------------------
+
 --- @param statIndex integer
 --- @return integer
 function GET_PACKED_STAT_INT_CODE(statIndex)
     return STATS.GET_PACKED_STAT_INT_CODE(statIndex, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @return boolean
+function GET_PACKED_STAT_BOOL_CODE(statIndex)
+    return STATS.GET_PACKED_STAT_BOOL_CODE(statIndex, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @param value integer
+function SET_PACKED_STAT_INT_CODE(statIndex, value)
+    STATS.SET_PACKED_STAT_INT_CODE(statIndex, value, util.get_char_slot())
+end
+
+--- @param statIndex integer
+--- @param value boolean
+function SET_PACKED_STAT_BOOL_CODE(statIndex, value)
+    STATS.SET_PACKED_STAT_BOOL_CODE(statIndex, value, util.get_char_slot())
+end
+
+--------------------------------
+-- Util Functions
+--------------------------------
+
+rs = {}
+
+--- Your `on_change` function will be called with value, prev_value and click_type.
+--- @param parent CommandRef
+--- @param menu_name string
+--- @param command_names table<any, string>
+--- @param help_text Label
+--- @param min_value int
+--- @param max_value int
+--- @param default_value int
+--- @param step_size int
+--- @param on_change function
+--- @return CommandRef|CommandUniqPtr
+function rs.menu_slider(parent, menu_name, command_names, help_text,
+                        min_value, max_value, default_value, step_size, on_change)
+    local command = menu.slider(parent, menu_name, command_names, help_text,
+        min_value, max_value, default_value, step_size, on_change)
+
+    menu.add_value_replacement(command, -1, Labels.Default)
+
+    return command
+end
+
+--- @param menu_list table<int, CommandRef>
+function rs.delete_menu_list(menu_list)
+    for _, command in pairs(menu_list) do
+        menu.delete(command)
+    end
 end
