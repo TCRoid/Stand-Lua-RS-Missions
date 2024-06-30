@@ -8,11 +8,11 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/6/29"
+local SCRIPT_VERSION <const> = "2024/6/30"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
-local DEBUG <const> = false
+local DEBUG <const> = true
 
 
 --#region Consts
@@ -70,8 +70,8 @@ function INSTANT_FINISH_FM_MISSION_CONTROLLER()
             GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
         end
     end
-    -- More than max (FMMC_MAX_STRAND_MISSIONS), get out
-    LOCAL_SET_INT(script, Locals[script].iNextMission, 6)
+    -- (not) More than max (FMMC_MAX_STRAND_MISSIONS), get out
+    LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
 
     if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
         GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
@@ -1198,9 +1198,9 @@ menu.list_select(Vehicle_Cargo, Lang.SelectMission, {}, "",
         VehicleCargoVars.Steal.eMissionVariation = value
     end)
 menu.list_select(Vehicle_Cargo, "载具类型", {}, "",
- Tables.VehicleExportEnum, -1, function(value)
-    VehicleCargoVars.Steal.exportEntityIeVehicleEnum = value
-end)
+    Tables.VehicleExportEnum, -1, function(value)
+        VehicleCargoVars.Steal.exportEntityIeVehicleEnum = value
+    end)
 
 menu.toggle_loop(Vehicle_Cargo, "设置偷取任务数据", {}, Lang.E_B_S_M, function()
     if VehicleCargoVars.Steal.eMissionVariation ~= -1 then
@@ -2360,6 +2360,16 @@ end)
 
 
 
+------------------------------------
+--    Salvage Yard Robbery
+------------------------------------
+
+-- local Salvage_Yard_Robbery <const> = menu.list(Freemode_Mission, get_label_text("SCOUT_BIG_START"), {}, "")
+
+
+
+
+
 
 
 ------------------------
@@ -3188,7 +3198,7 @@ end)
 
 
 menu.list_action(Casino_Heist, "启动差事: 赌场抢劫 终章", {},
-    "1.开始任务后会出生在游戏厅里面\n2.使用直接完成任务会出错", {
+    "", {
         { -1323726821, get_label_text("CHB_APPROACH_1") }, -- Silent & Sneaky
         { -1105714937, get_label_text("CHB_APPROACH_2") }, -- The Big Con
         { 14334224,    get_label_text("CHB_APPROACH_3") }  -- Aggressive
@@ -3288,7 +3298,7 @@ end)
 menu.divider(Island_Heist, "")
 
 menu.action(Island_Heist, "启动差事: 佩里科岛抢劫 终章", {},
-    "1.如果没有完成必需前置,需要手动设置终章面板后才可以开启任务\n2.启动的差事使用直接完成任务会出现报错", function()
+    "如果没有完成必需前置，那么需要手动设置终章面板后才可以点击“继续”开启任务", function()
         if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
             return
         end
@@ -3688,29 +3698,34 @@ end)
 
 local Tunable_Options <const> = menu.list(Menu_Root, "可调整项", {}, "")
 
-local TunableOptionVars = {}
+local TunableOptionVars = {
+    missionHighEarning = 0,
+    missionLowEarning = 0,
+}
 
 local Tunable_Mission_Earning = menu.list(Tunable_Options, "限制差事收入", {}, "")
 
-local Tunable_Mission_Earning_High = menu.slider(Tunable_Mission_Earning, "最高收入", { "MissionHighEarningModifier" }, "",
-    0, 15000000, 0, 10000, function(value) end)
-local Tunable_Mission_Earning_Low = menu.slider(Tunable_Mission_Earning, "最低收入", { "MissionLowEarningModifier" }, "",
-    0, 15000000, 0, 10000, function(value) end)
+menu.slider(Tunable_Mission_Earning, "最高收入", { "MissionHighEarningModifier" }, "",
+    0, 15000000, TunableOptionVars.missionHighEarning, 10000, function(value)
+        TunableOptionVars.missionHighEarning = value
+    end)
+menu.slider(Tunable_Mission_Earning, "最低收入", { "MissionLowEarningModifier" }, "",
+    0, 15000000, TunableOptionVars.missionLowEarning, 10000, function(value)
+        TunableOptionVars.missionLowEarning = value
+    end)
 
-menu.toggle_loop(Tunable_Mission_Earning, "限制差事收入", {}, "", function()
-    local high_earning = menu.get_value(Tunable_Mission_Earning_High)
-    local low_earning = menu.get_value(Tunable_Mission_Earning_Low)
-
-    if high_earning > 0 then
-        Tunables.SetFloat("HIGH_ROCKSTAR_MISSIONS_MODIFIER", high_earning)
-    end
-    if low_earning > 0 then
-        Tunables.SetFloat("LOW_ROCKSTAR_MISSIONS_MODIFIER", low_earning)
-    end
-end, function()
-    Tunables.SetFloat("HIGH_ROCKSTAR_MISSIONS_MODIFIER", 0)
-    Tunables.SetFloat("LOW_ROCKSTAR_MISSIONS_MODIFIER", 0)
-end)
+menu.toggle_loop(Tunable_Mission_Earning, "限制差事收入", {},
+    "例如：限制最低收入为10万，那么当任务结束最后结算的金额不到10万，就会被强制设置为10万\n0 表示不限制\n精英挑战奖励是额外加的，不受限制", function()
+        if TunableOptionVars.missionHighEarning > 0 then
+            Tunables.SetFloat("HIGH_ROCKSTAR_MISSIONS_MODIFIER", TunableOptionVars.missionHighEarning)
+        end
+        if TunableOptionVars.missionLowEarning > 0 then
+            Tunables.SetFloat("LOW_ROCKSTAR_MISSIONS_MODIFIER", TunableOptionVars.missionLowEarning)
+        end
+    end, function()
+        Tunables.SetFloat("HIGH_ROCKSTAR_MISSIONS_MODIFIER", 0)
+        Tunables.SetFloat("LOW_ROCKSTAR_MISSIONS_MODIFIER", 0)
+    end)
 
 
 

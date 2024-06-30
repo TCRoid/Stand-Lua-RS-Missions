@@ -2,6 +2,272 @@ local Menu_Root <const> = menu.my_root()
 
 menu.divider(Menu_Root, "DEBUG")
 
+local Freemode_Mission = Menu_Root
+local Heist_Mission = Menu_Root
+
+
+local LocalsTest = {
+    ["fm_content_vehrob_arena"] = {
+        iChallengeCondition = 7807 + 1342 + 14,
+        iChallengeBitset = 7807 + 1340,
+
+        eEndReason = 7807 + 1285,
+        iGenericBitset = 7748
+    },
+    ["fm_content_vehrob_cargo_ship"] = {
+        iChallengeBitset = 7025 + 1286,
+
+        eEndReason = 7025 + 1224,
+        iGenericBitset = 6934
+    },
+    ["fm_content_vehrob_casino_prize"] = {
+        iChallengeBitset = 9060 + 1310,
+
+        eEndReason = 9060 + 1231,
+        iGenericBitset = 8979
+    },
+    ["fm_content_vehrob_police"] = {
+        iChallengeCondition = 8847 + 1333 + 8 + 1, -- +[0~2]
+
+        eEndReason = 8847 + 1276,
+        iGenericBitset = 8772
+    },
+    ["fm_content_vehrob_submarine"] = {
+        iChallengeCondition = 6125 + 1199 + 19,
+        iChallengeBitset = 6125 + 1196,
+
+        eEndReason = 6125 + 1137,
+        iGenericBitset = 6041
+    },
+    ["fm_content_chop_shop_delivery"] = {
+        iMissionEntityBitSet = 1893 + 2 + 14,
+
+        eEndReason = 1893 + 137,
+        iGenericBitset = 1835
+    }
+}
+
+
+------------------------------------
+--    Salvage Yard Robbery
+------------------------------------
+
+local Salvage_Yard_Robbery <const> = menu.list(Freemode_Mission, get_label_text("SCOUT_BIG_START"), {}, "")
+
+local SalvageYardRobberyVars = {
+    challengeCompleted = true
+}
+
+local SalvageYardRobberyChallenge = {
+    ["fm_content_vehrob_arena"] = function(script)
+        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 17, 18)
+    end,
+    ["fm_content_vehrob_cargo_ship"] = function(script)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 31)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 0, 1) -- 32, 33
+    end,
+    ["fm_content_vehrob_casino_prize"] = function(script)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 24, 25, 26)
+    end,
+    ["fm_content_vehrob_police"] = function(script)
+        for i = 0, 2 do
+            LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition + i, 1)
+        end
+    end,
+    ["fm_content_vehrob_submarine"] = function(script)
+        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 9, 10) -- 41, 42
+    end
+}
+
+menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 前置任务", {}, "", function()
+    local data = {
+        ["fm_content_vehrob_scoping"] = {
+            eEndReason = 3752 + 508,
+            iGenericBitset = 3695
+        },
+        ["fm_content_vehrob_prep"] = {
+            eEndReason = 11366 + 1272,
+            iGenericBitset = 11265
+        },
+        ["fm_content_vehrob_task"] = {
+            eEndReason = 4773 + 1043,
+            iGenericBitset = 4705
+        },
+        ["fm_content_vehrob_disrupt"] = {
+            eEndReason = 4570 + 924,
+            iGenericBitset = 4511
+        }
+    }
+
+    for script, item in pairs(data) do
+        if IS_SCRIPT_RUNNING(script) then
+            LOCAL_SET_BIT(script, item.iGenericBitset + 1 + 0, 11)
+            LOCAL_SET_INT(script, item.eEndReason, 3)
+        end
+    end
+end)
+
+menu.toggle(Salvage_Yard_Robbery, get_label_text("SAL23_ENDS_CHAL"), {}, "", function(toggle)
+    SalvageYardRobberyVars.challengeCompleted = toggle
+end, true)
+
+menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 终章", {}, "", function()
+    for script, func in pairs(SalvageYardRobberyChallenge) do
+        if IS_SCRIPT_RUNNING(script) then
+            if SalvageYardRobberyVars.challengeCompleted then
+                func(script)
+            end
+
+            LOCAL_SET_BIT(script, LocalsTest[script].iGenericBitset + 1 + 0, 11)
+            LOCAL_SET_INT(script, LocalsTest[script].eEndReason, 3)
+        end
+    end
+end)
+
+
+menu.divider(Salvage_Yard_Robbery, "Sell")
+
+menu.action(Salvage_Yard_Robbery, "直接完成 出售任务", {}, "", function()
+    local script = "fm_content_chop_shop_delivery"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    if PED.IS_PED_IN_ANY_VEHICLE(players.user_ped(), false) then
+        TASK.CLEAR_PED_TASKS_IMMEDIATELY(players.user_ped())
+    end
+
+    local iMissionEntity = 0
+    LOCAL_SET_BIT(script, LocalsTest[script].iMissionEntityBitSet + 1 + iMissionEntity * 3 + 1 + 0, 4) -- eMISSIONENTITYBITSET_DELIVERED
+
+    LOCAL_SET_BIT(script, LocalsTest[script].iGenericBitset + 1 + 0, 11)
+    LOCAL_SET_INT(script, LocalsTest[script].eEndReason, 3)
+end)
+
+
+
+
+----------------------------------------
+--    Bail Office
+----------------------------------------
+
+local Bail_Office <const> = menu.list(Heist_Mission, get_label_text("CELL_BAIL_OF"), {}, "")
+
+menu.list_action(Bail_Office, "启动差事: 头号通缉犯", {}, "", {
+    { -1814367299, "头号通缉犯：惠特尼" },
+    { -1443228923, "头号通缉犯：里伯曼" },
+    { -625494467, "头号通缉犯：奥尼尔" },
+    { -1381858108, "头号通缉犯：汤普森" },
+    { 1585225527, "头号通缉犯：宋" },
+    { -62594295, "头号通缉犯：加西亚" },
+}, function(value)
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+
+    local Data = {
+        iRootContentID = value,
+        iMissionType = 0,        -- FMMC_TYPE_MISSION
+        iMissionEnteryType = 32, -- ciMISSION_ENTERY_TYPE_V2_CORONA
+    }
+
+    LAUNCH_MISSION(Data)
+    util.toast("请稍等...")
+end)
+
+
+
+
+
+
+
+local fm_content_xxx = {
+    { script = "fm_content_acid_lab_sell",       eEndReason = 5483 + 1294,  iGenericBitset = 5418 },
+    { script = "fm_content_acid_lab_setup",      eEndReason = 3348 + 541,   iGenericBitset = 3294 },
+    { script = "fm_content_acid_lab_source",     eEndReason = 7654 + 1162,  iGenericBitset = 7577 },
+    { script = "fm_content_ammunation",          eEndReason = 2079 + 204,   iGenericBitset = 2025 },
+    { script = "fm_content_armoured_truck",      eEndReason = 1902 + 113,   iGenericBitset = 1836 },
+    { script = "fm_content_auto_shop_delivery",  eEndReason = 1572 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_bank_shootout",       eEndReason = 2209 + 221,   iGenericBitset = 2138 },
+    { script = "fm_content_bar_resupply",        eEndReason = 2275 + 287,   iGenericBitset = 2219 },
+    { script = "fm_content_bicycle_time_trial",  eEndReason = 2942 + 83,    iGenericBitset = 2886 },
+    { script = "fm_content_bike_shop_delivery",  eEndReason = 1574 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_bounty_targets",      eEndReason = 7019 + 1251,  iGenericBitset = 6941 },
+    { script = "fm_content_business_battles",    eEndReason = 5257 + 1138,  iGenericBitset = 5186 },
+    { script = "fm_content_cargo",               eEndReason = 5830 + 1148,  iGenericBitset = 5761 },
+    { script = "fm_content_cerberus",            eEndReason = 1589 + 91,    iGenericBitset = 1539 },
+    { script = "fm_content_chop_shop_delivery",  eEndReason = 1893 + 137,   iGenericBitset = 1835 },
+    { script = "fm_content_clubhouse_contracts", eEndReason = 6639 + 1255,  iGenericBitset = 6573 },
+    { script = "fm_content_club_management",     eEndReason = 5207 + 775,   iGenericBitset = 5148 },
+    { script = "fm_content_club_odd_jobs",       eEndReason = 1794 + 83,    iGenericBitset = 1738 },
+    { script = "fm_content_club_source",         eEndReason = 3540 + 674,   iGenericBitset = 3467 },
+    { script = "fm_content_convoy",              eEndReason = 2736 + 437,   iGenericBitset = 2672 },
+    { script = "fm_content_crime_scene",         eEndReason = 1948 + 151,   iGenericBitset = 1892 },
+    { script = "fm_content_daily_bounty",        eEndReason = 2533 + 325,   iGenericBitset = 2480 },
+    { script = "fm_content_dispatch_work",       eEndReason = 4856 + 755,   iGenericBitset = 4797 },
+    { script = "fm_content_drug_lab_work",       eEndReason = 7884 + 1253,  iGenericBitset = 7820 },
+    { script = "fm_content_drug_vehicle",        eEndReason = 1762 + 115,   iGenericBitset = 1707 },
+    { script = "fm_content_export_cargo",        eEndReason = 2200 + 191,   iGenericBitset = 2146 },
+    { script = "fm_content_ghosthunt",           eEndReason = 1552 + 88,    iGenericBitset = 1499 },
+    { script = "fm_content_golden_gun",          eEndReason = 1762 + 93,    iGenericBitset = 1711 },
+    { script = "fm_content_gunrunning",          eEndReason = 5639 + 1237,  iGenericBitset = 5566 },
+    { script = "fm_content_island_dj",           eEndReason = 3451 + 495,   iGenericBitset = 3374 },
+    { script = "fm_content_island_heist",        eEndReason = 13311 + 1339, iGenericBitset = 13220 },
+    { script = "fm_content_metal_detector",      eEndReason = 1810 + 93,    iGenericBitset = 1757 },
+    { script = "fm_content_movie_props",         eEndReason = 1888 + 137,   iGenericBitset = 1833 },
+    { script = "fm_content_parachuter",          eEndReason = 1568 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_payphone_hit",        eEndReason = 5675 + 683,   iGenericBitset = 5616 },
+    { script = "fm_content_phantom_car",         eEndReason = 1577 + 83,    iGenericBitset = 1527 },
+    { script = "fm_content_pizza_delivery",      eEndReason = 1704 + 83,    iGenericBitset = 1648 },
+    { script = "fm_content_possessed_animals",   eEndReason = 1593 + 83,    iGenericBitset = 1541 },
+    { script = "fm_content_robbery",             eEndReason = 1732 + 87,    iGenericBitset = 1666 },
+    { script = "fm_content_security_contract",   eEndReason = 7136 + 1278,  iGenericBitset = 7058 },
+    { script = "fm_content_sightseeing",         eEndReason = 1822 + 84,    iGenericBitset = 1770 },
+    { script = "fm_content_skydive",             eEndReason = 3010 + 93,    iGenericBitset = 2953 },
+    { script = "fm_content_slasher",             eEndReason = 1597 + 83,    iGenericBitset = 1545 },
+    { script = "fm_content_smuggler_ops",        eEndReason = 7600 + 1270,  iGenericBitset = 7523 },
+    { script = "fm_content_smuggler_plane",      eEndReason = 1838 + 178,   iGenericBitset = 1771 },
+    { script = "fm_content_smuggler_resupply",   eEndReason = 6045 + 1271,  iGenericBitset = 5966 },
+    { script = "fm_content_smuggler_sell",       eEndReason = 4015 + 489,   iGenericBitset = 3880 },
+    { script = "fm_content_smuggler_trail",      eEndReason = 2051 + 130,   iGenericBitset = 1980 },
+    { script = "fm_content_source_research",     eEndReason = 4318 + 1195,  iGenericBitset = 4261 },
+    { script = "fm_content_stash_house",         eEndReason = 3521 + 475,   iGenericBitset = 3467 },
+    { script = "fm_content_taxi_driver",         eEndReason = 1993 + 83,    iGenericBitset = 1941 },
+    { script = "fm_content_tow_truck_work",      eEndReason = 1755 + 91,    iGenericBitset = 1702 },
+    { script = "fm_content_tuner_robbery",       eEndReason = 7313 + 1194,  iGenericBitset = 7226 },
+    { script = "fm_content_ufo_abduction",       eEndReason = 2858 + 334,   iGenericBitset = 2792 },
+    { script = "fm_content_vehicle_list",        eEndReason = 1568 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_vehrob_arena",        eEndReason = 7807 + 1285,  iGenericBitset = 7748 },
+    { script = "fm_content_vehrob_cargo_ship",   eEndReason = 7025 + 1224,  iGenericBitset = 6934 },
+    { script = "fm_content_vehrob_casino_prize", eEndReason = 9060 + 1231,  iGenericBitset = 8979 },
+    { script = "fm_content_vehrob_disrupt",      eEndReason = 4570 + 924,   iGenericBitset = 4511 },
+    { script = "fm_content_vehrob_police",       eEndReason = 8847 + 1276,  iGenericBitset = 8772 },
+    { script = "fm_content_vehrob_prep",         eEndReason = 11366 + 1272, iGenericBitset = 11265 },
+    { script = "fm_content_vehrob_scoping",      eEndReason = 3752 + 508,   iGenericBitset = 3695 },
+    { script = "fm_content_vehrob_submarine",    eEndReason = 6125 + 1137,  iGenericBitset = 6041 },
+    { script = "fm_content_vehrob_task",         eEndReason = 4773 + 1043,  iGenericBitset = 4705 },
+    { script = "fm_content_vip_contract_1",      eEndReason = 8692 + 1157,  iGenericBitset = 8619 },
+    { script = "fm_content_xmas_mugger",         eEndReason = 1620 + 83,    iGenericBitset = 1568 },
+    { script = "fm_content_xmas_truck",          eEndReason = 1461 + 91,    iGenericBitset = 1409 },
+}
+menu.action(Menu_Root, "Complete fm_content_xxx Mission", {}, "", function()
+    for _, item in pairs(fm_content_xxx) do
+        if IS_SCRIPT_RUNNING(item.script) then
+            LOCAL_SET_BIT(item.script, item.iGenericBitset + 1 + 0, 11)
+            LOCAL_SET_INT(item.script, item.eEndReason, 3)
+
+            util.toast(item.script, TOAST_ALL)
+        end
+    end
+end)
+
+
+
+
+
+
 
 ----------------------------------------
 --    Instant Finish Test
@@ -117,24 +383,8 @@ menu.action(Instant_Finish_Test, "Test Complete Vehicle Export", {}, "", functio
 end)
 
 
-menu.divider(Instant_Finish_Test, "")
 
-menu.action(Instant_Finish_Test, "Test Complete Mission", {}, "", function()
-    local script = "gb_smuggler"
-    if not IS_SCRIPT_RUNNING(script) then return end
 
-    LOCAL_SET_BIT(script, 1932 + 6 + 63 + 1 + 0 * 3 + 1 + 0, 6) -- SET_SMUGGLER_ENTITY_BIT(iSmugglerEntity, eSMUGGLERENTITYBITSET_DELIVERED)
-    LOCAL_SET_BIT(script, 1117 + 1 + 3, 16)                     -- SET_LOCAL_BIT(eLOCALBITSET_I_WON)
-    LOCAL_SET_INT(script, 1932 + 771, 3)                        -- SET_END_REASON(eENDREASON_SMUGGLER_ENTITY_DELIVERED)
-    LOCAL_SET_INT(script, 1932 + 770, 18)                       -- SET_MODE_STATE(eMODESTATE_REWARDS)
-end)
-
-menu.action(Instant_Finish_Test, "Test Complete FM_CONTENT Mission", {}, "", function()
-    local script = "fm_content_stash_house"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    INSTANT_FINISH_FM_CONTENT_MISSION(script, 3433, 3484 + 475)
-end)
 
 
 
@@ -276,89 +526,7 @@ menu.action(Test_Start_Mission, "TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME", {}, "", 
     MISC.TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(value)
 end)
 
-menu.divider(Test_Start_Mission, "")
 
-menu.action(Test_Start_Mission, "启动差事", {}, "", function()
-    local Data = {
-        iRootContentID = -590337633,
-        iMissionEnteryType = 29,
-    }
-
-
-
-    local iArrayPos = MISC.GET_CONTENT_ID_INDEX(Data.iRootContentID)
-
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].tlName
-    local tlName = GLOBAL_GET_STRING(Globals.sMissionHeaderVars + iArrayPos * 89)
-    toast(tlName)
-
-
-    -- SET_HEIST_AM_I_HEIST_LEADER_GLOBAL(TRUE)
-    ---- g_TransitionSessionNonResetVars.bAmIHeistLeader = bValue
-    GLOBAL_SET_INT(2685249 + 6357, 1)
-
-    -- SET_HEIST_NONRESET_AUTO_CONFIGURE(FALSE)
-    ---- g_TransitionSessionNonResetVars.bAutoProgressToConfigure = bNewState
-    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6360, 0)
-
-
-    local iMissionIndex = 0 -- ci_HEIST_PRE_PLAN_MISSION_0
-    local net_player_id = PLAYER.NETWORK_PLAYER_ID_TO_INT()
-
-    -- GlobalplayerBD_FM_HeistPlanning[NETWORK_PLAYER_ID_TO_INT()].iPreviousPropertyIndex = GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].propertyDetails.iCurrentlyInsideProperty
-    local iCurrentlyInsideProperty = GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 267 + 34)
-    GLOBAL_SET_INT(1877075 + 1 + net_player_id * 77 + 8, iCurrentlyInsideProperty)
-
-    -- GlobalplayerBD_FM_HeistPlanning[NETWORK_PLAYER_ID_TO_INT()].iCurrentHeistSetupIndex = iMissionIndex
-    GLOBAL_SET_INT(1877075 + 1 + net_player_id * 77 + 9, iMissionIndex)
-
-    -- g_TransitionSessionNonResetVars.iHeistSetupIdx = iMissionIndex
-    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6380, iMissionIndex)
-
-
-
-    -- Setup_My_Heist_Corona_From_ContentID(tlMissionContID)
-    local lhcMyCorona = 2635125 + 3
-
-    GLOBAL_SET_INT(lhcMyCorona, 1)
-    GLOBAL_SET_STRING(lhcMyCorona + 1, tlName)
-    GLOBAL_SET_INT(lhcMyCorona + 7, 0)
-    GLOBAL_SET_INT(lhcMyCorona + 8, 0)
-    GLOBAL_SET_INT(lhcMyCorona + 9, 0)
-    GLOBAL_SET_INT(lhcMyCorona + 10, -1)
-    GLOBAL_SET_INT(lhcMyCorona + 11, 0)
-    GLOBAL_SET_INT(lhcMyCorona + 12, 0)
-    GLOBAL_SET_INT(lhcMyCorona + 13, 0)
-
-
-
-    -- SET_FM_JOB_ENTERY_TYPE(ciMISSION_ENTERY_TYPE_XXX)
-    ---- g_iMissionEnteryType = iType
-    GLOBAL_SET_INT(g_iMissionEnteryType, Data.iMissionEnteryType)
-
-    -- SET_HEIST_CORONA_FROM_PLANNING_BOARD(TRUE)
-    ---- g_TransitionSessionNonResetVars.bCoronaLaunchFromPlanningBoard = bValue
-    GLOBAL_SET_INT(g_TransitionSessionNonResetVars + 6367, 1)
-
-    -- SET_HEIST_FLOW_TOGGLE_RENDERPHASE_STATE(ci_HEIST_BS_RP_LEADER_LAUNCHED_FROM_BOARD)
-    ---- SET_BIT(g_HeistSharedClient.iRenderphaseBitset, iRenderPhaseBit)
-    GLOBAL_SET_BIT(1933811 + 55, 0)
-    -- g_HeistSharedClient.iRenderphaseWaitCount = 0
-    GLOBAL_SET_INT(1933811 + 56, 0)
-
-    -- SET_HEIST_PREPLAN_STATE(HEIST_PRE_FLOW_UPDATE_APT_THREAD_BUFFER)
-
-    -- SET_HEIST_UPDATE_AVAILABLE(TRUE)
-    -- g_HeistPrePlanningClient.bHeistBoardUpdateReady = bValue
-    GLOBAL_SET_INT(1928268 + 1782, 1)
-    -- g_HeistPrePlanningClient.eHeistFlowState = eNewState
-    GLOBAL_SET_INT(1928268, 5)
-end)
-
-menu.toggle_loop(Test_Start_Mission, "Show mhcContentID", {}, "", function()
-    local text = GLOBAL_GET_STRING(2635125 + 3 + 1)
-    draw_text("mhcContentID: " .. text)
-end)
 
 
 
@@ -560,54 +728,6 @@ menu.toggle_loop(Job_Mission_Test, "Show Selectd Player Info", {}, "", function(
 end)
 
 
-menu.action(Job_Mission_Test, "Force Ready (Global)", {}, "", function()
-    local pid = menu.get_value(TestPlayerSelect)
-    if pid == -1 or not players.exists(pid) then
-        return
-    end
-
-    menu.trigger_commands("scripthost")
-    util.request_script_host("fmmc_launcher")
-
-
-    GLOBAL_SET_BIT(1882422 + 1 + pid * 142 + 14, 5)
-    local bHasPlayerVoted = GLOBAL_GET_INT(1882422 + 1 + pid * 142 + 31)
-    if bHasPlayerVoted == 1 then
-        bHasPlayerVoted = 0
-    elseif bHasPlayerVoted == 0 then
-        bHasPlayerVoted = 1
-    end
-    GLOBAL_SET_INT(1882422 + 1 + pid * 142 + 31, bHasPlayerVoted)
-
-    local iClientSyncID = GLOBAL_GET_INT(1845263 + 1 + pid * 877 + 96 + 31)
-    GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 96 + 31, iClientSyncID + 1)
-end)
-menu.action(Job_Mission_Test, "Force Ready (Local)", {}, "", function()
-    local pid = menu.get_value(TestPlayerSelect)
-    if pid == -1 or not players.exists(pid) then
-        return
-    end
-
-    local script = "fmmc_launcher"
-
-    menu.trigger_commands("scripthost")
-    util.request_script_host(script)
-
-    local bVoted = LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
-    if bVoted == 1 then
-        bVoted = 0
-    elseif bVoted == 0 then
-        bVoted = 1
-    end
-    LOCAL_SET_INT(script, 17208 + 845 + 1 + pid * 2 + 1, bVoted)
-
-    local iClientSyncID = LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2)
-    LOCAL_SET_INT(script, 17208 + 845 + 1 + pid * 2, iClientSyncID + 1)
-end)
-menu.toggle_loop(Job_Mission_Test, "sCoronaTimer", {}, "", function()
-    GLOBAL_SET_INT(1882422 + 1 + players.user() * 142 + 32, NETWORK.GET_NETWORK_TIME())
-end)
-
 
 
 menu.divider(Job_Mission_Test, "fm_mission_controller")
@@ -651,10 +771,6 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     draw_text(text)
 end)
 
-
-menu.toggle_loop(Job_Mission_Test, "g_bEmergencyCallsSuppressed = False", {}, "", function()
-    GLOBAL_SET_INT(33054, 0)
-end)
 
 
 
@@ -800,48 +916,6 @@ menu.toggle_loop(Script_Event_Test, "Get Network Script Event", {}, "", function
                     "Script Event Hash: %s\nFrom Player: %s\nTime: %s",
                     eventHash,
                     players.get_name(FromPlayerIndex),
-                    os.date("%Y-%m-%d %H:%M:%S", util.current_unix_time_seconds())
-                )
-
-                toast(text)
-            end
-        end
-    end
-end)
-
-
-menu.action(Script_Event_Test, "BROADCAST_DELIVERED_HANGAR_MISSION_PRODUCT", {}, "", function()
-    util.trigger_script_event(1 << players.user(),
-        {
-            446749111, -- SCRIPT_EVENT_DATA_DELIVERED_HANGAR_MISSION_PRODUCT_DATA
-            players.user(),
-            -1,
-            0,
-            7
-        })
-end)
-
-menu.divider(Script_Event_Test, "")
-
-local TransitionGamerInstruction = memory.alloc(8 * 44)
-menu.toggle_loop(Script_Event_Test, "Get NETWORK_TRANSITION_GAMER_INSTRUCTION", {}, "", function()
-    -- SCRIPT_EVENT_QUEUE_NETWORK = 1
-    local eventType = 214 -- EVENT_NETWORK_TRANSITION_GAMER_INSTRUCTION
-
-    for eventIndex = 0, SCRIPT.GET_NUMBER_OF_EVENTS(1) - 1 do
-        if SCRIPT.GET_EVENT_AT_INDEX(1, eventIndex) == eventType then
-            if SCRIPT.GET_EVENT_DATA(1, eventIndex, TransitionGamerInstruction, 44) then
-                local nInstruction = memory.read_int(TransitionGamerInstruction + 8 * 42)
-
-                local hToGamer = memory.read_int(TransitionGamerInstruction + 8 * 13)
-                local nInstructionParam = memory.read_int(TransitionGamerInstruction + 8 * 43)
-
-
-                local text = string.format(
-                    "nInstruction: %s\nhToGamer: %s\nnInstructionParam: %s\nTime: %s",
-                    nInstruction,
-                    hToGamer,
-                    nInstructionParam,
                     os.date("%Y-%m-%d %H:%M:%S", util.current_unix_time_seconds())
                 )
 

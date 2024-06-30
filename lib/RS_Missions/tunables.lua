@@ -371,6 +371,7 @@ local TunablesF = {
     ["NpcCut"] = {
         22475, -- SMUG_SELL_RONS_CUT
         24074, -- BB_SELL_MISSIONS_TONYS_CUT
+        29467, -- IH_DEDUCTION_FENCING_FEE
         29468, -- IH_DEDUCTION_PAVEL_CUT
         30334, -- TUNER_ROBBERY_CONTACT_FEE
     },

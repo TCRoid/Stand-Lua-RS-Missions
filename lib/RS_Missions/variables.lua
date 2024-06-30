@@ -122,7 +122,7 @@ FMMC_STRUCT = {
     iRootContentIDHash = g_FMMC_STRUCT + 127178,
     tl63MissionName = g_FMMC_STRUCT + 127185,
     tl31LoadedContentID = g_FMMC_STRUCT + 127465,
-    tl23NextContentID = g_FMMC_STRUCT + 127493 + 1, -- +[0~5]
+    tl23NextContentID = g_FMMC_STRUCT + 127493 + 1, -- +[0~5]*6
 
     iFixedCamera = g_FMMC_STRUCT + 155346,
     iCriticalMinimumForTeam = g_FMMC_STRUCT + 178821 + 1 -- +[0~3]
