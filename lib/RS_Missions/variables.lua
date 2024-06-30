@@ -23,7 +23,7 @@ Globals = {
 
     -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD_FM_3 = function()
-        return 1887305 + 1 + players.user() * 609
+        return 1887305 + 1 + players.user() * 610
     end,
 
     MPGlobalsAmbience = 2738934,
