@@ -26,6 +26,14 @@ Globals = {
         return 1887305 + 1 + players.user() * 610
     end,
 
+
+    -- NET_HEIST_PLANNING_GENERIC_PLAYER_BD_DATA
+    GlobalPlayerBD_NetHeistPlanningGeneric = function()
+        return 1972760 + 1 + players.user() * 27
+    end,
+
+
+    -- MPGlobalsAmbienceStruct
     MPGlobalsAmbience = 2738934,
 
 
@@ -199,7 +207,15 @@ GlobalPlayerBD_HeistIsland = {
     sConfig = function()
         -- GlobalPlayerBD_HeistIsland[NATIVE_TO_INT(sData.piLeader)].sConfig
         return 1973625 + 1 + players.user() * 53 + 5
-    end,
+    end
+}
+
+
+-- NET_HEIST_PLANNING_GENERIC_PLAYER_BD_DATA
+GlobalPlayerBD_NetHeistPlanningGeneric = {
+    stFinaleLaunchTimer = function()
+        return Globals.GlobalPlayerBD_NetHeistPlanningGeneric() + 18
+    end
 }
 
 

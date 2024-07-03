@@ -48,6 +48,312 @@ local LocalsTest = {
 }
 
 
+
+
+------------------------------------
+--    Auto Island Heist
+------------------------------------
+
+local Auto_Island_Heist <const> = menu.list(Menu_Root, "全自动佩里科岛抢劫", {}, "")
+
+
+local bTransitionSessionSkipLbAndNjvs = g_sTransitionSessionData + 702
+
+-- `fmmc_launcher`
+-- CORONA_MENU_DATA
+local _coronaMenuData = 17445
+local coronaMenuData = {
+    iCurrentSelection = _coronaMenuData + 911,
+}
+
+local _sLaunchMissionDetails = 19709
+local sLaunchMissionDetails2 = {
+    iIntroStatus = _sLaunchMissionDetails,
+    iHeistStatus = _sLaunchMissionDetails + 3,
+    iLobbyStatus = _sLaunchMissionDetails + 4,
+    iInviteScreenStatus = _sLaunchMissionDetails + 6,
+    iInCoronaStatus = _sLaunchMissionDetails + 7,
+    iBettingStatus = _sLaunchMissionDetails + 10,
+    iLoadStatus = _sLaunchMissionDetails + 11,
+
+    iMaxParticipants = _sLaunchMissionDetails + 32,
+}
+
+
+
+local AutoIslandHeistStatus <const> = {
+    Disable = 0,
+    Freemode = 1,
+    InKotsatka = 2,
+    RegisterAsCEO = 3,
+    IntroScreen = 4,
+    HeistPlanningScreen = 5,
+    InCoronaScreen = 6,
+    InMission = 7,
+    MissionEnd = 8,
+    Cleanup = 9
+}
+
+
+local AutoIslandHeist = {
+    menuAction = 0,
+    enable = false,
+    status = AutoIslandHeistStatus.Disable,
+    spawnLocation = nil,
+
+    setting = {
+        rewardValue = 2000000,
+        addRandom = true,
+        disableCut = false,
+        delay = 1500,
+        disableToast = false
+    }
+}
+
+function AutoIslandHeist.setStatus(eStatus)
+    AutoIslandHeist.status = eStatus
+end
+
+function AutoIslandHeist.getSpawnLocation()
+    return STAT_GET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"))
+end
+
+function AutoIslandHeist.setSpawnLocation(iLocation)
+    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), iLocation)
+end
+
+function AutoIslandHeist.toggleActionName(toggle)
+    if toggle then
+        menu.set_menu_name(AutoIslandHeist.menuAction, "开启 全自动佩里科岛抢劫")
+    else
+        menu.set_menu_name(AutoIslandHeist.menuAction, "停止 全自动佩里科岛抢劫")
+    end
+end
+
+function AutoIslandHeist.cleanup()
+    AutoIslandHeist.enable = false
+    AutoIslandHeist.status = AutoIslandHeistStatus.Disable
+    AutoIslandHeist.toggleActionName(true)
+end
+
+function AutoIslandHeist.toast(text)
+    if not AutoIslandHeist.setting.disableToast then
+        util.toast("[全自动佩里科岛抢劫] " .. text)
+    end
+end
+
+AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩里科岛抢劫", {}, "[仅适用于单人]", function()
+    if AutoIslandHeist.enable then
+        AutoIslandHeist.enable = false
+        return
+    end
+
+    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+        return
+    end
+    if not DOES_PLAYER_OWN_KOSATKA() then
+        util.toast("你需要拥有虎鲸")
+        return
+    end
+
+    AutoIslandHeist.toggleActionName(false)
+    AutoIslandHeist.enable = true
+    AutoIslandHeist.spawnLocation = nil
+
+    AutoIslandHeist.setStatus(AutoIslandHeistStatus.Freemode)
+
+    util.create_tick_handler(function()
+        if not AutoIslandHeist.enable then
+            AutoIslandHeist.cleanup()
+            AutoIslandHeist.toast("已停止...")
+            return false
+        end
+
+        local setting = AutoIslandHeist.setting
+        local eStatus = AutoIslandHeist.status
+
+        if eStatus == AutoIslandHeistStatus.Freemode then
+            if not IS_PLAYER_IN_KOSATKA() then
+                AutoIslandHeist.spawnLocation = AutoIslandHeist.getSpawnLocation()
+                AutoIslandHeist.setSpawnLocation(16) -- MP_SETTING_SPAWN_SUBMARINE
+                menu.trigger_commands("go inviteonly")
+
+                AutoIslandHeist.toast("切换战局到虎鲸...")
+            end
+            AutoIslandHeist.setStatus(AutoIslandHeistStatus.InKotsatka)
+        elseif eStatus == AutoIslandHeistStatus.InKotsatka then
+            if IS_IN_SESSION() then
+                if IS_PLAYER_IN_KOSATKA() then
+                    util.yield(setting.delay)
+
+                    if not IS_PLAYER_BOSS_OF_A_GANG() then
+                        menu.trigger_commands("ceostart")
+
+                        AutoIslandHeist.toast("注册为CEO...")
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.RegisterAsCEO)
+                    else
+                        if AutoIslandHeist.spawnLocation then
+                            AutoIslandHeist.setSpawnLocation(AutoIslandHeist.spawnLocation)
+                        end
+
+                        local Data = {
+                            iRootContentID = -1172878953, -- HIM_STUB
+                            iMissionType = 260,           -- FMMC_TYPE_HEIST_ISLAND_FINALE
+                            iMissionEnteryType = 67,      -- ciMISSION_ENTERY_TYPE_HEIST_ISLAND_TABLE
+                        }
+                        LAUNCH_MISSION(Data)
+
+                        AutoIslandHeist.toast("启动差事...")
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.IntroScreen)
+                    end
+                end
+            end
+        elseif eStatus == AutoIslandHeistStatus.RegisterAsCEO then
+            if IS_PLAYER_BOSS_OF_A_GANG() then
+                util.yield(setting.delay)
+
+                AutoIslandHeist.setStatus(AutoIslandHeistStatus.InKotsatka)
+            end
+        elseif eStatus == AutoIslandHeistStatus.IntroScreen then
+            local script = "fmmc_launcher"
+            if IS_SCRIPT_RUNNING(script) then
+                -- FM_MISSION_INTRO_SCREEN_MAINTAIN
+                if LOCAL_GET_INT(script, sLaunchMissionDetails2.iIntroStatus) == 3 then
+                    util.yield(setting.delay)
+
+                    LOCAL_SET_INT(script, sLaunchMissionDetails2.iMaxParticipants, 1)
+
+                    AutoIslandHeist.toast("开始游戏...")
+                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.HeistPlanningScreen)
+                end
+            end
+        elseif eStatus == AutoIslandHeistStatus.HeistPlanningScreen then
+            if IS_SCRIPT_RUNNING("heist_island_planning") then
+                local script = "fmmc_launcher"
+                if IS_SCRIPT_RUNNING(script) then
+                    -- FM_MISSION_LOAD_IN_CORONA_SCENE_COMPLETE
+                    if LOCAL_GET_INT(script, sLaunchMissionDetails2.iLoadStatus) == 2 then
+                        util.yield(setting.delay)
+
+
+                        local sConfig = GlobalPlayerBD_HeistIsland.sConfig()
+
+                        local Data = {
+                            bHardModeEnabled = false,
+                            eApproachVehicle = 6,
+                            eInfiltrationPoint = 3,
+                            eCompoundEntrance = 0,
+                            eEscapePoint = 1,
+                            eTimeOfDay = 1,
+                            eWeaponLoadout = 1,
+                            bUseSuppressors = true
+                        }
+                        GLOBAL_SET_INT(sConfig + 35, Data.eWeaponLoadout)
+                        GLOBAL_SET_BOOL(sConfig + 38, Data.bHardModeEnabled)
+                        GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_NORMAL)
+
+                        GLOBAL_SET_INT(sConfig + 39, Data.eApproachVehicle)
+                        GLOBAL_SET_INT(sConfig + 40, Data.eInfiltrationPoint)
+                        GLOBAL_SET_INT(sConfig + 41, Data.eCompoundEntrance)
+                        GLOBAL_SET_INT(sConfig + 42, Data.eEscapePoint)
+                        GLOBAL_SET_INT(sConfig + 43, Data.eTimeOfDay)
+                        GLOBAL_SET_BOOL(sConfig + 44, Data.bUseSuppressors)
+
+                        GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer() + 1, 1)
+                        GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer(), 0)
+
+                        AutoIslandHeist.toast("设置面板并继续...")
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.InCoronaScreen)
+                    end
+                end
+            end
+        elseif eStatus == AutoIslandHeistStatus.InCoronaScreen then
+            if IS_SCRIPT_RUNNING("heist_island_planning") then
+                local script = "fmmc_launcher"
+                if IS_SCRIPT_RUNNING(script) then
+                    -- FM_MISSION_IN_CORONA_SCREEN_MAINTAIN
+                    if LOCAL_GET_INT(script, sLaunchMissionDetails2.iInCoronaStatus) == 4 then
+                        util.yield(setting.delay)
+
+                        -- ciCORONA_LOBBY_START_GAME
+                        LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
+
+                        -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
+                        PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
+
+                        AutoIslandHeist.toast("准备就绪，进入任务...")
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.InMission)
+                    end
+                end
+            end
+        elseif eStatus == AutoIslandHeistStatus.InMission then
+            if IS_IN_SESSION() then
+                local script = "fm_mission_controller_2020"
+                if IS_SCRIPT_RUNNING(script) then
+                    util.yield(setting.delay + 3000)
+
+                    if AutoIslandHeist.setting.rewardValue ~= -1 then
+                        if AutoIslandHeist.setting.addRandom then
+                            AutoIslandHeist.setting.rewardValue = AutoIslandHeist.setting.rewardValue +
+                                math.random(0, 50000)
+                        end
+                        Tunables.SetIntList("IslandHeistPrimaryTargetValue", AutoIslandHeist.setting.rewardValue)
+                    end
+                    if AutoIslandHeist.setting.disableCut then
+                        Tunables.SetFloatList("NpcCut", 0)
+                    end
+                    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+
+                    -- g_sTransitionSessionData.bTransitionSessionSkipLbAndNjvs
+                    GLOBAL_SET_BOOL(bTransitionSessionSkipLbAndNjvs, true)
+
+                    AutoIslandHeist.toast("直接完成任务...")
+                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.MissionEnd)
+                end
+            end
+        elseif eStatus == AutoIslandHeistStatus.MissionEnd then
+            if not IS_SCRIPT_RUNNING("fm_mission_controller_2020") then
+                AutoIslandHeist.toast("任务已完成...")
+                AutoIslandHeist.setStatus(AutoIslandHeistStatus.Cleanup)
+            end
+        elseif eStatus == AutoIslandHeistStatus.Cleanup then
+            AutoIslandHeist.cleanup()
+            AutoIslandHeist.toast("结束...")
+            return false
+        end
+    end)
+end)
+
+menu.divider(Auto_Island_Heist, "收入")
+local Auto_Island_Heist_Reward = menu.slider(Auto_Island_Heist, "主要目标价值", { "AutoIslandHeistRewardValue" }, "",
+    -1, 2550000, AutoIslandHeist.setting.rewardValue, 50000, function(value)
+        AutoIslandHeist.setting.rewardValue = value
+    end)
+menu.add_value_replacement(Auto_Island_Heist_Reward, -1, Labels.Default)
+menu.toggle(Auto_Island_Heist, "添加随机数", {}, "主要目标价值加0 ~ 50000的随机数", function(toggle)
+    AutoIslandHeist.setting.addRandom = toggle
+end, true)
+menu.toggle(Auto_Island_Heist, "禁用NPC分红", {}, "", function(toggle)
+    AutoIslandHeist.setting.disableCut = toggle
+end)
+
+menu.divider(Auto_Island_Heist, "设置")
+menu.slider(Auto_Island_Heist, "延迟", { "AutoIslandHeistDelay" }, "到达新的状态后的等待时间",
+    0, 5000, AutoIslandHeist.setting.delay, 100, function(value)
+        AutoIslandHeist.setting.delay = value
+    end)
+menu.toggle(Auto_Island_Heist, "禁用通知提示", {}, "", function(toggle)
+    AutoIslandHeist.setting.disableToast = toggle
+end)
+
+
+
+
+
+
+
+
+
 ------------------------------------
 --    Salvage Yard Robbery
 ------------------------------------
@@ -423,11 +729,35 @@ menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
     draw_text(text)
 end)
 
+menu.toggle_loop(Freemode_Test, "CUTSCENE", {}, "", function()
+    local text = string.format(
+        "IS_CUTSCENE_PLAYING: %s\nIS_CUTSCENE_ACTIVE: %s\nIS_PLAYER_IN_CUTSCENE: %s\nNETWORK_IS_IN_MP_CUTSCENE: %s",
+        CUTSCENE.IS_CUTSCENE_PLAYING(),
+        CUTSCENE.IS_CUTSCENE_ACTIVE(),
+        NETWORK.IS_PLAYER_IN_CUTSCENE(players.user()),
+        NETWORK.NETWORK_IS_IN_MP_CUTSCENE()
+    )
+    draw_text(text)
+end)
+
+
 
 
 menu.action(Freemode_Test, "切换战局 到 虎鲸", {}, "", function()
     -- MP_SETTING_SPAWN_SUBMARINE
     STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 16)
+
+    menu.trigger_commands("go inviteonly")
+end)
+menu.action(Freemode_Test, "切换战局 到 游戏厅", {}, "", function()
+    -- MP_SETTING_SPAWN_ARCADE
+    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 15)
+
+    menu.trigger_commands("go inviteonly")
+end)
+menu.action(Freemode_Test, "切换战局 到 设施", {}, "", function()
+    -- MP_SETTING_SPAWN_DEFUNCT_BASE
+    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 11)
 
     menu.trigger_commands("go inviteonly")
 end)
@@ -540,58 +870,20 @@ local Job_Mission_Test <const> = menu.list(Menu_Root, "Job Mission Test", {}, ""
 
 
 menu.toggle_loop(Job_Mission_Test, "Show g_FMMC_STRUCT Info", {}, "", function()
-    local iRootContentID = GLOBAL_GET_INT(4718592 + 126144)
+    local iRootContentID = GLOBAL_GET_INT(FMMC_STRUCT.iRootContentIDHash)
     local iArrayPos = MISC.GET_CONTENT_ID_INDEX(iRootContentID)
 
     local text = string.format(
-        "MissionName: %s, iRootContentIDHash: %s, iArrayPos: %s\niMissionType: %s, iMissionSubType: %s, tl23NextContentID[0]: %s\niMinNumberOfTeams: %s, iMaxNumberOfTeams: %s, iNumberOfTeams: %s\niMinNumParticipants: %s, iNumParticipants: %s\niNumPlayersPerTeam[]: %s, %s, %s, %s\niCriticalMinimumForTeam[]: %s, %s, %s, %s\niCriticalMinimumForRole[1]: %s, %s, %s, %s\niCriticalMinimumForRole[2]: %s, %s, %s, %s\niMissionEndType: %s, iTargetScore: %s, iMissionTargetScore[]: %s, %s, %s, %s\niMyTeam: %s, iTeamChosen: %s",
-        GLOBAL_GET_STRING(4718592 + 126151),
+        "MissionName: %s, iRootContentIDHash: %s, iArrayPos: %s\ntl23NextContentID: %s, %s, %s\niEndCutscene: %s",
+        GLOBAL_GET_STRING(FMMC_STRUCT.tl63MissionName),
         iRootContentID,
         iArrayPos,
 
-        GLOBAL_GET_INT(4718592 + 0),
-        GLOBAL_GET_INT(4718592 + 2),
-        GLOBAL_GET_STRING(4718592 + 126459 + 1 + 0 * 6), -- tl23NextContentID
+        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 0 * 6),
+        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 1 * 6),
+        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 2 * 6),
 
-        GLOBAL_GET_INT(4718592 + 3254),
-        GLOBAL_GET_INT(4718592 + 3253),
-        GLOBAL_GET_INT(4718592 + 3252), -- iNumberOfTeams
-
-        GLOBAL_GET_INT(4718592 + 3249),
-        GLOBAL_GET_INT(4718592 + 3248),     -- iNumParticipants
-
-        GLOBAL_GET_INT(4718592 + 3255 + 1), -- iNumPlayersPerTeam
-        GLOBAL_GET_INT(4718592 + 3255 + 2),
-        GLOBAL_GET_INT(4718592 + 3255 + 3),
-        GLOBAL_GET_INT(4718592 + 3255 + 4),
-
-        GLOBAL_GET_INT(4718592 + 176675 + 1), -- iCriticalMinimumForTeam
-        GLOBAL_GET_INT(4718592 + 176675 + 2),
-        GLOBAL_GET_INT(4718592 + 176675 + 3),
-        GLOBAL_GET_INT(4718592 + 176675 + 4),
-
-        -- g_FMMC_STRUCT.iCriticalMinimumForRole[iTeam][iRole]
-        -- Global_4718592.f_176680[bVar27 /*5*/][iVar28]
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 0 + 1 + 0), -- iCriticalMinimumForRole[1]
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 0 + 1 + 1),
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 0 + 1 + 2),
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 0 + 1 + 3),
-
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 1 * 5 + 1 + 0), -- iCriticalMinimumForRole[2]
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 2 * 5 + 1 + 1),
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 3 * 5 + 1 + 2),
-        GLOBAL_GET_INT(4718592 + 176680 + 1 + 4 * 5 + 1 + 3),
-
-        GLOBAL_GET_INT(4718592 + 3274),
-        GLOBAL_GET_INT(4718592 + 3276),
-        -- g_FMMC_STRUCT.sFMMCEndConditions[iteamrepeat].iMissionTargetScore Global_4718592.f_3318[iVar0 /*25763*/].f_59
-        GLOBAL_GET_INT(4718592 + 3318 + 1 + 0 * 25763 + 59),
-        GLOBAL_GET_INT(4718592 + 3318 + 1 + 1 * 25763 + 59),
-        GLOBAL_GET_INT(4718592 + 3318 + 1 + 2 * 25763 + 59),
-        GLOBAL_GET_INT(4718592 + 3318 + 1 + 3 * 25763 + 59),
-
-        GLOBAL_GET_INT(4718592 + 3286),
-        GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 96 + 28)
+        GLOBAL_GET_INT(g_FMMC_STRUCT + 127643)
     )
 
     -- util.log(text)
@@ -604,7 +896,7 @@ menu.toggle_loop(Job_Mission_Test, "最小玩家数为1", {}, "强制任务单�
         return
     end
 
-    local iArrayPos = LOCAL_GET_INT(script, LaunchMissionDetails.iMissionVariation)
+    local iArrayPos = LOCAL_GET_INT(script, sLaunchMissionDetails.iMissionVariation)
     if iArrayPos == 0 then
         return
     end
@@ -612,7 +904,7 @@ menu.toggle_loop(Job_Mission_Test, "最小玩家数为1", {}, "强制任务单�
     -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].iMinPlayers
     if GLOBAL_GET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 69) > 1 then
         GLOBAL_SET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 69, 1)
-        LOCAL_SET_INT(script, LaunchMissionDetails.iMinPlayers, 1)
+        LOCAL_SET_INT(script, sLaunchMissionDetails.iMinPlayers, 1)
     end
 
     GLOBAL_SET_INT(FMMC_STRUCT.iMinNumParticipants, 1)
@@ -634,6 +926,45 @@ menu.click_slider(Job_Mission_Test, "设置最大团队数", {}, "", 1, 4, 2, 1,
     GLOBAL_SET_INT(FMMC_STRUCT.iMaxNumberOfTeams, value)
 end)
 
+menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", function()
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then return end
+
+    -- CHECK_TO_SEE_IF_THIS_IS_THE_LAST_STRAND_MISSION()
+    for i = 0, 5 do
+        local tl23NextContentID = GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6)
+        if tl23NextContentID ~= "" then
+            GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
+        end
+    end
+
+    -- g_FMMC_STRUCT.iCelebrationType
+    GLOBAL_SET_INT(4718592 + 178859, 5)
+
+    -- ciMISSION_CUTSCENE_ISLAND_HEIST_HS4F_DRP_OFF
+    LOCAL_SET_INT(script, 50150 + 3016, 69)    -- MISSION_HAS_VALID_MOCAP
+    LOCAL_SET_INT(script, 50150 + 2525 + 1, 0) -- SHOULD_PLAY_END_MOCAP
+
+
+
+    if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
+        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
+        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstStrandNoReset, true)
+        GLOBAL_SET_BOOL(StrandMissionData.bLastMission, true)
+    end
+
+    -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
+    LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
+
+    for i = 0, 3 do
+        -- MC_serverBD.iTeamScore[iTeam]
+        LOCAL_SET_INT(script, Locals[script].iTeamScore + i, 999999)
+    end
+
+    -- SSBOOL_TEAMx_FINISHED
+    LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12)
+end)
+
 menu.action(Job_Mission_Test, "Mission Over", { "MissionOver" }, "", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
@@ -650,11 +981,23 @@ menu.divider(Job_Mission_Test, "fmmc_launcher")
 
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
     local text = string.format(
-        "iPlayerOrder: %s\nsHeistRoles.ePlayerRoles: %s\nbLaunchTimerExpired: %s\nsClientCoronaData.iClientSyncID: %s",
-        GLOBAL_GET_INT(1928233 + 12 + 1 + 0),                        -- GlobalServerBD_HeistPlanning.iPlayerOrder[index]
-        GLOBAL_GET_INT(1928233 + 7 + 1 + 0),                         -- GlobalServerBD_HeistPlanning.sHeistRoles.ePlayerRoles[index]
-        GLOBAL_GET_INT(1930201 + 2812),                              -- g_HeistPlanningClient.bLaunchTimerExpired
-        GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 96 + 31) -- GlobalplayerBD_FM[iMyGBD].sClientCoronaData.iClientSyncID
+        "iSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\neBranchingTransitionType: %s, %s, %s\niVoteStatus: %s, iCelebrationType: %s",
+        GLOBAL_GET_INT(2684504 + 43 + 3),   -- g_sTransitionSessionData.sStrandMissionData.iSwitchState
+        GLOBAL_GET_INT(2684504 + 43),       -- g_sTransitionSessionData.sStrandMissionData.iArrayPos
+        GLOBAL_GET_BOOL(2684504 + 43 + 57), -- g_sTransitionSessionData.sStrandMissionData.bIsThisAStrandMission
+
+        -- g_sTransitionSessionData.sStrandMissionData.iBitSet
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 0),     -- ciSTRAND_BITSET_A_STRAND_MISSION_BEING_INITIALISED
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 6),     -- ciSTRAND_BITSET_MISSION_HAS_BEEN_DOWNLOADED
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 7),     -- ciSTRAND_BITSET_MISSION_READY_TO_SET_UP
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 8),     -- ciSTRAND_BITSET_MISSION_READY_TO_START_DOWNLOAD
+
+        GLOBAL_GET_INT(4718592 + 127530 + 1 + 0), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
+        GLOBAL_GET_INT(4718592 + 127530 + 1 + 1), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
+        GLOBAL_GET_INT(4718592 + 127530 + 1 + 2), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
+
+        GLOBAL_GET_INT(1919969 + 9),              -- g_sFMMCEOM.iVoteStatus
+        GLOBAL_GET_INT(4718592 + 178859)          -- g_FMMC_STRUCT.iCelebrationType
     )
 
     draw_text(text)
@@ -666,66 +1009,44 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
         return
     end
 
-    -- sLaunchMissionDetails.iMissionVariation Local_19331.f_34
-    -- sLaunchMissionDetails.iMinPlayers Local_19331.f_15
-
-    local coronaMenuData = 17208
-
-    local pid = players.user()
+    local __coronaMenuData = 17445
+    local __sLaunchMissionDetails = 19709
 
     local text = string.format(
-        "iMissionVariation: %s, iMinPlayers: %s\ncoronaClientSyncData[iPlayer].iClientSyncID: %s\ncoronaClientSyncData[iPlayer].bVoted: %s",
-        LOCAL_GET_INT(script, 19331 + 34),
-        LOCAL_GET_INT(script, 19331 + 15),
-
-        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2),
-        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
+        "iCurrentSelection: %s\niIntroStatus: %s, iLobbyStatus: %s, iInviteScreenStatus: %s, iInCoronaStatus: %s, iBettingStatus: %s, iLoadStatus: %s",
+        LOCAL_GET_INT(script, __coronaMenuData + 911), -- coronaMenuData.iCurrentSelection
+        LOCAL_GET_INT(script, __sLaunchMissionDetails),
+        LOCAL_GET_INT(script, __sLaunchMissionDetails + 4),
+        LOCAL_GET_INT(script, __sLaunchMissionDetails + 6),
+        LOCAL_GET_INT(script, __sLaunchMissionDetails + 7),
+        LOCAL_GET_INT(script, __sLaunchMissionDetails + 10),
+        LOCAL_GET_INT(script, __sLaunchMissionDetails + 11)
     )
 
     draw_text(text)
 end)
 
 
-TestPlayerSelect = menu.list_select(Job_Mission_Test, "Select Player", {}, "", {
-    { -1, "Refresh Player List" }
-}, -1, function(value)
-    if value == -1 then
-        local list_item = { { -1, "Refresh Player List" } }
-        for _, pid in pairs(players.list()) do
-            table.insert(list_item, { pid, players.get_name(pid) })
-        end
-        menu.set_list_action_options(TestPlayerSelect, list_item)
-        util.toast("Refreshed")
-        return
-    end
-end)
-menu.toggle_loop(Job_Mission_Test, "Show Selectd Player Info", {}, "", function()
-    local pid = menu.get_value(TestPlayerSelect)
-    if pid == -1 or not players.exists(pid) then
-        return
-    end
-    local player_name = players.get_name(pid)
 
-    local script = "fmmc_launcher"
-    if not IS_SCRIPT_RUNNING(script) then
+local function SET_CORONA_BIT(iCoronaBit)
+    local iBitSet = math.ceil(iCoronaBit / 32)
+    local iBitVal = iCoronaBit % 32
+
+    util.toast(string.format("iBitSet: %s, iBitVal: %s", iBitSet, iBitVal))
+
+    if iBitSet >= 9 then -- NUM_CORONA_BITSETS
         return
     end
 
-    local coronaMenuData = 17208
+    -- SET_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet[iBitSet], iBitVal)
+    -- MISC::SET_BIT(&(Global_2685444.f_1.f_2813[iVar0]), bVar1);
+    GLOBAL_SET_BIT(2685444 + 1 + 2813 + 1 + iBitSet, iBitVal)
+end
+menu.click_slider(Job_Mission_Test, "SET_CORONA_BIT", { "Test_iCoronaBit" }, "",
+    0, 200, 170, 1, function(value)
+        SET_CORONA_BIT(value)
+    end)
 
-    local text = string.format(
-        "%s\n\nbHasPlayerVoted: %s\nsClientCoronaData.iClientSyncID: %s\n\ncoronaClientSyncData[iPlayer].bVoted: %s\ncoronaClientSyncData[iPlayer].iClientSyncID: %s",
-        player_name,
-
-        GLOBAL_GET_INT(1882422 + 1 + pid * 142 + 31),
-        GLOBAL_GET_INT(1845263 + 1 + pid * 877 + 96 + 31),
-
-        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2),
-        LOCAL_GET_INT(script, 17208 + 845 + 1 + pid * 2 + 1)
-    )
-
-    draw_text(text)
-end)
 
 
 
@@ -782,18 +1103,20 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
         return
     end
 
-    local team = PLAYER.GET_PLAYER_TEAM(players.user())
+    local MC_serverBD = 50150
+    local MC_serverBD_4 = 59029
 
-    local MC_serverBD_3 = 55004
+    local iTeam = 0
+
+    -- if (uLocal_59029[Local_62290[bLocal_19370 /*275*/].f_1] == Local_50150.f_2114[Local_62290[bLocal_19370 /*275*/].f_1])
+    -- MC_serverBD_4.iCurrentHighestPriority[mc_playerBD[iPartToUse].iteam] = MC_serverBD.iMaxObjectives[mc_playerBD[iPartToUse].iteam]
+    local iMaxObjectives = 50150 + 2114
 
     local text = string.format(
-        "Team: %s\ntdObjectiveLimitTimer: %s\ntdMultiObjectiveLimitTimer: %s\ntdLimitTimer: %s\niTimerPenalty: %s\niMultiObjectiveTimeLimit: %s",
-        team,
-        LOCAL_GET_INT(script, MC_serverBD_3 + 297 + 1 + team * 2),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 306 + 1 + team * 2),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 315),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 317 + 1 + team),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 322 + 1 + team)
+        "iCurrentHighestPriority: %s, iMaxObjectives: %s\ntimerCelebPreLoadPostFxBeenPlaying: %s",
+        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam),
+        LOCAL_GET_INT(script, MC_serverBD + 2114 + 1 + iTeam),
+        LOCAL_GET_INT(script, 36804 + 1200)
     )
 
     draw_text(text)

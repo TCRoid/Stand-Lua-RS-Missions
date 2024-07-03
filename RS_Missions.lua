@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/6/30"
+local SCRIPT_VERSION <const> = "2024/7/3"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
@@ -71,7 +71,7 @@ function INSTANT_FINISH_FM_MISSION_CONTROLLER()
         end
     end
     -- (not) More than max (FMMC_MAX_STRAND_MISSIONS), get out
-    LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
+    -- LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
 
     if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
         GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
@@ -2870,7 +2870,7 @@ menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 终章", {}, "", Ta
         util.toast("你需要拥有设施")
         return
     end
-    if players.get_org_type(players.user()) == -1 then
+    if not IS_PLAYER_BOSS_OF_A_GANG() then
         util.toast("你需要注册为老大")
         return
     end
@@ -2897,7 +2897,7 @@ menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 准备任务", {}, 
         util.toast("你需要拥有设施")
         return
     end
-    if players.get_org_type(players.user()) == -1 then
+    if not IS_PLAYER_BOSS_OF_A_GANG() then
         util.toast("你需要注册为老大")
         return
     end
@@ -3211,7 +3211,7 @@ menu.list_action(Casino_Heist, "启动差事: 赌场抢劫 终章", {},
             util.toast("你需要拥有游戏厅")
             return
         end
-        if players.get_org_type(players.user()) == -1 then
+        if not IS_PLAYER_BOSS_OF_A_GANG() then
             util.toast("你需要注册为老大")
             return
         end
@@ -3307,11 +3307,11 @@ menu.action(Island_Heist, "启动差事: 佩里科岛抢劫 终章", {},
             util.toast("你需要拥有虎鲸")
             return
         end
-        if players.get_org_type(players.user()) == -1 then
+        if not IS_PLAYER_BOSS_OF_A_GANG() then
             util.toast("你需要注册为老大")
             return
         end
-        if INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) ~= 281345 then
+        if not IS_PLAYER_IN_KOSATKA() then
             util.toast("你需要在虎鲸里面")
             return
         end
@@ -3373,6 +3373,10 @@ menu.action(Island_Heist_Final_Config, "设置终章面板", {}, "", function()
     GLOBAL_SET_INT(sConfig + 43, Data.eTimeOfDay)
     GLOBAL_SET_BOOL(sConfig + 44, Data.bUseSuppressors)
     GLOBAL_SET_INT(sConfig + 45, Data.iAbilitiesBitset)
+end)
+menu.action(Island_Heist_Final_Config, "强制点击 继续 按钮", {}, "", function()
+    GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer() + 1, 1)
+    GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer(), 0)
 end)
 
 menu.divider(Island_Heist_Final_Config, "")
@@ -3522,7 +3526,7 @@ menu.list_action(Tuner_Robbery, "启动差事: 改装铺抢劫", {}, "", Tables.
         util.toast("你需要拥有改装铺")
         return
     end
-    if players.get_org_type(players.user()) == -1 then
+    if not IS_PLAYER_BOSS_OF_A_GANG() then
         util.toast("你需要注册为老大")
         return
     end
@@ -3610,7 +3614,7 @@ menu.action(Fixer_VIP, "启动差事: 别惹德瑞", {}, "", function()
         util.toast("你需要拥有事务所")
         return
     end
-    if players.get_org_type(players.user()) == -1 then
+    if not IS_PLAYER_BOSS_OF_A_GANG() then
         util.toast("你需要注册为老大")
         return
     end

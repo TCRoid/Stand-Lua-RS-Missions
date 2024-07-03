@@ -100,6 +100,16 @@ function TP_MISSION_PICKUPS_TO_ME(missionScript)
     end
 end
 
+--- @return boolean
+function IS_PLAYER_BOSS_OF_A_GANG()
+    return players.get_org_type(players.user()) ~= -1
+end
+
+--- @return boolean
+function IS_PLAYER_IN_KOSATKA()
+    return INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) == 281345
+end
+
 --------------------------------
 -- Vehicle Functions
 --------------------------------
