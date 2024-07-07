@@ -131,6 +131,10 @@ function AutoIslandHeist.toggleActionName(toggle)
 end
 
 function AutoIslandHeist.cleanup()
+    if AutoIslandHeist.spawnLocation then
+        AutoIslandHeist.setSpawnLocation(AutoIslandHeist.spawnLocation)
+    end
+
     AutoIslandHeist.enable = false
     AutoIslandHeist.status = AutoIslandHeistStatus.Disable
     AutoIslandHeist.toggleActionName(true)
@@ -154,6 +158,21 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
     if not DOES_PLAYER_OWN_KOSATKA() then
         util.toast("你需要拥有虎鲸")
         return
+    end
+
+    if AutoIslandHeist.setting.rewardValue ~= -1 then
+        -- Add random value
+        if AutoIslandHeist.setting.addRandom then
+            AutoIslandHeist.setting.rewardValue = AutoIslandHeist.setting.rewardValue +
+                math.random(0, 50000)
+        end
+
+        -- Calculate estimated reward value
+        local estimatedValue = AutoIslandHeist.setting.rewardValue
+        if not AutoIslandHeist.setting.disableCut then
+            estimatedValue = math.ceil(estimatedValue * 0.88)
+        end
+        AutoIslandHeist.toast("预计收入: " .. estimatedValue)
     end
 
     AutoIslandHeist.toggleActionName(false)
@@ -192,10 +211,6 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
                         AutoIslandHeist.toast("注册为CEO...")
                         AutoIslandHeist.setStatus(AutoIslandHeistStatus.RegisterAsCEO)
                     else
-                        if AutoIslandHeist.spawnLocation then
-                            AutoIslandHeist.setSpawnLocation(AutoIslandHeist.spawnLocation)
-                        end
-
                         local Data = {
                             iRootContentID = -1172878953, -- HIM_STUB
                             iMissionType = 260,           -- FMMC_TYPE_HEIST_ISLAND_FINALE
@@ -292,14 +307,10 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
                 if IS_SCRIPT_RUNNING(script) then
                     util.yield(setting.delay + 3000)
 
-                    if AutoIslandHeist.setting.rewardValue ~= -1 then
-                        if AutoIslandHeist.setting.addRandom then
-                            AutoIslandHeist.setting.rewardValue = AutoIslandHeist.setting.rewardValue +
-                                math.random(0, 50000)
-                        end
-                        Tunables.SetIntList("IslandHeistPrimaryTargetValue", AutoIslandHeist.setting.rewardValue)
+                    if setting.rewardValue ~= -1 then
+                        Tunables.SetIntList("IslandHeistPrimaryTargetValue", setting.rewardValue)
                     end
-                    if AutoIslandHeist.setting.disableCut then
+                    if setting.disableCut then
                         Tunables.SetFloatList("NpcCut", 0)
                     end
                     INSTANT_FINISH_FM_MISSION_CONTROLLER()
@@ -703,33 +714,64 @@ end)
 
 local Freemode_Test <const> = menu.list(Menu_Root, "Freemode Test", {}, "")
 
-menu.toggle_loop(Freemode_Test, "Show Local Info", {}, "", function()
-    local script = "tuner_property_carmod"
+menu.toggle_loop(Freemode_Test, "Show Local Info", { "t" }, "", function()
+    local script = "am_pi_menu"
     if not IS_SCRIPT_RUNNING(script) then
         return
     end
 
     local text = string.format(
-        "iCarmodSlot: %s",
-        LOCAL_GET_INT(script, 733 + 679)
+        "ePiStage: %s, bCursorAccept: %s, iCursorValueChange: %s\nbiStoreActive: %s, bGBMenuShouldRefresh: %s, biListenForDoubleTap: %s",
+        LOCAL_GET_INT(script, 1526),
+        LOCAL_GET_INT(script, 1679),
+        LOCAL_GET_INT(script, 1683),
+        LOCAL_BIT_TEST(script, 1691, 18),
+        LOCAL_GET_INT(script, 1501),
+        LOCAL_BIT_TEST(script, 1691, 31)
+
     )
 
     draw_text(text)
 end)
 
 menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
-    local iWarehouseStagger = GLOBAL_GET_INT(1882389 + 3)
-    local iWarehouse = GLOBAL_GET_INT(1845263 + 1 + players.user() * 877 + 267 + 118 + 1 + iWarehouseStagger * 3)
+    -- Global_2710523.f_8191
+    -- PIMenuData.iCurrentSelection
+
+    -- Global_2710428
+    -- g_iPIM_SubMenu
+
+    -- Global_4541816
+    -- g_iMenuCursorItem
+
+    -- Global_2672855.f_990.f_6
+    -- MPGlobals.PlayerInteractionData.iLaunchStage
+
+    -- Global_2710431
+    -- g_bPIM_ResetMenuNow
+
+    -- Global_2710523.f_8192, 1
+    -- PIMenuData.iMenuBitSet, biM_MenuSetup
+
+    -- Global_2710429
+    -- g_bPIM_SelectAvailable
+
 
     local text = string.format(
-        "iWarehouseStagger: %s\niWarehouse: %s",
-        iWarehouseStagger, iWarehouse
+        "iCurrentSelection: %s, g_iPIM_SubMenu: %s, g_iMenuCursorItem: %s\nPlayerInteractionData.iLaunchStage: %s\nbiM_MenuSetup: %s, g_bPIM_SelectAvailable:%s\niBS_PauseMenuFlags: %s",
+        GLOBAL_GET_INT(2710523 + 8191),
+        GLOBAL_GET_INT(2710428),
+        GLOBAL_GET_INT(4541816),
+        GLOBAL_GET_INT(2672855 + 990 + 6),
+        GLOBAL_BIT_TEST(2710523 + 8192, 1),
+        GLOBAL_GET_INT(2710429),
+        GLOBAL_GET_INT(1574589)
     )
 
     draw_text(text)
 end)
 
-menu.toggle_loop(Freemode_Test, "CUTSCENE", {}, "", function()
+menu.toggle_loop(Freemode_Test, "Show CUTSCENE", {}, "", function()
     local text = string.format(
         "IS_CUTSCENE_PLAYING: %s\nIS_CUTSCENE_ACTIVE: %s\nIS_PLAYER_IN_CUTSCENE: %s\nNETWORK_IS_IN_MP_CUTSCENE: %s",
         CUTSCENE.IS_CUTSCENE_PLAYING(),
@@ -739,8 +781,104 @@ menu.toggle_loop(Freemode_Test, "CUTSCENE", {}, "", function()
     )
     draw_text(text)
 end)
+menu.toggle_loop(Freemode_Test, "Show SESSION", {}, "", function()
+    local text = string.format(
+        "NETWORK_SESSION_IS_PRIVATE: %s\nNETWORK_IS_SESSION_ACTIVE: %s\nNETWORK_IS_IN_SESSION: %s\nNETWORK_IS_SESSION_STARTED: %s\nNETWORK_IS_SESSION_BUSY: %s",
+        NETWORK.NETWORK_SESSION_IS_PRIVATE(),
+        NETWORK.NETWORK_IS_SESSION_ACTIVE(),
+        NETWORK.NETWORK_IS_IN_SESSION(),
+        NETWORK.NETWORK_IS_SESSION_STARTED(),
+        NETWORK.NETWORK_IS_SESSION_BUSY()
+    )
+    draw_text(text)
+end)
 
 
+menu.action(Freemode_Test, "open CEO menu", {}, "", function()
+    local script = "am_pi_menu"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    GLOBAL_SET_INT(2710428, 116) -- Start an Organization
+    GLOBAL_SET_INT(2710523 + 8191, 0)
+
+    GLOBAL_SET_INT(2710431, 1)
+
+    -- iBoolsBitSet2, bi2_BlockRepeatWarning
+    LOCAL_SET_BIT(script, 1692, 10)
+end)
+menu.action(Freemode_Test, "注册为CEO", {}, "", function()
+    local ePiStage = 1526
+
+    local g_iPIM_SubMenu = 2710428
+    local PIMenuData = {
+        iCurrentSelection = 2710523 + 8191
+    }
+    local g_bPIM_ResetMenuNow = 2710431
+
+
+    local script = "am_pi_menu"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    -- PLAYER_CONTROL, INPUT_INTERACTION_MENU
+    PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 244, 1.0)
+
+    repeat
+        util.yield()
+    until LOCAL_GET_INT(script, ePiStage) == 1
+
+    GLOBAL_SET_INT(g_iPIM_SubMenu, 116) -- REGISTER AS A BOSS
+    GLOBAL_SET_INT(PIMenuData.iCurrentSelection, 0)
+
+    GLOBAL_SET_BOOL(g_bPIM_ResetMenuNow, true)
+
+    util.yield(50)
+
+    -- FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT
+    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 176, 1.0)
+
+    repeat
+        util.yield()
+    until GLOBAL_GET_INT(g_iPIM_SubMenu) == 27 -- Start an Organization
+    GLOBAL_SET_INT(PIMenuData.iCurrentSelection, 0)
+
+    util.yield(10)
+
+    -- FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT
+    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 176, 1.0)
+
+    util.yield(10)
+
+    -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
+    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
+
+    util.yield(10)
+
+    if LOCAL_GET_INT(script, ePiStage) == 1 then
+        -- PLAYER_CONTROL, INPUT_INTERACTION_MENU
+        PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 244, 1.0)
+    end
+end)
+
+menu.action(Freemode_Test, "切换到 邀请战局", {}, "", function()
+    local g_Private_Players_FM_SESSION_Menu_Choice = 1575035
+    local g_PauseMenuMissionCreatorData = {
+        iBS_PauseMenuFlags = 1574589
+    }
+
+    -- FM_SESSION_MENU_CHOICE_JOIN_CLOSED_INVITE_ONLY
+    GLOBAL_SET_INT(g_Private_Players_FM_SESSION_Menu_Choice, 11)
+
+    -- bsPauseRequestingTransition, bsPauseMenuRequestingNewSession
+    GLOBAL_SET_BITS(g_PauseMenuMissionCreatorData.iBS_PauseMenuFlags, 0, 5)
+
+    util.yield(200)
+
+    GLOBAL_SET_INT(g_PauseMenuMissionCreatorData.iBS_PauseMenuFlags, 0)
+end)
 
 
 menu.action(Freemode_Test, "切换战局 到 虎鲸", {}, "", function()
@@ -979,25 +1117,46 @@ end)
 
 menu.divider(Job_Mission_Test, "fmmc_launcher")
 
+local launcher_states = {
+    [0] = "FMMC_LAUNCHER_STATE_GET_UGC",
+    [1] = "FMMC_LAUNCHER_STATE_INI",
+    [2] = "FMMC_LAUNCHER_STATE_WAIT_FOR_INTRO",
+    [3] = "FMMC_LAUNCHER_STATE_RUNNING",
+    [4] = "FMMC_LAUNCHER_STATE_IN_CORONA",
+    [5] = "FMMC_LAUNCHER_STATE_RUN_PLAY_LIST",
+    [6] = "FMMC_LAUNCHER_STATE_WARP_TO_LOCATION",
+    [7] = "FMMC_LAUNCHER_STATE_IMPROMPTU_DM",
+    [8] = "FMMC_LAUNCHER_STATE_LOAD_MISSION_FOR_TRANSITION_SESSION",
+    [9] = "FMMC_LAUNCHER_STATE_INITILISE_MISSION",
+    [10] = "FMMC_LAUNCHER_STATE_RESTART_PLAYLIST"
+}
+
+
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
+    -- Global_1845281[iVar0 /*883*/].f_96
+    -- GlobalplayerBD_FM[iMyGBD].iFmLauncherGameState
+    local iFmLauncherGameState = GLOBAL_GET_INT(1845281 + 1 + players.user() * 883 + 96)
+    if launcher_states[iFmLauncherGameState] then
+        iFmLauncherGameState = launcher_states[iFmLauncherGameState]
+    end
+
+
     local text = string.format(
-        "iSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\neBranchingTransitionType: %s, %s, %s\niVoteStatus: %s, iCelebrationType: %s",
+        "iFmLauncherGameState: %s\niSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\niVoteStatus: %s, iCelebrationType: %s",
+        iFmLauncherGameState,
+
         GLOBAL_GET_INT(2684504 + 43 + 3),   -- g_sTransitionSessionData.sStrandMissionData.iSwitchState
         GLOBAL_GET_INT(2684504 + 43),       -- g_sTransitionSessionData.sStrandMissionData.iArrayPos
         GLOBAL_GET_BOOL(2684504 + 43 + 57), -- g_sTransitionSessionData.sStrandMissionData.bIsThisAStrandMission
 
         -- g_sTransitionSessionData.sStrandMissionData.iBitSet
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 0),     -- ciSTRAND_BITSET_A_STRAND_MISSION_BEING_INITIALISED
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 6),     -- ciSTRAND_BITSET_MISSION_HAS_BEEN_DOWNLOADED
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 7),     -- ciSTRAND_BITSET_MISSION_READY_TO_SET_UP
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 8),     -- ciSTRAND_BITSET_MISSION_READY_TO_START_DOWNLOAD
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 0), -- ciSTRAND_BITSET_A_STRAND_MISSION_BEING_INITIALISED
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 6), -- ciSTRAND_BITSET_MISSION_HAS_BEEN_DOWNLOADED
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 7), -- ciSTRAND_BITSET_MISSION_READY_TO_SET_UP
+        GLOBAL_BIT_TEST(2684504 + 43 + 4, 8), -- ciSTRAND_BITSET_MISSION_READY_TO_START_DOWNLOAD
 
-        GLOBAL_GET_INT(4718592 + 127530 + 1 + 0), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
-        GLOBAL_GET_INT(4718592 + 127530 + 1 + 1), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
-        GLOBAL_GET_INT(4718592 + 127530 + 1 + 2), -- g_FMMC_STRUCT.eBranchingTransitionType[i]
-
-        GLOBAL_GET_INT(1919969 + 9),              -- g_sFMMCEOM.iVoteStatus
-        GLOBAL_GET_INT(4718592 + 178859)          -- g_FMMC_STRUCT.iCelebrationType
+        GLOBAL_GET_INT(1919969 + 9),          -- g_sFMMCEOM.iVoteStatus
+        GLOBAL_GET_INT(4718592 + 178859)      -- g_FMMC_STRUCT.iCelebrationType
     )
 
     draw_text(text)

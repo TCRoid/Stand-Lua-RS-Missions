@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/3"
+local SCRIPT_VERSION <const> = "2024/7/7"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
