@@ -1012,10 +1012,12 @@ menu.toggle_loop(Job_Mission_Test, "Show g_FMMC_STRUCT Info", {}, "", function()
     local iArrayPos = MISC.GET_CONTENT_ID_INDEX(iRootContentID)
 
     local text = string.format(
-        "MissionName: %s, iRootContentIDHash: %s, iArrayPos: %s\ntl23NextContentID: %s, %s, %s\niEndCutscene: %s",
+        "MissionName: %s, iRootContentIDHash: %s, iArrayPos: %s\ntl31LoadedContentID: %s\ntl23NextContentID: %s, %s, %s\niEndCutscene: %s",
         GLOBAL_GET_STRING(FMMC_STRUCT.tl63MissionName),
         iRootContentID,
         iArrayPos,
+
+        GLOBAL_GET_STRING(FMMC_STRUCT.tl31LoadedContentID),
 
         GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 0 * 6),
         GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 1 * 6),
@@ -1077,11 +1079,11 @@ menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", functio
     end
 
     -- g_FMMC_STRUCT.iCelebrationType
-    GLOBAL_SET_INT(4718592 + 178859, 5)
+    -- GLOBAL_SET_INT(4718592 + 178859, 5)
 
     -- ciMISSION_CUTSCENE_ISLAND_HEIST_HS4F_DRP_OFF
-    LOCAL_SET_INT(script, 50150 + 3016, 69)    -- MISSION_HAS_VALID_MOCAP
-    LOCAL_SET_INT(script, 50150 + 2525 + 1, 0) -- SHOULD_PLAY_END_MOCAP
+    -- LOCAL_SET_INT(script, 50150 + 3016, 69)    -- MISSION_HAS_VALID_MOCAP
+    -- LOCAL_SET_INT(script, 50150 + 2525 + 1, 0) -- SHOULD_PLAY_END_MOCAP
 
 
 
@@ -1187,6 +1189,24 @@ end)
 
 
 
+
+
+menu.toggle_loop(Job_Mission_Test, "Show Global Info 2", {}, "", function()
+    local text = string.format(
+        "tlGlobalFinaleRContID: %s\nmhcContentID: %s\ng_HeistPlanningClient.eHeistFlowState: %s\ng_HeistPrePlanningClient.eHeistFlowState: %s",
+        GLOBAL_GET_STRING(1934536 + 10),    -- g_HeistSharedClient.tlGlobalFinaleRContID
+        GLOBAL_GET_STRING(2635126 + 3 + 1), -- g_sLocalMPHeistControl.lhcMyCorona.mhcContentID
+        GLOBAL_GET_INT(1930926 + 2768),     -- g_HeistPlanningClient.eHeistFlowState
+        GLOBAL_GET_INT(1928993)
+    )
+
+    draw_text(text)
+end)
+
+
+
+
+
 local function SET_CORONA_BIT(iCoronaBit)
     local iBitSet = math.ceil(iCoronaBit / 32)
     local iBitVal = iCoronaBit % 32
@@ -1234,22 +1254,21 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
         return
     end
 
-    local team = PLAYER.GET_PLAYER_TEAM(players.user())
+    local MC_serverBD = 19746
 
-    local MC_serverBD_3 = 26154
+    local iTeam = 0
 
     local text = string.format(
-        "Team: %s\ntdObjectiveLimitTimer: %s\ntdMultiObjectiveLimitTimer: %s\ntdLimitTimer: %s\niTimerPenalty: %s\niMultiObjectiveTimeLimit: %s",
-        team,
-        LOCAL_GET_INT(script, MC_serverBD_3 + 740 + 1 + team * 2),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 749 + 1 + team * 2),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 758),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 760 + 1 + team),
-        LOCAL_GET_INT(script, MC_serverBD_3 + 765 + 1 + team)
+        "iServerGameState: %s",
+        LOCAL_GET_INT(script, MC_serverBD)
     )
 
     draw_text(text)
 end)
+
+
+
+
 
 
 
@@ -1263,23 +1282,18 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     end
 
     local MC_serverBD = 50150
-    local MC_serverBD_4 = 59029
 
     local iTeam = 0
 
-    -- if (uLocal_59029[Local_62290[bLocal_19370 /*275*/].f_1] == Local_50150.f_2114[Local_62290[bLocal_19370 /*275*/].f_1])
-    -- MC_serverBD_4.iCurrentHighestPriority[mc_playerBD[iPartToUse].iteam] = MC_serverBD.iMaxObjectives[mc_playerBD[iPartToUse].iteam]
-    local iMaxObjectives = 50150 + 2114
-
     local text = string.format(
-        "iCurrentHighestPriority: %s, iMaxObjectives: %s\ntimerCelebPreLoadPostFxBeenPlaying: %s",
-        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam),
-        LOCAL_GET_INT(script, MC_serverBD + 2114 + 1 + iTeam),
-        LOCAL_GET_INT(script, 36804 + 1200)
+        "iServerGameState: %s",
+        LOCAL_GET_INT(script, MC_serverBD)
     )
 
     draw_text(text)
 end)
+
+
 
 
 

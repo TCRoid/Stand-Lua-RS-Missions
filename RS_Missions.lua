@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/7"
+local SCRIPT_VERSION <const> = "2024/7/8"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
@@ -2774,6 +2774,30 @@ menu.action(Apartment_Heist, "直接完成 公寓抢劫", {}, "", function()
     INSTANT_FINISH_FM_MISSION_CONTROLLER()
 end)
 
+menu.divider(Apartment_Heist, "")
+
+menu.list_action(Apartment_Heist, "启动差事: 抢劫任务 终章", {},
+    "1. 需要在公寓内部 抢劫任务面板位置\n2. 启动差事后右下角没有提示下载，就动两下", {
+        { 1, Labels.TheFleecaJob },
+        { 2, Labels.ThePrisonBreak },
+        { 3, Labels.TheHumaneLabsRaid },
+        { 4, Labels.SeriesAFunding },
+        { 5, Labels.ThePacificStandardJob }
+    }, function(value)
+        if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+            return
+        end
+
+        if not IS_PLAYER_IN_INTERIOR() then
+            util.toast("你需要在公寓内部")
+            return
+        end
+
+        local ContentID = Tables.HeistFinalContentID[value]
+        LAUNCH_APARTMENT_HEIST(ContentID)
+        util.toast("请稍等...")
+    end)
+
 
 
 
@@ -2884,7 +2908,6 @@ menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 终章", {}, "", Ta
         iMissionType = 235, -- FMMC_TYPE_FM_GANGOPS_FIN
     }
 
-    -- LAUNCH_DOOMSDAY_HEIST_MISSION(Data)
     LAUNCH_MISSION(Data)
     util.toast("请稍等...")
 end)
@@ -2911,7 +2934,6 @@ menu.list_action(Doomsday_Heist, "启动差事: 末日豪劫 准备任务", {}, 
         iMissionType = 233, -- FMMC_TYPE_FM_GANGOPS
     }
 
-    -- LAUNCH_DOOMSDAY_HEIST_MISSION(Data)
     LAUNCH_MISSION(Data)
     util.toast("请稍等...")
 end)

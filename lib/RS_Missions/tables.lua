@@ -780,6 +780,14 @@ Tables = {
         { 20, "太平洋标准银行: 摩托车", {}, "", Labels.ThePacificStandardJob },
     },
 
+    HeistFinalContentID = {
+        [1] = "_T5Vz_ZV2kiIdfzRP3fJYQ",
+        [2] = "ISSREsbrtUGrxSiLmlUCRA",
+        [3] = "82ihljX03UO9tTUoLbukSQ",
+        [4] = "qr5DtZrmrkGad_9pemY39g",
+        [5] = "tYc3SkqXTk6ia7j0lezrbQ"
+    },
+
     ---- Doomsday Heist
     GangopsAwards = {
         { 1, get_label_text("AWD_GANGOPA") },  -- All In Order II

@@ -110,6 +110,11 @@ function IS_PLAYER_IN_KOSATKA()
     return INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) == 281345
 end
 
+--- @return boolean
+function IS_PLAYER_IN_INTERIOR()
+    return INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) ~= 0
+end
+
 --------------------------------
 -- Vehicle Functions
 --------------------------------

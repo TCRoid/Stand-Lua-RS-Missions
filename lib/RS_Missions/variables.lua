@@ -48,6 +48,19 @@ Globals = {
 }
 
 
+-- GlobalPlayerBroadcastDataFM
+GlobalplayerBD_FM = {}
+
+-- PROPERTY_BROADCAST_DETAILS
+GlobalplayerBD_FM.propertyDetails = {
+    _ = 268, -- offset
+
+    iCurrentlyInsideProperty = function()
+        return Globals.GlobalplayerBD() + GlobalplayerBD_FM.propertyDetails._ + 35
+    end
+}
+
+
 -- GlobalPlayerBroadcastDataFM_3
 GlobalplayerBD_FM_3 = {
     _sMagnateGangBossData = function()
@@ -89,6 +102,7 @@ MPGlobalsAmbience = {
         iMissionVariation = Globals.MPGlobalsAmbience + 5249 + 347,
     },
 }
+
 
 
 -- CONTACT_REQUEST_GB_MISSION_LAUNCH_STRUCT
@@ -155,12 +169,20 @@ StrandMissionData = {
 }
 
 
+
 -- HEIST_CLIENT_PRE_PLANNING_LOCAL_DATA
 local _g_HeistPrePlanningClient = 1928993
 g_HeistPrePlanningClient = {
     eHeistFlowState = _g_HeistPrePlanningClient,
     iCurrentBoardDepth = _g_HeistPrePlanningClient + 1708
 }
+
+-- HEIST_CLIENT_PLANNING_LOCAL_DATA
+local _g_HeistPlanningClient = 1930926
+g_HeistPlanningClient = {
+    bHeistCoronaActive = _g_HeistPlanningClient + 2816
+}
+
 
 -- CASINO_HEIST_MISSION_CONFIGURATION_DATA
 local _g_sCasinoHeistMissionConfigData = 1964815
@@ -201,6 +223,7 @@ g_sCasinoHeistMissionConfigData = {
     bHardMode = _g_sCasinoHeistMissionConfigData + 27
 }
 
+
 -- HEIST_ISLAND_PLAYER_BD_DATA
 GlobalPlayerBD_HeistIsland = {
     -- HEIST_ISLAND_CONFIG
@@ -209,7 +232,6 @@ GlobalPlayerBD_HeistIsland = {
         return 1973625 + 1 + players.user() * 53 + 5
     end
 }
-
 
 -- NET_HEIST_PLANNING_GENERIC_PLAYER_BD_DATA
 GlobalPlayerBD_NetHeistPlanningGeneric = {
@@ -632,69 +654,37 @@ function LAUNCH_MISSION(Data)
     GLOBAL_SET_INT(Globals.GlobalplayerBD_FM() + 96, 8)
 end
 
-function LAUNCH_DOOMSDAY_HEIST_MISSION(Data)
-    local iArrayPos = MISC.GET_CONTENT_ID_INDEX(Data.iRootContentID)
+-- g_structLocalHeistControl
+local g_sLocalMPHeistControl = {
+    _ = 2635126,
+    _lhcMyCorona = 2635126 + 3,
+}
 
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].tlName
-    local tlName = GLOBAL_GET_STRING(Globals.sMissionHeaderVars + iArrayPos * 89)
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].iMaxPlayers
-    local iMaxPlayers = GLOBAL_GET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 71)
+-- g_structMyHeistCorona
+g_sLocalMPHeistControl.lhcMyCorona = {
+    mhcAvailable = g_sLocalMPHeistControl._lhcMyCorona,
+    mhcContentID = g_sLocalMPHeistControl._lhcMyCorona + 1,
+    mhcIsFinale = g_sLocalMPHeistControl._lhcMyCorona + 7,
+    mhcIsIntroCutscene = g_sLocalMPHeistControl._lhcMyCorona + 8,
+    mhcIsMidStrandCutscene = g_sLocalMPHeistControl._lhcMyCorona + 9,
+    mhcMatcID = g_sLocalMPHeistControl._lhcMyCorona + 10,
+    mhcInCorona = g_sLocalMPHeistControl._lhcMyCorona + 11,
+    mhcAlreadyTransitioned = g_sLocalMPHeistControl._lhcMyCorona + 12,
+    mhcIsTutorialHeist = g_sLocalMPHeistControl._lhcMyCorona + 13,
+}
 
+function LAUNCH_APARTMENT_HEIST(ContentID)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcAvailable, true)
+    GLOBAL_SET_STRING(g_sLocalMPHeistControl.lhcMyCorona.mhcContentID, ContentID)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcIsFinale, true)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcIsIntroCutscene, false)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcIsMidStrandCutscene, false)
+    GLOBAL_SET_INT(g_sLocalMPHeistControl.lhcMyCorona.mhcMatcID, -1) -- ILLEGAL_AT_COORDS_ID
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcInCorona, false)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcAlreadyTransitioned, false)
+    GLOBAL_SET_BOOL(g_sLocalMPHeistControl.lhcMyCorona.mhcIsTutorialHeist, false)
 
-    -- SET_TRANSITION_SESSIONS_PICKED_SPECIFIC_JOB()
-    ---- SET_BIT(g_sTransitionSessionData.iSecondBitSet, ciTRANSITION_SESSIONS_PICKED_SPECIFIC_JOB)
-    GLOBAL_SET_BIT(g_sTransitionSessionData + 2, 29)
-
-
-    -- SET_TRANSITION_SESSIONS_QUICK_MATCH_TYPE(FMMC_TYPE_XXX)
-    ---- g_sTransitionSessionData.iMissionType = iMissionType
-    GLOBAL_SET_INT(g_sTransitionSessionData + 9, Data.iMissionType)
-
-
-    -- SET_MY_TRANSITION_SESSION_CONTENT_ID(tlName)
-    ---- g_sTransitionSessionData.stFileName = stPassed
-    GLOBAL_SET_STRING(g_sTransitionSessionData + 860, tlName)
-
-    -- SET_TRANSITION_SESSIONS_QUICK_MATCH_MAX_PLAYERS(iMaxPlayers)
-    ---- g_sTransitionSessionData.iMaxPlayers = iMaxPlayers
-    GLOBAL_SET_INT(g_sTransitionSessionData + 42, iMaxPlayers)
-
-
-    -- CLEAR_TRANSITION_SESSIONS_NEED_TO_SKYCAM_UP_NOT_WARP()
-    ---- CLEAR_BIT(g_sTransitionSessionData.iSecondBitSet, ciTRANSITION_SESSIONS_NEED_TO_SKYCAM_UP_NOT_WARP)
-    GLOBAL_CLEAR_BIT(g_sTransitionSessionData + 2, 14)
-
-    -- SET_TRANSITION_SESSIONS_STARTING_QUICK_MATCH()
-    ---- SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_STARTING_QUICK_MATCH)
-    GLOBAL_SET_BIT(g_sTransitionSessionData, 5)
-    ---- SET_TRANSITION_SESSIONS_SETTING_UP_QUICKMATCH()
-    ------ SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_SETTING_UP_QUICKMATCH)
-    GLOBAL_SET_BIT(g_sTransitionSessionData, 8)
-
-    -- CLEAR_TRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM()
-    ---- CLEAR_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM)
-    GLOBAL_CLEAR_BIT(g_sTransitionSessionData, 7)
-
-    -- CLEAR_TRANSITION_SESSIONS_CORONA_CONTROLLER_MAINTAIN_CAMERA()
-    ---- CLEAR_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_CORONA_CONTROLLER_MAINTAIN_CAMERA)
-    GLOBAL_CLEAR_BIT(g_sTransitionSessionData, 15)
-
-    -- CLEAR_TRANSITION_SESSIONS_RECIEVED_FAILED_TO_LAUNCH()
-    ---- g_sTransitionSessionData.bTransitionSessionJoinFailed = FALSE
-    GLOBAL_SET_INT(g_sTransitionSessionData + 718, 0)
-
-    -- SET_TRANSITION_SESSIONS_FORCE_ME_HOST_QUICK_MATCH()
-    ---- g_sTransitionSessionData.bForceMeHost = TRUE
-    GLOBAL_SET_INT(g_sTransitionSessionData + 717, 1)
-
-
-    -- SVM_FLOW_SET_TRANSITION_SESSIONS_LAUNCHING_SMV_FROM_LAPTOP()
-    ---- SET_BIT(g_sTransitionSessionData.iThirdBitSet, ciTRANSITION_SESSIONS_LAUNCHING_SVM_FROM_LAPTOP)
-    GLOBAL_SET_BIT(g_sTransitionSessionData + 3, 4)
-
-
-    -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].iFmLauncherGameState = FMMC_LAUNCHER_STATE_LOAD_MISSION_FOR_TRANSITION_SESSION
-    GLOBAL_SET_INT(Globals.GlobalplayerBD_FM() + 95, 8)
+    GLOBAL_SET_BOOL(g_HeistPlanningClient.bHeistCoronaActive, true)
 end
 
 function INSTANT_FINISH_CASINO_HEIST_PREPS()
