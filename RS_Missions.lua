@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/8"
+local SCRIPT_VERSION <const> = "2024/7/9"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
@@ -2400,7 +2400,7 @@ menu.textslider(Freemode_Mission, "每周挑战", {},
 local Heist_Mission <const> = menu.list(Menu_Root, "抢劫任务", {}, "")
 
 
-menu.toggle_loop(Heist_Mission, "最小玩家数为1", {}, "强制任务单人可开", function()
+MissionMinPlayers = menu.toggle_loop(Heist_Mission, "最小玩家数为1", {}, "强制任务单人可开", function()
     local script = "fmmc_launcher"
     if not IS_SCRIPT_RUNNING(script) then
         return
@@ -2426,13 +2426,13 @@ menu.toggle_loop(Heist_Mission, "最小玩家数为1", {}, "强制任务单人�
     -- end
 end)
 
-local SetMissionMaxTeams = menu.toggle_loop(Heist_Mission, "最大团队数为1", {}, "用于多团队任务", function()
+MissionMaxTeams = menu.toggle_loop(Heist_Mission, "最大团队数为1", {}, "用于多团队任务", function()
     GLOBAL_SET_INT(FMMC_STRUCT.iNumberOfTeams, 1)
     GLOBAL_SET_INT(FMMC_STRUCT.iMaxNumberOfTeams, 1)
 end)
 
 menu.click_slider(Heist_Mission, "设置最大团队数", {}, "", 1, 4, 2, 1, function(value)
-    menu.set_value(SetMissionMaxTeams, false)
+    menu.set_value(MissionMaxTeams, false)
 
     GLOBAL_SET_INT(FMMC_STRUCT.iNumberOfTeams, value)
     GLOBAL_SET_INT(FMMC_STRUCT.iMaxNumberOfTeams, value)
@@ -2677,6 +2677,7 @@ end
 
 local Apartment_Heist <const> = menu.list(Heist_Mission, "公寓抢劫", {}, "")
 
+
 menu.divider(Apartment_Heist, Labels.PREP)
 
 local Apartment_Heist_Prep <const> = menu.list(Apartment_Heist, "前置编辑", {}, "跳过前置任务")
@@ -2719,7 +2720,7 @@ menu.list_action(Apartment_Heist, "完成奖章挑战", {}, "进行任务时使�
         GLOBAL_SET_INT(FMMC_STRUCT.iFixedCamera, 1)
     elseif value == 5 then
         -- Member
-        GLOBAL_SET_INT(g_TransitionSessionNonResetVars.bAmIHeistLeader, 0)
+        GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
         LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST
     end
 
@@ -2777,7 +2778,7 @@ end)
 menu.divider(Apartment_Heist, "")
 
 menu.list_action(Apartment_Heist, "启动差事: 抢劫任务 终章", {},
-    "1. 需要在公寓内部 抢劫任务面板位置\n2. 启动差事后右下角没有提示下载，就动两下", {
+    "1. 需要在公寓内部 抢劫计划面板附近\n2. 启动差事后右下角没有提示下载，就动两下", {
         { 1, Labels.TheFleecaJob },
         { 2, Labels.ThePrisonBreak },
         { 3, Labels.TheHumaneLabsRaid },
@@ -2790,6 +2791,10 @@ menu.list_action(Apartment_Heist, "启动差事: 抢劫任务 终章", {},
 
         if not IS_PLAYER_IN_INTERIOR() then
             util.toast("你需要在公寓内部")
+            return
+        end
+        if not IS_PLAYER_IN_APARTMENT_PLANNING_ROOM() then
+            util.toast("你需要在抢劫计划面板附近")
             return
         end
 

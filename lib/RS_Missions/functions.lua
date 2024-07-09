@@ -20,6 +20,13 @@ function GET_ENTITY_SCRIPT(entity)
     return string.lower(entity_script)
 end
 
+--- @param textLabel string
+--- @return boolean
+function IS_THIS_HELP_MESSAGE_BEING_DISPLAYED(textLabel)
+    HUD.BEGIN_TEXT_COMMAND_IS_THIS_HELP_MESSAGE_BEING_DISPLAYED(textLabel)
+    return HUD.END_TEXT_COMMAND_IS_THIS_HELP_MESSAGE_BEING_DISPLAYED(0) -- HELP_TEXT_SLOT_STANDARD
+end
+
 get_label_text = util.get_label_text
 
 --------------------------------
@@ -113,6 +120,16 @@ end
 --- @return boolean
 function IS_PLAYER_IN_INTERIOR()
     return INTERIOR.GET_INTERIOR_FROM_ENTITY(players.user_ped()) ~= 0
+end
+
+--- @return boolean
+function IS_PLAYER_IN_APARTMENT_PLANNING_ROOM()
+    if HUD.IS_HELP_MESSAGE_BEING_DISPLAYED() then
+        if IS_THIS_HELP_MESSAGE_BEING_DISPLAYED("HEIST_PRE_DONE2") or IS_THIS_HELP_MESSAGE_BEING_DISPLAYED("HEIST_STR_BG2") then
+            return true
+        end
+    end
+    return false
 end
 
 --------------------------------

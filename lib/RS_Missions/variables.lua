@@ -446,6 +446,8 @@ Locals = {
     ["fm_mission_controller"] = {
         iNextMission = 19746 + 1062,
         iTeamScore = 19746 + 1232 + 1, -- +[0~3]
+
+        iServerGameState = 19746,
         iServerBitSet = 19746 + 1,
         iServerBitSet1 = 19746 + 2,
 
@@ -471,6 +473,8 @@ Locals = {
     ["fm_mission_controller_2020"] = {
         iNextMission = 50150 + 1583,
         iTeamScore = 50150 + 1770 + 1, -- +[0~3]
+
+        iServerGameState = 50150,
         iServerBitSet = 50150 + 1,
         iServerBitSet1 = 50150 + 2,
 

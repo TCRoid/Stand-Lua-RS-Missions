@@ -48,13 +48,19 @@ local LocalsTest = {
 }
 
 
+local function draw_top_centred_text(text)
+    local scale = 0.6
 
+    local text_width, text_height = directx.get_text_size(text, scale)
+    local text_x = 0.5 - text_width / 2
 
-------------------------------------
---    Auto Island Heist
-------------------------------------
+    directx.draw_rect(text_x - 0.01, 0.0,
+        text_width + 0.03, text_height + 0.02,
+        { r = 0.0, g = 0.0, b = 0.0, a = 0.6 })
+    directx.draw_text(text_x, 0.01, text, ALIGN_TOP_LEFT, scale,
+        { r = 1, g = 0, b = 1, a = 1 })
+end
 
-local Auto_Island_Heist <const> = menu.list(Menu_Root, "全自动佩里科岛抢劫", {}, "")
 
 
 local bTransitionSessionSkipLbAndNjvs = g_sTransitionSessionData + 702
@@ -81,14 +87,53 @@ local sLaunchMissionDetails2 = {
 
 
 
+
+GlobalplayerBD_FM.eCoronaStatus = function()
+    return Globals.GlobalplayerBD_FM() + 193
+end
+
+g_TransitionSessionNonResetVars.sTransVars = {
+    iCoronaBitSet = 2685444 + 1 + 2813
+}
+
+g_HeistPlanningClient.bLaunchTimerExpired = 1930926 + 2812
+
+
+
+local CORONA_STATUS_ENUM = {
+    CORONA_STATUS_IDLE = 0,
+    CORONA_STATUS_INTRO = 9,
+    CORONA_STATUS_TEAM_DM = 26,
+    CORONA_STATUS_HEIST_PLANNING = 27,
+    CORONA_STATUS_GENERIC_HEIST_PLANNING = 34
+}
+
+local function GET_CORONA_STATUS()
+    return GLOBAL_GET_INT(GlobalplayerBD_FM.eCoronaStatus())
+end
+
+local function IS_PLAYER_IN_CORONA()
+    return GLOBAL_GET_INT(GlobalplayerBD_FM.eCoronaStatus()) ~= CORONA_STATUS_ENUM.CORONA_STATUS_IDLE
+end
+
+
+
+
+------------------------------------
+--    Auto Island Heist
+------------------------------------
+
+local Auto_Island_Heist <const> = menu.list(Menu_Root, "全自动佩里科岛抢劫", {}, "")
+
+
 local AutoIslandHeistStatus <const> = {
     Disable = 0,
     Freemode = 1,
     InKotsatka = 2,
     RegisterAsCEO = 3,
-    IntroScreen = 4,
-    HeistPlanningScreen = 5,
-    InCoronaScreen = 6,
+    CoronaIntro = 4,
+    CoronaHeistPlanning = 5,
+    CoronaTeamDM = 6,
     InMission = 7,
     MissionEnd = 8,
     Cleanup = 9
@@ -99,6 +144,7 @@ local AutoIslandHeist = {
     menuAction = 0,
     enable = false,
     status = AutoIslandHeistStatus.Disable,
+
     spawnLocation = nil,
 
     setting = {
@@ -106,7 +152,8 @@ local AutoIslandHeist = {
         addRandom = true,
         disableCut = false,
         delay = 1500,
-        disableToast = false
+        disableToast = false,
+        disableDraw = false
     }
 }
 
@@ -143,6 +190,12 @@ end
 function AutoIslandHeist.toast(text)
     if not AutoIslandHeist.setting.disableToast then
         util.toast("[全自动佩里科岛抢劫] " .. text)
+    end
+end
+
+function AutoIslandHeist.draw(text)
+    if not AutoIslandHeist.setting.disableDraw then
+        draw_top_centred_text("[全自动佩里科岛抢劫] " .. text)
     end
 end
 
@@ -190,6 +243,7 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
 
         local setting = AutoIslandHeist.setting
         local eStatus = AutoIslandHeist.status
+        local statusText = ""
 
         if eStatus == AutoIslandHeistStatus.Freemode then
             if not IS_PLAYER_IN_KOSATKA() then
@@ -219,7 +273,7 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
                         LAUNCH_MISSION(Data)
 
                         AutoIslandHeist.toast("启动差事...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.IntroScreen)
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaIntro)
                     end
                 end
             end
@@ -229,25 +283,27 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
 
                 AutoIslandHeist.setStatus(AutoIslandHeistStatus.InKotsatka)
             end
-        elseif eStatus == AutoIslandHeistStatus.IntroScreen then
+        elseif eStatus == AutoIslandHeistStatus.CoronaIntro then
+            statusText = "等待差事加载..."
+
             local script = "fmmc_launcher"
             if IS_SCRIPT_RUNNING(script) then
-                -- FM_MISSION_INTRO_SCREEN_MAINTAIN
-                if LOCAL_GET_INT(script, sLaunchMissionDetails2.iIntroStatus) == 3 then
+                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_INTRO then
                     util.yield(setting.delay)
 
                     LOCAL_SET_INT(script, sLaunchMissionDetails2.iMaxParticipants, 1)
 
                     AutoIslandHeist.toast("开始游戏...")
-                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.HeistPlanningScreen)
+                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaHeistPlanning)
                 end
             end
-        elseif eStatus == AutoIslandHeistStatus.HeistPlanningScreen then
+        elseif eStatus == AutoIslandHeistStatus.CoronaHeistPlanning then
+            statusText = "等待继续..."
+
             if IS_SCRIPT_RUNNING("heist_island_planning") then
                 local script = "fmmc_launcher"
                 if IS_SCRIPT_RUNNING(script) then
-                    -- FM_MISSION_LOAD_IN_CORONA_SCENE_COMPLETE
-                    if LOCAL_GET_INT(script, sLaunchMissionDetails2.iLoadStatus) == 2 then
+                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_GENERIC_HEIST_PLANNING then
                         util.yield(setting.delay)
 
 
@@ -278,51 +334,55 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
                         GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer(), 0)
 
                         AutoIslandHeist.toast("设置面板并继续...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.InCoronaScreen)
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaTeamDM)
                     end
                 end
             end
-        elseif eStatus == AutoIslandHeistStatus.InCoronaScreen then
-            if IS_SCRIPT_RUNNING("heist_island_planning") then
-                local script = "fmmc_launcher"
-                if IS_SCRIPT_RUNNING(script) then
-                    -- FM_MISSION_IN_CORONA_SCREEN_MAINTAIN
-                    if LOCAL_GET_INT(script, sLaunchMissionDetails2.iInCoronaStatus) == 4 then
-                        util.yield(setting.delay)
+        elseif eStatus == AutoIslandHeistStatus.CoronaTeamDM then
+            local script = "fmmc_launcher"
+            if IS_SCRIPT_RUNNING(script) then
+                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_TEAM_DM then
+                    util.yield(setting.delay)
 
-                        -- ciCORONA_LOBBY_START_GAME
-                        LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
+                    -- ciCORONA_LOBBY_START_GAME
+                    LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
 
-                        -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
-                        PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
+                    -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
+                    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
 
-                        AutoIslandHeist.toast("准备就绪，进入任务...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.InMission)
-                    end
+                    AutoIslandHeist.toast("准备就绪，进入任务...")
+                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.InMission)
                 end
             end
         elseif eStatus == AutoIslandHeistStatus.InMission then
+            statusText = "等待任务开始..."
+
             if IS_IN_SESSION() then
                 local script = "fm_mission_controller_2020"
                 if IS_SCRIPT_RUNNING(script) then
-                    util.yield(setting.delay + 3000)
+                    -- GAME_STATE_RUNNING
+                    if LOCAL_GET_INT(script, Locals[script].iServerGameState) == 6 then
+                        util.yield(setting.delay + 3000)
 
-                    if setting.rewardValue ~= -1 then
-                        Tunables.SetIntList("IslandHeistPrimaryTargetValue", setting.rewardValue)
+                        if setting.rewardValue ~= -1 then
+                            Tunables.SetIntList("IslandHeistPrimaryTargetValue", setting.rewardValue)
+                        end
+                        if setting.disableCut then
+                            Tunables.SetFloatList("NpcCut", 0)
+                        end
+                        INSTANT_FINISH_FM_MISSION_CONTROLLER()
+
+                        -- g_sTransitionSessionData.bTransitionSessionSkipLbAndNjvs
+                        GLOBAL_SET_BOOL(bTransitionSessionSkipLbAndNjvs, true)
+
+                        AutoIslandHeist.toast("直接完成任务...")
+                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.MissionEnd)
                     end
-                    if setting.disableCut then
-                        Tunables.SetFloatList("NpcCut", 0)
-                    end
-                    INSTANT_FINISH_FM_MISSION_CONTROLLER()
-
-                    -- g_sTransitionSessionData.bTransitionSessionSkipLbAndNjvs
-                    GLOBAL_SET_BOOL(bTransitionSessionSkipLbAndNjvs, true)
-
-                    AutoIslandHeist.toast("直接完成任务...")
-                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.MissionEnd)
                 end
             end
         elseif eStatus == AutoIslandHeistStatus.MissionEnd then
+            statusText = "等待任务结束..."
+
             if not IS_SCRIPT_RUNNING("fm_mission_controller_2020") then
                 AutoIslandHeist.toast("任务已完成...")
                 AutoIslandHeist.setStatus(AutoIslandHeistStatus.Cleanup)
@@ -331,6 +391,10 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
             AutoIslandHeist.cleanup()
             AutoIslandHeist.toast("结束...")
             return false
+        end
+
+        if statusText ~= "" then
+            AutoIslandHeist.draw(statusText)
         end
     end)
 end)
@@ -356,7 +420,247 @@ menu.slider(Auto_Island_Heist, "延迟", { "AutoIslandHeistDelay" }, "到达新�
 menu.toggle(Auto_Island_Heist, "禁用通知提示", {}, "", function(toggle)
     AutoIslandHeist.setting.disableToast = toggle
 end)
+menu.toggle(Auto_Island_Heist, "禁用绘制提示文本", {}, "", function(toggle)
+    AutoIslandHeist.setting.disableDraw = toggle
+end)
 
+
+
+
+
+------------------------------------
+--    Auto Apartment Heist
+------------------------------------
+
+local Auto_Apartment_Heist <const> = menu.list(Menu_Root, "全自动公寓抢劫", {}, "")
+
+
+local AutoApartmentHeistStatus <const> = {
+    Disable = 0,
+    InPlanningRoom = 1,
+    CoronaIntro = 2,
+    CoronaHeistPlanning = 3,
+    CoronaTeamDM = 4,
+    InMission = 5,
+    MissionEnd = 6,
+    Cleanup = 7
+}
+
+
+local AutoApartmentHeist = {
+    menuAction = 0,
+    enable = false,
+    status = AutoApartmentHeistStatus.Disable,
+
+    minPlayers = false,
+    maxTeams = false,
+
+    setting = {
+        delay = 1500,
+        disableToast = false,
+        disableDraw = false
+    }
+}
+
+function AutoApartmentHeist.processHeistAward()
+    for _, item in pairs(Tables.HeistAwardsStats) do
+        STAT_SET_INT(item[1], 268435455)
+        STAT_SET_BOOL(item[2], false)
+    end
+
+    local script = "fm_mission_controller"
+
+    -- Ultimate Challenge
+    GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_HARD)
+    -- First Person
+    GLOBAL_SET_INT(FMMC_STRUCT.iFixedCamera, 1)
+    -- Member
+    GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
+    LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST
+end
+
+function AutoApartmentHeist.setStatus(eStatus)
+    AutoApartmentHeist.status = eStatus
+end
+
+function AutoApartmentHeist.toggleActionName(toggle)
+    if toggle then
+        menu.set_menu_name(AutoApartmentHeist.menuAction, "开启 全自动公寓抢劫")
+    else
+        menu.set_menu_name(AutoApartmentHeist.menuAction, "停止 全自动公寓抢劫")
+    end
+end
+
+function AutoApartmentHeist.cleanup()
+    menu.set_value(MissionMinPlayers, AutoApartmentHeist.minPlayers)
+    menu.set_value(MissionMaxTeams, AutoApartmentHeist.maxTeams)
+
+    AutoApartmentHeist.enable = false
+    AutoApartmentHeist.status = AutoApartmentHeistStatus.Disable
+    AutoApartmentHeist.toggleActionName(true)
+end
+
+function AutoApartmentHeist.toast(text)
+    if not AutoApartmentHeist.setting.disableToast then
+        util.toast("[全自动公寓抢劫] " .. text)
+    end
+end
+
+function AutoApartmentHeist.draw(text)
+    if not AutoApartmentHeist.setting.disableDraw then
+        draw_top_centred_text("[全自动公寓抢劫] " .. text)
+    end
+end
+
+AutoApartmentHeist.menuAction = menu.action(Auto_Apartment_Heist, "开启 全自动公寓抢劫", {},
+    "[仅适用于单人]\n同时完成所有奖章挑战, 可获得1400多万\n1. 需要在公寓内部 抢劫计划面板附近\n2. 启动差事后右下角没有提示下载，就动两下\n3. 如果精英挑战没有完成就增加延迟", function()
+        if AutoApartmentHeist.enable then
+            AutoApartmentHeist.enable = false
+            return
+        end
+
+        if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
+            return
+        end
+        if not IS_PLAYER_IN_INTERIOR() then
+            util.toast("你需要在公寓内部")
+            return
+        end
+        if not IS_PLAYER_IN_APARTMENT_PLANNING_ROOM() then
+            util.toast("你需要在抢劫计划面板附近")
+            return
+        end
+
+        AutoApartmentHeist.minPlayers = menu.get_value(MissionMinPlayers)
+        AutoApartmentHeist.maxTeams = menu.get_value(MissionMaxTeams)
+
+        menu.set_value(MissionMinPlayers, true)
+        menu.set_value(MissionMaxTeams, true)
+
+        AutoApartmentHeist.toggleActionName(false)
+        AutoApartmentHeist.enable = true
+
+        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.InPlanningRoom)
+
+        util.create_tick_handler(function()
+            if not AutoApartmentHeist.enable then
+                AutoApartmentHeist.cleanup()
+                AutoApartmentHeist.toast("已停止...")
+                return false
+            end
+
+            local setting = AutoApartmentHeist.setting
+            local eStatus = AutoApartmentHeist.status
+            local statusText = ""
+
+            if eStatus == AutoApartmentHeistStatus.InPlanningRoom then
+                local ContentID = "tYc3SkqXTk6ia7j0lezrbQ"
+                LAUNCH_APARTMENT_HEIST(ContentID)
+
+                AutoApartmentHeist.toast("启动差事...")
+                AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaIntro)
+            elseif eStatus == AutoApartmentHeistStatus.CoronaIntro then
+                statusText = "等待差事加载... (右下角没有提示下载就动两下)"
+
+                local script = "fmmc_launcher"
+                if IS_SCRIPT_RUNNING(script) then
+                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_INTRO then
+                        util.yield(setting.delay)
+
+                        LOCAL_SET_INT(script, sLaunchMissionDetails2.iMaxParticipants, 1)
+
+                        GLOBAL_SET_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 0)   -- CORONA_HEIST_CUTSCENE_HAS_BEEN_VALIDATED
+                        GLOBAL_CLEAR_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 1) -- CORONA_HEIST_FINALE_CUTSCENE_CAN_PLAY
+
+                        AutoApartmentHeist.toast("开始游戏...")
+                        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaHeistPlanning)
+                    end
+                end
+            elseif eStatus == AutoApartmentHeistStatus.CoronaHeistPlanning then
+                statusText = "等待继续..."
+
+                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_HEIST_PLANNING then
+                    util.yield(setting.delay)
+
+                    GLOBAL_SET_BOOL(g_HeistPlanningClient.bLaunchTimerExpired, true)
+
+                    AutoApartmentHeist.toast("继续...")
+                    AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaTeamDM)
+                end
+            elseif eStatus == AutoApartmentHeistStatus.CoronaTeamDM then
+                local script = "fmmc_launcher"
+                if IS_SCRIPT_RUNNING(script) then
+                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_TEAM_DM then
+                        util.yield(setting.delay)
+
+                        -- ciCORONA_LOBBY_START_GAME
+                        LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
+
+                        -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
+                        PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
+
+                        AutoApartmentHeist.toast("准备就绪，进入任务...")
+                        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.InMission)
+                    end
+                end
+            elseif eStatus == AutoApartmentHeistStatus.InMission then
+                statusText = "等待任务开始..."
+
+                if IS_IN_SESSION() then
+                    local script = "fm_mission_controller"
+                    if IS_SCRIPT_RUNNING(script) then
+                        -- GAME_STATE_RUNNING
+                        if LOCAL_GET_INT(script, Locals[script].iServerGameState) == 9 then
+                            util.yield(setting.delay + 1000)
+
+                            AutoApartmentHeist.processHeistAward()
+                            INSTANT_FINISH_FM_MISSION_CONTROLLER()
+
+                            AutoApartmentHeist.toast("直接完成任务...")
+                            AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.MissionEnd)
+                        end
+                    end
+                end
+            elseif eStatus == AutoApartmentHeistStatus.MissionEnd then
+                statusText = "等待任务结束..."
+
+                if not IS_SCRIPT_RUNNING("fm_mission_controller") then
+                    AutoApartmentHeist.toast("任务已完成...")
+                    AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.Cleanup)
+                end
+            elseif eStatus == AutoApartmentHeistStatus.Cleanup then
+                AutoApartmentHeist.cleanup()
+                AutoApartmentHeist.toast("结束...")
+                return false
+            end
+
+            if statusText ~= "" then
+                AutoApartmentHeist.draw(statusText)
+            end
+        end)
+    end)
+
+
+menu.divider(Auto_Apartment_Heist, "设置")
+menu.slider(Auto_Apartment_Heist, "延迟", { "AutoApartmentHeistDelay" }, "到达新的状态后的等待时间",
+    0, 5000, AutoApartmentHeist.setting.delay, 100, function(value)
+        AutoApartmentHeist.setting.delay = value
+    end)
+menu.toggle(Auto_Apartment_Heist, "禁用通知提示", {}, "", function(toggle)
+    AutoApartmentHeist.setting.disableToast = toggle
+end)
+menu.toggle(Auto_Apartment_Heist, "禁用绘制提示文本", {}, "", function(toggle)
+    AutoApartmentHeist.setting.disableDraw = toggle
+end)
+
+menu.divider(Auto_Apartment_Heist, "")
+menu.action(Auto_Apartment_Heist, "清除奖章挑战记录", {}, "", function()
+    for _, item in pairs(Tables.HeistAwardsStats) do
+        STAT_SET_INT(item[1], 0)
+        STAT_SET_BOOL(item[2], false)
+    end
+    util.toast("完成！")
+end)
 
 
 
@@ -794,20 +1098,7 @@ menu.toggle_loop(Freemode_Test, "Show SESSION", {}, "", function()
 end)
 
 
-menu.action(Freemode_Test, "open CEO menu", {}, "", function()
-    local script = "am_pi_menu"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
 
-    GLOBAL_SET_INT(2710428, 116) -- Start an Organization
-    GLOBAL_SET_INT(2710523 + 8191, 0)
-
-    GLOBAL_SET_INT(2710431, 1)
-
-    -- iBoolsBitSet2, bi2_BlockRepeatWarning
-    LOCAL_SET_BIT(script, 1692, 10)
-end)
 menu.action(Freemode_Test, "注册为CEO", {}, "", function()
     local ePiStage = 1526
 
@@ -862,7 +1153,6 @@ menu.action(Freemode_Test, "注册为CEO", {}, "", function()
         PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 244, 1.0)
     end
 end)
-
 menu.action(Freemode_Test, "切换到 邀请战局", {}, "", function()
     local g_Private_Players_FM_SESSION_Menu_Choice = 1575035
     local g_PauseMenuMissionCreatorData = {
@@ -1116,36 +1406,68 @@ end)
 
 
 
-
 menu.divider(Job_Mission_Test, "fmmc_launcher")
 
-local launcher_states = {
-    [0] = "FMMC_LAUNCHER_STATE_GET_UGC",
-    [1] = "FMMC_LAUNCHER_STATE_INI",
-    [2] = "FMMC_LAUNCHER_STATE_WAIT_FOR_INTRO",
-    [3] = "FMMC_LAUNCHER_STATE_RUNNING",
-    [4] = "FMMC_LAUNCHER_STATE_IN_CORONA",
-    [5] = "FMMC_LAUNCHER_STATE_RUN_PLAY_LIST",
-    [6] = "FMMC_LAUNCHER_STATE_WARP_TO_LOCATION",
-    [7] = "FMMC_LAUNCHER_STATE_IMPROMPTU_DM",
-    [8] = "FMMC_LAUNCHER_STATE_LOAD_MISSION_FOR_TRANSITION_SESSION",
-    [9] = "FMMC_LAUNCHER_STATE_INITILISE_MISSION",
-    [10] = "FMMC_LAUNCHER_STATE_RESTART_PLAYLIST"
+
+local CORONA_STATUS = {
+    [0] = "CORONA_STATUS_IDLE",
+    [1] = "CORONA_STATUS_CAN_START",
+    [2] = "CORONA_STATUS_WALK_IN",
+    [3] = "CORONA_STATUS_JOIN_HOST",
+    [4] = "CORONA_STATUS_MatC_HAND_SHAKE",
+    [5] = "CORONA_STATUS_INIT_CORONA",
+    [6] = "CORONA_STATUS_INIT_TRAN_SCRIPT",
+    [7] = "CORONA_STATUS_GET_DATA_SETUP_TRAN",
+    [8] = "CORONA_STATUS_SETUP_VARS",
+    [9] = "CORONA_STATUS_INTRO",
+    [10] = "CORONA_STATUS_LOBBY",
+    [11] = "CORONA_STATUS_H2H_LOBBY",
+    [12] = "CORONA_STATUS_LEADERBOARD",
+    [13] = "CORONA_STATUS_JOINED_PLAYERS",
+    [14] = "CORONA_STATUS_LOCAL_PLAYERS",
+    [15] = "CORONA_STATUS_LAST_JOB_PLAYERS",
+    [16] = "CORONA_STATUS_LAST_HEIST_PLAYERS",
+    [17] = "CORONA_STATUS_FRIENDS",
+    [18] = "CORONA_STATUS_CREW_MEMBERS",
+    [19] = "CORONA_STATUS_MATCHED_PLAYERS",
+    [20] = "CORONA_LAUNCH_TRANSITION",
+    [21] = "CORONA_STATUS_BALANCE_AND_LOAD",
+    [22] = "CORONA_STATUS_SCTV_HOLDING",
+    [23] = "CORONA_STATUS_SCTV_PROPERTY_CAM",
+    [24] = "CORONA_STATUS_IN_CORONA",
+    [25] = "CORONA_STATUS_IN_GENERIC_JOB_CORONA",
+    [26] = "CORONA_STATUS_TEAM_DM",
+    [27] = "CORONA_STATUS_HEIST_PLANNING",
+    [28] = "CORONA_STATUS_HEIST_PLANNING_CUTSCENE",
+    [29] = "CORONA_STATUS_HEIST_CUTSCENE",
+    [30] = "CORONA_STATUS_HEIST_TUTORIAL_CUTSCENE",
+    [31] = "CORONA_STATUS_FLOW_CUTSCENE",
+    [32] = "CORONA_STATUS_GANG_OPS_HEIST_PLANNING",
+    [33] = "CORONA_STATUS_CASINO_HEIST_PLANNING",
+    [34] = "CORONA_STATUS_GENERIC_HEIST_PLANNING",
+    [35] = "CORONA_STATUS_BETTING",
+    [36] = "CORONA_STATUS_WAIT_FOR_CASH_TRANSACTION",
+    [37] = "CORONA_STATUS_KICKED",
+    [38] = "CORONA_STATUS_RESET_POSITION",
+    [39] = "CORONA_STATUS_WARP_TO_SAFE_LOC",
+    [40] = "CORONA_STATUS_WALK_OUT",
+    [41] = "CORONA_STATUS_LAUNCH",
+    [42] = "CORONA_STATUS_WAIT_FOR_ACTIVE",
+    [43] = "CORONA_STATUS_QUIT"
 }
 
-
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
-    -- Global_1845281[iVar0 /*883*/].f_96
-    -- GlobalplayerBD_FM[iMyGBD].iFmLauncherGameState
-    local iFmLauncherGameState = GLOBAL_GET_INT(1845281 + 1 + players.user() * 883 + 96)
-    if launcher_states[iFmLauncherGameState] then
-        iFmLauncherGameState = launcher_states[iFmLauncherGameState]
+    -- Global_1845281[PLAYER::PLAYER_ID() /*883*/].f_193
+    -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].eCoronaStatus
+    local eCoronaStatus = GLOBAL_GET_INT(1845281 + 1 + players.user() * 883 + 193)
+    if CORONA_STATUS[eCoronaStatus] then
+        eCoronaStatus = CORONA_STATUS[eCoronaStatus]
     end
 
 
     local text = string.format(
-        "iFmLauncherGameState: %s\niSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\niVoteStatus: %s, iCelebrationType: %s",
-        iFmLauncherGameState,
+        "eCoronaStatus: %s\niSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\niVoteStatus: %s, iCelebrationType: %s",
+        eCoronaStatus,
 
         GLOBAL_GET_INT(2684504 + 43 + 3),   -- g_sTransitionSessionData.sStrandMissionData.iSwitchState
         GLOBAL_GET_INT(2684504 + 43),       -- g_sTransitionSessionData.sStrandMissionData.iArrayPos
@@ -1189,8 +1511,6 @@ end)
 
 
 
-
-
 menu.toggle_loop(Job_Mission_Test, "Show Global Info 2", {}, "", function()
     local text = string.format(
         "tlGlobalFinaleRContID: %s\nmhcContentID: %s\ng_HeistPlanningClient.eHeistFlowState: %s\ng_HeistPrePlanningClient.eHeistFlowState: %s",
@@ -1205,7 +1525,7 @@ end)
 
 
 
-
+local iCoronaBitSet = 2685444 + 1 + 2813
 
 local function SET_CORONA_BIT(iCoronaBit)
     local iBitSet = math.ceil(iCoronaBit / 32)
@@ -1225,6 +1545,8 @@ menu.click_slider(Job_Mission_Test, "SET_CORONA_BIT", { "Test_iCoronaBit" }, "",
     0, 200, 170, 1, function(value)
         SET_CORONA_BIT(value)
     end)
+
+
 
 
 
