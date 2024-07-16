@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/9"
+local SCRIPT_VERSION <const> = "2024/7/16"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3258"
 
@@ -4002,31 +4002,46 @@ menu.textslider(Stat_Doomsday_Heist, "解锁莱斯特免费移除通缉", {}, ""
 end)
 
 ------------------------
--- Packed Stat Bool
+-- Weapons
 ------------------------
 
-local Packed_Stat_Bool = menu.list(Stat_Options, "PACKED_STAT_BOOL", {}, "")
+local Stat_Weapons = menu.list(Stat_Options, "武器", {}, "")
 
-menu.textslider(Packed_Stat_Bool, get_label_text("WT_CANDYCANE"), {}, "", {
-    "True", "False"
+menu.textslider(Stat_Weapons, get_label_text("WT_CANDYCANE"), {}, "", {
+    "获得", "移除"
 }, function(value)
     if value == 1 then
         SET_PACKED_STAT_BOOL_CODE(42249, true)
+        WEAPON.GIVE_DELAYED_WEAPON_TO_PED(players.user_ped(), util.joaat("WEAPON_CANDYCANE"), 9999, false)
     else
         SET_PACKED_STAT_BOOL_CODE(42249, false)
+        WEAPON.REMOVE_WEAPON_FROM_PED(players.user_ped(), util.joaat("WEAPON_CANDYCANE"))
     end
-    util.toast("写入完成!")
+    util.toast("完成!")
 end)
-menu.textslider(Packed_Stat_Bool, get_label_text("WT_SNOWLNCHR"), {}, "", {
-    "True", "False"
+menu.textslider(Stat_Weapons, get_label_text("WT_SNOWLNCHR"), {}, "", {
+    "获得", "移除"
 }, function(value)
     if value == 1 then
         SET_PACKED_STAT_BOOL_CODE(42148, true)
+        WEAPON.GIVE_DELAYED_WEAPON_TO_PED(players.user_ped(), util.joaat("WEAPON_SNOWLAUNCHER"), 9999, false)
     else
         SET_PACKED_STAT_BOOL_CODE(42148, false)
+        WEAPON.REMOVE_WEAPON_FROM_PED(players.user_ped(), util.joaat("WEAPON_SNOWLAUNCHER"))
     end
-    util.toast("写入完成!")
+    util.toast("完成!")
 end)
+menu.textslider(Stat_Weapons, get_label_text("WT_HAZARDCAN"), {}, "", {
+    "移除"
+}, function(value)
+    if value == 1 then
+        WEAPON.REMOVE_WEAPON_FROM_PED(players.user_ped(), util.joaat("WEAPON_HAZARDCAN"))
+        STAT_SET_INT(ADD_MP_INDEX("HAZARDCAN_FM_AMMO_CURRENT"), 0)
+    end
+    util.toast("完成!")
+end)
+
+
 
 
 
