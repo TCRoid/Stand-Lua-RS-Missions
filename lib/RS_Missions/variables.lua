@@ -388,10 +388,6 @@ Locals = {
         iGenericBitset = 7820,
         eEndReason = 7884 + 1253
     },
-    ["fm_content_stash_house"] = {
-        iGenericBitset = 3467,
-        eEndReason = 3521 + 475
-    },
     ["fm_content_auto_shop_delivery"] = {
         iGenericBitset = 1518,
         eEndReason = 1572 + 83,
@@ -401,6 +397,16 @@ Locals = {
         iGenericBitset = 1518,
         eEndReason = 1574 + 83,
         iMissionEntityBitSet = 1574 + 2 + 5
+    },
+    ["fm_content_stash_house"] = {
+        iGenericBitset = 3467,
+        eEndReason = 3521 + 475
+    },
+    ["fm_content_daily_bounty"] = {
+        iBitSet = 2533 + 369,
+
+        eEndReason = 2533 + 325,
+        iGenericBitset = 2480
     },
 
     ["fm_content_island_heist"] = {

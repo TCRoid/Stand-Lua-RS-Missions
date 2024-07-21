@@ -44,7 +44,7 @@ local LocalsTest = {
 
         eEndReason = 1893 + 137,
         iGenericBitset = 1835
-    }
+    },
 }
 
 
@@ -740,7 +740,6 @@ menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 终章", {}, "",
             if SalvageYardRobberyVars.challengeCompleted then
                 func(script)
             end
-
             LOCAL_SET_BIT(script, LocalsTest[script].iGenericBitset + 1 + 0, 11)
             LOCAL_SET_INT(script, LocalsTest[script].eEndReason, 3)
         end
@@ -1227,19 +1226,26 @@ local Test_Start_Mission <const> = menu.list(Menu_Root, "Start Mission Test", {}
 
 menu.toggle_loop(Test_Start_Mission, "Show Global Info", {}, "", function()
     local text = string.format(
-        "%s",
-        "-1"
+        "iMissionToLaunch: %s\niMission: %s, iVariation: %s",
+        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()),
+        GLOBAL_GET_INT(g_sContactRequestGBMissionLaunch.iType),
+        GLOBAL_GET_INT(g_sContactRequestGBMissionLaunch.iVariation)
     )
 
     draw_text(text)
 end)
+menu.toggle_loop(Test_Start_Mission, "Monitor iMissionToLaunch", {}, "", function()
+    if GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()) ~= -1 then
+        toast(GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()))
+    end
+end)
 
 menu.divider(Test_Start_Mission, "Freemode Mission")
 
-menu.click_slider(Test_Start_Mission, "Request FMMC_TYPE Mission", { "fmmcReq" }, "", 0, 310, 0, 1, function(value)
+menu.click_slider(Test_Start_Mission, "Request FMMC_TYPE Mission", { "fmmcReq" }, "", 0, 400, 0, 1, function(value)
     SET_CONTACT_REQUEST_GB_MISSION_LAUNCH_DATA(value)
 end)
-menu.click_slider(Test_Start_Mission, "Start FMMC_TYPE Mission", { "fmmcStart" }, "", 0, 310, 0, 1, function(value)
+menu.click_slider(Test_Start_Mission, "Start FMMC_TYPE Mission", { "fmmcStart" }, "", 0, 400, 0, 1, function(value)
     GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(value)
 end)
 

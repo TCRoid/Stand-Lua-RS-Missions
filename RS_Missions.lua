@@ -8,9 +8,9 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/16"
+local SCRIPT_VERSION <const> = "2024/7/21"
 
-local SUPPORT_GAME_VERSION <const> = "1.69-3258"
+local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
 local DEBUG <const> = true
 
@@ -2009,35 +2009,6 @@ end)
 
 
 ------------------------------------
---    Stash House
-------------------------------------
-
-local Stash_House <const> = menu.list(Freemode_Mission, get_label_text("SH_BIGM_T"), {}, "")
-
-menu.action(Stash_House, "传送到 藏匿屋", {}, "", function()
-    local blip = HUD.GET_NEXT_BLIP_INFO_ID(845)
-    if HUD.DOES_BLIP_EXIST(blip) then
-        local coords = HUD.GET_BLIP_COORDS(blip)
-        TELEPORT(coords)
-    else
-        util.toast("未在地图上找到 藏匿屋")
-    end
-end)
-menu.action(Stash_House, Labels.LaunchMission, {}, "", function()
-    -- FMMC_TYPE_STASH_HOUSE
-    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(308)
-end)
-menu.action(Stash_House, "直接完成 藏匿屋", {}, "", function()
-    local script = "fm_content_stash_house"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-    INSTANT_FINISH_FM_CONTENT_MISSION(script)
-end)
-
-
-
-------------------------------------
 --    Auto Shop Service
 ------------------------------------
 
@@ -2369,6 +2340,69 @@ end)
 
 
 
+
+
+
+menu.divider(Freemode_Mission, "")
+
+------------------------------------
+--    Daily Missions
+------------------------------------
+
+local Daily_Missions <const> = menu.list(Freemode_Mission, "每日任务", {}, "")
+
+-- Stash House
+menu.divider(Daily_Missions, get_label_text("DSH_BLP_LOC"))
+
+menu.action(Daily_Missions, "传送到 藏匿屋", {}, "", function()
+    local blip = HUD.GET_NEXT_BLIP_INFO_ID(845)
+    if HUD.DOES_BLIP_EXIST(blip) then
+        local coords = HUD.GET_BLIP_COORDS(blip)
+        TELEPORT(coords)
+    else
+        util.toast("未在地图上找到 藏匿屋")
+    end
+end)
+menu.action(Daily_Missions, Labels.LaunchMission, {}, "", function()
+    -- FMMC_TYPE_STASH_HOUSE
+    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(308)
+end)
+menu.action(Daily_Missions, "直接完成 藏匿屋", {}, "", function()
+    local script = "fm_content_stash_house"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+    INSTANT_FINISH_FM_CONTENT_MISSION(script)
+end)
+
+
+-- Madrazo Hits
+menu.divider(Daily_Missions, get_label_text("BTHIT_B_LAUN"))
+
+menu.action(Daily_Missions, "传送到 玛德拉索雇凶", {}, "", function()
+    local blip = HUD.GET_NEXT_BLIP_INFO_ID(886)
+    if HUD.DOES_BLIP_EXIST(blip) then
+        local coords = HUD.GET_BLIP_COORDS(blip)
+        TELEPORT(coords)
+    else
+        util.toast("未在地图上找到 玛德拉索雇凶")
+    end
+end)
+menu.action(Daily_Missions, Labels.LaunchMission, {}, "", function()
+    -- _FMMC_TYPE_DAILY_BOUNTY
+    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(338)
+end)
+menu.action(Daily_Missions, "直接完成 玛德拉索雇凶", {}, "", function()
+    local script = "fm_content_daily_bounty"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    -- You successfully used the weapon of choice.
+    LOCAL_SET_BIT(script, Locals[script].iBitSet + 1 + 0, 4)
+
+    INSTANT_FINISH_FM_CONTENT_MISSION(script)
+end)
 
 
 
@@ -4041,8 +4075,62 @@ menu.textslider(Stat_Weapons, get_label_text("WT_HAZARDCAN"), {}, "", {
     util.toast("完成!")
 end)
 
+------------------------
+-- Packed Stat Editor
+------------------------
 
+local Packed_Stat_Editor = menu.list(Stat_Options, "Packed Stat Editor", {}, "")
 
+local PackedStatEditor = {
+    index = 0,
+    type = 1
+}
+
+menu.slider(Packed_Stat_Editor, "Stat Code Index", { "PackedStatIndex" }, "",
+    0, 16777216, 0, 1, function(value)
+        PackedStatEditor.index = value
+    end)
+menu.list_select(Packed_Stat_Editor, "Type", {}, "", {
+    { 1, "int" },
+    { 2, "bool" }
+}, 1, function(value)
+    PackedStatEditor.type = value
+
+    if value == 1 then
+        menu.set_visible(PackedStatEditor.intValue, true)
+        menu.set_visible(PackedStatEditor.boolValue, false)
+    else
+        menu.set_visible(PackedStatEditor.boolValue, true)
+        menu.set_visible(PackedStatEditor.intValue, false)
+    end
+end)
+menu.action(Packed_Stat_Editor, "Read", {}, "", function()
+    if PackedStatEditor.type == 1 then
+        local value = GET_PACKED_STAT_INT_CODE(PackedStatEditor.index)
+        menu.set_value(PackedStatEditor.intValue, value)
+    else
+        local value = GET_PACKED_STAT_BOOL_CODE(PackedStatEditor.index)
+        menu.set_value(PackedStatEditor.boolValue, value)
+    end
+end)
+
+menu.divider(Packed_Stat_Editor, "Value")
+
+PackedStatEditor.intValue = menu.slider(Packed_Stat_Editor, "Int", { "PackedStatIntValue" }, "",
+    HIGHEST_INT, LOWEST_INT, 0, 1, function(value) end)
+
+PackedStatEditor.boolValue = menu.toggle(Packed_Stat_Editor, "Bool", {}, "", function(toggle) end)
+menu.set_visible(PackedStatEditor.boolValue, false)
+
+menu.action(Packed_Stat_Editor, "Write", {}, "", function()
+    if PackedStatEditor.type == 1 then
+        local value = menu.get_value(PackedStatEditor.intValue)
+        SET_PACKED_STAT_INT_CODE(PackedStatEditor.index, value)
+    else
+        local value = menu.get_value(PackedStatEditor.boolValue)
+        SET_PACKED_STAT_BOOL_CODE(PackedStatEditor.index, value)
+    end
+end)
 
 
 
