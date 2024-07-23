@@ -1,5 +1,5 @@
 -- Game Variables
--- 1.69-3258
+-- 1.69-3274
 
 --------------------------------
 --  Tunables
@@ -377,6 +377,8 @@ local TunablesF = {
     },
     ["HIGH_ROCKSTAR_MISSIONS_MODIFIER"] = 2403,
     ["LOW_ROCKSTAR_MISSIONS_MODIFIER"] = 2407,
+
+    ["XP_MULTIPLIER"] = 1,
 }
 
 g_sMPTunables = 262145

@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/21"
+local SCRIPT_VERSION <const> = "2024/7/23"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
@@ -73,10 +73,10 @@ function INSTANT_FINISH_FM_MISSION_CONTROLLER()
     -- (not) More than max (FMMC_MAX_STRAND_MISSIONS), get out
     -- LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
 
-    if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstStrandNoReset, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bLastMission, true)
+    if GLOBAL_GET_BOOL(sStrandMissionData.bIsThisAStrandMission) then
+        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstMission, true)
+        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstStrandNoReset, true)
+        GLOBAL_SET_BOOL(sStrandMissionData.bLastMission, true)
     end
 
     -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
@@ -146,6 +146,12 @@ function GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(iVariation, iSubvariation, iL
     end
 end
 
+--- @param timer integer
+function SET_NET_TIMER_STARTED_AND_EXPIRED(timer)
+    GLOBAL_SET_INT(timer + 1, 1) -- bInitialisedTimer
+    GLOBAL_SET_INT(timer, 0)     -- Timer
+end
+
 START_APP = {
     TERRORBYTE = function()
         -- GLOBAL_SET_BOOL(Globals.bBrowserVisible, true)
@@ -205,9 +211,9 @@ function toast(text)
     util.toast(text, TOAST_ALL)
 end
 
-----------------------------------------------------------
---                   MENU START
-----------------------------------------------------------
+----------------------------------------------------------------
+--                        MENU START
+----------------------------------------------------------------
 
 local Menu_Root <const> = menu.my_root()
 
@@ -233,9 +239,9 @@ end)
 
 
 
---------------------------------
---    Business Mission
---------------------------------
+------------------------------------------------------
+--                BUSINESS MISSION
+------------------------------------------------------
 
 local Business_Mission <const> = menu.list(Menu_Root, "资产任务", {}, "")
 
@@ -860,7 +866,6 @@ end)
 
 
 
-
 --------------------------------
 --    Nightclub
 --------------------------------
@@ -1159,7 +1164,6 @@ end)
 
 
 
-
 --------------------------------
 --    Vehicle Cargo
 --------------------------------
@@ -1283,6 +1287,7 @@ menu.toggle_loop(Vehicle_Cargo, "设置出售价值", {}, "", function()
 end, function()
     Tunables.RestoreIntDefaults("ImpExpSellOffer")
 end)
+
 
 
 --------------------------------
@@ -1633,8 +1638,9 @@ end
 
 
 
-
-
+------------------------------------------------------
+--                FREEMODE MISSION
+------------------------------------------------------
 
 local Freemode_Mission <const> = menu.list(Menu_Root, "自由模式任务", {}, "")
 
@@ -1857,6 +1863,7 @@ end, function()
 end)
 
 
+
 ----------------------------------------
 --    Fooligan Jobs
 ----------------------------------------
@@ -1938,51 +1945,7 @@ menu.textslider(Casino_Work, Labels.LaunchMission, {}, "", {
 end)
 
 menu.action(Casino_Work, "直接完成 赌场工作", {}, "", function()
-    local script = "gb_casino"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    local eMissionVariation = LOCAL_GET_INT(script, 2845 + 1321)
-    if eMissionVariation == 14 then -- CSV_TRACKING_CHIPS
-        for i = 0, 4 do
-            -- SET_FIND_ITEM_BIT(iChip, eFINDITEMBITSET_COLLECTED)
-            LOCAL_SET_BIT(script, 2845 + 1573 + 1 + i, 1)
-        end
-    end
-
-    local iNumEntitiesThisVariation = LOCAL_GET_INT(script, 2845 + 1541)
-    local partId = NETWORK.NETWORK_GET_PARTICIPANT_INDEX(players.user())
-    for i = 0, iNumEntitiesThisVariation - 1, 1 do
-        -- SET_MISSION_ENTITY_BIT(iMissionEntity, eMISSIONENTITYBITSET_DELIVERED)
-        LOCAL_SET_BIT(script, 2845 + 63 + 1 + i * 3 + 1 + 0, 4)
-
-        -- SET_MISSION_ENTITY_CLIENT_BIT(iMissionEntity, NETWORK_GET_PARTICIPANT_INDEX(playerID), eMISSIONENTITYCLIENTBITSET_MY_GANG_DELIVERED_MISSION_ENTITY)
-        LOCAL_SET_BIT(script, 4517 + 1 + partId * 266 + 9 + 1 + i * 3 + 1 + 1, 3)
-    end
-
-    LOCAL_SET_INT(script, 2845 + 1324, 3)  -- SET_END_REASON(eENDREASON_MISSION_ENTITY_DELIVERED)
-    LOCAL_SET_INT(script, 2845 + 1323, 33) -- SET_MODE_STATE(eMODESTATE_REWARDS)
-end)
-
-
-menu.toggle_loop(Casino_Work, "Show Info", {}, "", function()
-    local script = "gb_casino"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    local eMissionVariation = LOCAL_GET_INT(script, 2845 + 1321)
-    local iNumEntitiesThisVariation = LOCAL_GET_INT(script, 2845 + 1541)
-    local partId = NETWORK.NETWORK_GET_PARTICIPANT_INDEX(players.user())
-
-    local text = string.format(
-        "eMissionVariation: %s\niNumEntitiesThisVariation: %s\npartId: %s",
-
-        eMissionVariation, iNumEntitiesThisVariation, partId
-    )
-
-    draw_text(text)
+    INSTANT_FINISH_CASINO_WORK()
 end)
 
 
@@ -2167,7 +2130,6 @@ end)
 
 
 
-
 ------------------------------------
 --    Time Trial
 ------------------------------------
@@ -2335,8 +2297,66 @@ end)
 --    Salvage Yard Robbery
 ------------------------------------
 
--- local Salvage_Yard_Robbery <const> = menu.list(Freemode_Mission, get_label_text("SCOUT_BIG_START"), {}, "")
+local Salvage_Yard_Robbery <const> = menu.list(Freemode_Mission, get_label_text("SCOUT_BIG_START"), {}, "")
 
+local SalvageYardRobberyVars = {
+    challengeCompleted = true
+}
+
+local SalvageYardRobberyChallenge = {
+    ["fm_content_vehrob_arena"] = function(script)
+        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 17, 18)
+    end,
+    ["fm_content_vehrob_cargo_ship"] = function(script)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 31)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 0, 1) -- 32, 33
+    end,
+    ["fm_content_vehrob_casino_prize"] = function(script)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 24, 25, 26)
+    end,
+    ["fm_content_vehrob_police"] = function(script)
+        for i = 0, 2 do
+            LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition + i, 1)
+        end
+    end,
+    ["fm_content_vehrob_submarine"] = function(script)
+        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
+        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 9, 10) -- 41, 42
+    end
+}
+
+menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 前置任务", {}, "", function()
+    local script_list = {
+        "fm_content_vehrob_scoping",
+        "fm_content_vehrob_prep",
+        "fm_content_vehrob_task",
+        "fm_content_vehrob_disrupt"
+    }
+
+    for script, item in pairs(script_list) do
+        if IS_SCRIPT_RUNNING(script) then
+            INSTANT_FINISH_FM_CONTENT_MISSION(script)
+        end
+    end
+end)
+
+menu.divider(Salvage_Yard_Robbery, Labels.FINALE)
+
+menu.toggle(Salvage_Yard_Robbery, get_label_text("SAL23_ENDS_CHAL"), {}, "", function(toggle)
+    SalvageYardRobberyVars.challengeCompleted = toggle
+end, true)
+
+menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 终章", {}, "", function()
+    for script, func in pairs(SalvageYardRobberyChallenge) do
+        if IS_SCRIPT_RUNNING(script) then
+            if SalvageYardRobberyVars.challengeCompleted then
+                func(script)
+            end
+            INSTANT_FINISH_FM_CONTENT_MISSION(script)
+        end
+    end
+end)
 
 
 
@@ -2399,7 +2419,7 @@ menu.action(Daily_Missions, "直接完成 玛德拉索雇凶", {}, "", function(
     end
 
     -- You successfully used the weapon of choice.
-    LOCAL_SET_BIT(script, Locals[script].iBitSet + 1 + 0, 4)
+    LOCAL_SET_BIT(script, Locals[script].iMissionBitSet + 1 + 0, 4)
 
     INSTANT_FINISH_FM_CONTENT_MISSION(script)
 end)
@@ -2427,9 +2447,11 @@ menu.textslider(Freemode_Mission, "每周挑战", {},
 
 
 
---------------------------------
---    Heist Mission
---------------------------------
+
+
+------------------------------------------------------
+--                HEIST MISSION
+------------------------------------------------------
 
 local Heist_Mission <const> = menu.list(Menu_Root, "抢劫任务", {}, "")
 
@@ -2836,6 +2858,11 @@ menu.list_action(Apartment_Heist, "启动差事: 抢劫任务 终章", {},
         LAUNCH_APARTMENT_HEIST(ContentID)
         util.toast("请稍等...")
     end)
+
+menu.action(Apartment_Heist, "跳过动画", {}, "点击 开始游戏 之前使用", function()
+    GLOBAL_SET_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 0)   -- CORONA_HEIST_CUTSCENE_HAS_BEEN_VALIDATED
+    GLOBAL_CLEAR_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 1) -- CORONA_HEIST_FINALE_CUTSCENE_CAN_PLAY
+end)
 
 
 
@@ -3436,8 +3463,7 @@ menu.action(Island_Heist_Final_Config, "设置终章面板", {}, "", function()
     GLOBAL_SET_INT(sConfig + 45, Data.iAbilitiesBitset)
 end)
 menu.action(Island_Heist_Final_Config, "强制点击 继续 按钮", {}, "", function()
-    GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer() + 1, 1)
-    GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer(), 0)
+    SET_NET_TIMER_STARTED_AND_EXPIRED(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer())
 end)
 
 menu.divider(Island_Heist_Final_Config, "")
@@ -3757,9 +3783,10 @@ end)
 
 
 
---------------------------------
---    Tunable Options
---------------------------------
+
+------------------------------------------------------
+--                TUNABLE OPTIONS
+------------------------------------------------------
 
 local Tunable_Options <const> = menu.list(Menu_Root, "可调整项", {}, "")
 
@@ -3822,6 +3849,13 @@ end, function()
     Tunables.RestoreIntDefaults("DisableBusinessRaid")
 end)
 
+menu.toggle_loop(Tunable_Options, "获得经验倍率为0", {}, "避免升级太快:(", function()
+    Tunables.SetFloat("XP_MULTIPLIER", 0)
+end, function()
+    Tunables.RestoreFloatDefault("XP_MULTIPLIER")
+end)
+
+
 
 menu.divider(Tunable_Options, "")
 menu.toggle(Tunable_Options, "禁止可调整项自动刷新", { "DisableRefreshTunable" }, "禁止切换战局后可调整项恢复为默认值", function(toggle)
@@ -3847,9 +3881,12 @@ end)
 
 
 
---------------------------------
---    Stat Options
---------------------------------
+
+
+
+------------------------------------------------------
+--                STAT OPTIONS
+------------------------------------------------------
 
 local Stat_Options <const> = menu.list(Menu_Root, "统计数据选项", {}, "")
 
@@ -4139,6 +4176,19 @@ end)
 
 
 
+------------------------------------------------------
+--                AUTOMATIC HEIST
+------------------------------------------------------
+
+require("RS_Missions.AutomaticHeist")
+
+
+
+
+
+
+
+
 menu.divider(Menu_Root, "")
 
 menu.action(Menu_Root, "跳过破解小游戏", { "SkipHackingMinigame" }, "所有的破解、骇入、钻孔等", function()
@@ -4155,6 +4205,89 @@ menu.action(Menu_Root, "移除NPC分红", {}, "切换战局会失效", function(
     Tunables.SetIntList("NpcCut", 0)
     Tunables.SetFloatList("NpcCut", 0)
 end)
+
+
+local fm_content_xxx = {
+    { script = "fm_content_acid_lab_sell",       eEndReason = 5483 + 1294,  iGenericBitset = 5418 },
+    { script = "fm_content_acid_lab_setup",      eEndReason = 3348 + 541,   iGenericBitset = 3294 },
+    { script = "fm_content_acid_lab_source",     eEndReason = 7654 + 1162,  iGenericBitset = 7577 },
+    { script = "fm_content_ammunation",          eEndReason = 2079 + 204,   iGenericBitset = 2025 },
+    { script = "fm_content_armoured_truck",      eEndReason = 1902 + 113,   iGenericBitset = 1836 },
+    { script = "fm_content_auto_shop_delivery",  eEndReason = 1572 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_bank_shootout",       eEndReason = 2209 + 221,   iGenericBitset = 2138 },
+    { script = "fm_content_bar_resupply",        eEndReason = 2275 + 287,   iGenericBitset = 2219 },
+    { script = "fm_content_bicycle_time_trial",  eEndReason = 2942 + 83,    iGenericBitset = 2886 },
+    { script = "fm_content_bike_shop_delivery",  eEndReason = 1574 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_bounty_targets",      eEndReason = 7019 + 1251,  iGenericBitset = 6941 },
+    { script = "fm_content_business_battles",    eEndReason = 5257 + 1138,  iGenericBitset = 5186 },
+    { script = "fm_content_cargo",               eEndReason = 5830 + 1148,  iGenericBitset = 5761 },
+    { script = "fm_content_cerberus",            eEndReason = 1589 + 91,    iGenericBitset = 1539 },
+    { script = "fm_content_chop_shop_delivery",  eEndReason = 1893 + 137,   iGenericBitset = 1835 },
+    { script = "fm_content_clubhouse_contracts", eEndReason = 6639 + 1255,  iGenericBitset = 6573 },
+    { script = "fm_content_club_management",     eEndReason = 5207 + 775,   iGenericBitset = 5148 },
+    { script = "fm_content_club_odd_jobs",       eEndReason = 1794 + 83,    iGenericBitset = 1738 },
+    { script = "fm_content_club_source",         eEndReason = 3540 + 674,   iGenericBitset = 3467 },
+    { script = "fm_content_convoy",              eEndReason = 2736 + 437,   iGenericBitset = 2672 },
+    { script = "fm_content_crime_scene",         eEndReason = 1948 + 151,   iGenericBitset = 1892 },
+    { script = "fm_content_daily_bounty",        eEndReason = 2533 + 325,   iGenericBitset = 2480 },
+    { script = "fm_content_dispatch_work",       eEndReason = 4856 + 755,   iGenericBitset = 4797 },
+    { script = "fm_content_drug_lab_work",       eEndReason = 7884 + 1253,  iGenericBitset = 7820 },
+    { script = "fm_content_drug_vehicle",        eEndReason = 1762 + 115,   iGenericBitset = 1707 },
+    { script = "fm_content_export_cargo",        eEndReason = 2200 + 191,   iGenericBitset = 2146 },
+    { script = "fm_content_ghosthunt",           eEndReason = 1552 + 88,    iGenericBitset = 1499 },
+    { script = "fm_content_golden_gun",          eEndReason = 1762 + 93,    iGenericBitset = 1711 },
+    { script = "fm_content_gunrunning",          eEndReason = 5639 + 1237,  iGenericBitset = 5566 },
+    { script = "fm_content_island_dj",           eEndReason = 3451 + 495,   iGenericBitset = 3374 },
+    { script = "fm_content_island_heist",        eEndReason = 13311 + 1339, iGenericBitset = 13220 },
+    { script = "fm_content_metal_detector",      eEndReason = 1810 + 93,    iGenericBitset = 1757 },
+    { script = "fm_content_movie_props",         eEndReason = 1888 + 137,   iGenericBitset = 1833 },
+    { script = "fm_content_parachuter",          eEndReason = 1568 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_payphone_hit",        eEndReason = 5675 + 683,   iGenericBitset = 5616 },
+    { script = "fm_content_phantom_car",         eEndReason = 1577 + 83,    iGenericBitset = 1527 },
+    { script = "fm_content_pizza_delivery",      eEndReason = 1704 + 83,    iGenericBitset = 1648 },
+    { script = "fm_content_possessed_animals",   eEndReason = 1593 + 83,    iGenericBitset = 1541 },
+    { script = "fm_content_robbery",             eEndReason = 1732 + 87,    iGenericBitset = 1666 },
+    { script = "fm_content_security_contract",   eEndReason = 7136 + 1278,  iGenericBitset = 7058 },
+    { script = "fm_content_sightseeing",         eEndReason = 1822 + 84,    iGenericBitset = 1770 },
+    { script = "fm_content_skydive",             eEndReason = 3010 + 93,    iGenericBitset = 2953 },
+    { script = "fm_content_slasher",             eEndReason = 1597 + 83,    iGenericBitset = 1545 },
+    { script = "fm_content_smuggler_ops",        eEndReason = 7600 + 1270,  iGenericBitset = 7523 },
+    { script = "fm_content_smuggler_plane",      eEndReason = 1838 + 178,   iGenericBitset = 1771 },
+    { script = "fm_content_smuggler_resupply",   eEndReason = 6045 + 1271,  iGenericBitset = 5966 },
+    { script = "fm_content_smuggler_sell",       eEndReason = 4015 + 489,   iGenericBitset = 3880 },
+    { script = "fm_content_smuggler_trail",      eEndReason = 2051 + 130,   iGenericBitset = 1980 },
+    { script = "fm_content_source_research",     eEndReason = 4318 + 1195,  iGenericBitset = 4261 },
+    { script = "fm_content_stash_house",         eEndReason = 3521 + 475,   iGenericBitset = 3467 },
+    { script = "fm_content_taxi_driver",         eEndReason = 1993 + 83,    iGenericBitset = 1941 },
+    { script = "fm_content_tow_truck_work",      eEndReason = 1755 + 91,    iGenericBitset = 1702 },
+    { script = "fm_content_tuner_robbery",       eEndReason = 7313 + 1194,  iGenericBitset = 7226 },
+    { script = "fm_content_ufo_abduction",       eEndReason = 2858 + 334,   iGenericBitset = 2792 },
+    { script = "fm_content_vehicle_list",        eEndReason = 1568 + 83,    iGenericBitset = 1518 },
+    { script = "fm_content_vehrob_arena",        eEndReason = 7807 + 1285,  iGenericBitset = 7748 },
+    { script = "fm_content_vehrob_cargo_ship",   eEndReason = 7025 + 1224,  iGenericBitset = 6934 },
+    { script = "fm_content_vehrob_casino_prize", eEndReason = 9060 + 1231,  iGenericBitset = 8979 },
+    { script = "fm_content_vehrob_disrupt",      eEndReason = 4570 + 924,   iGenericBitset = 4511 },
+    { script = "fm_content_vehrob_police",       eEndReason = 8847 + 1276,  iGenericBitset = 8772 },
+    { script = "fm_content_vehrob_prep",         eEndReason = 11366 + 1272, iGenericBitset = 11265 },
+    { script = "fm_content_vehrob_scoping",      eEndReason = 3752 + 508,   iGenericBitset = 3695 },
+    { script = "fm_content_vehrob_submarine",    eEndReason = 6125 + 1137,  iGenericBitset = 6041 },
+    { script = "fm_content_vehrob_task",         eEndReason = 4773 + 1043,  iGenericBitset = 4705 },
+    { script = "fm_content_vip_contract_1",      eEndReason = 8692 + 1157,  iGenericBitset = 8619 },
+    { script = "fm_content_xmas_mugger",         eEndReason = 1620 + 83,    iGenericBitset = 1568 },
+    { script = "fm_content_xmas_truck",          eEndReason = 1461 + 91,    iGenericBitset = 1409 },
+}
+menu.action(Menu_Root, "直接完成 fm_content 自由模式任务", {}, "可以完成大部分的自由模式任务\n主要是新出的那些任务", function()
+    for _, item in pairs(fm_content_xxx) do
+        if IS_SCRIPT_RUNNING(item.script) then
+            LOCAL_SET_BIT(item.script, item.iGenericBitset + 1 + 0, 11)
+            LOCAL_SET_INT(item.script, item.eEndReason, 3)
+
+            util.toast(item.script, TOAST_ALL)
+        end
+    end
+end)
+
+
 
 
 
@@ -5207,6 +5340,8 @@ IslandHeistPrepVars.Secondary.LootValue["H4LOOT_PAINT_V"] = menu.slider(Island_H
     0, 10000000, 0, 10000, function(value) end)
 
 --#endregion
+
+
 
 
 

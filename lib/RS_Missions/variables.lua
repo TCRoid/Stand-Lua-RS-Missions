@@ -1,9 +1,9 @@
 -- Game Variables
--- 1.69-3258
+-- 1.69-3274
 
---------------------------------
--- Globals
---------------------------------
+----------------------------------------------
+--                GLOBALS
+----------------------------------------------
 
 Globals = {
     -- GlobalplayerBD[NATIVE_TO_INT(PLAYER_ID())]
@@ -27,11 +27,6 @@ Globals = {
     end,
 
 
-    -- NET_HEIST_PLANNING_GENERIC_PLAYER_BD_DATA
-    GlobalPlayerBD_NetHeistPlanningGeneric = function()
-        return 1972760 + 1 + players.user() * 27
-    end,
-
 
     -- MPGlobalsAmbienceStruct
     MPGlobalsAmbience = 2738934,
@@ -48,6 +43,7 @@ Globals = {
 }
 
 
+
 -- GlobalPlayerBroadcastDataFM
 GlobalplayerBD_FM = {}
 
@@ -62,34 +58,38 @@ GlobalplayerBD_FM.propertyDetails = {
 
 
 -- GlobalPlayerBroadcastDataFM_3
-GlobalplayerBD_FM_3 = {
-    _sMagnateGangBossData = function()
-        -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData
-        return Globals.GlobalplayerBD_FM_3() + 10
-    end,
-    _contrabandMissionData = function()
-        -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData.contrabandMissionData
-        return GlobalplayerBD_FM_3._sMagnateGangBossData() + 183
-    end,
-}
+GlobalplayerBD_FM_3 = {}
 
 -- STRUCT_MAGNATE_GANG_BOSS_GLOBAL_PLAYER_BD
 GlobalplayerBD_FM_3.sMagnateGangBossData = {
+    _ = 10, -- offset
+
+    -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData.
+
     iMissionToLaunch = function()
-        return GlobalplayerBD_FM_3._sMagnateGangBossData() + 32
+        return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 32
+    end,
+    iActiveMission = function()
+        return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 33
     end,
     iNumGoonsInGang = function()
-        return GlobalplayerBD_FM_3._sMagnateGangBossData() + 19
+        return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 19
     end,
 }
 
 -- CONTRABAND_MISSION_DATA
 GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = {
+    _ = GlobalplayerBD_FM_3.sMagnateGangBossData._ + 183, -- offset
+
+    -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData.contrabandMissionData.
+
     contrabandSize = function()
-        return GlobalplayerBD_FM_3._contrabandMissionData() + 1
+        return Globals.GlobalplayerBD_FM_3() +
+            GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData._ + 1
     end,
     bSpecialItem = function()
-        return GlobalplayerBD_FM_3._contrabandMissionData() + 3
+        return Globals.GlobalplayerBD_FM_3() +
+            GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData._ + 3
     end,
 }
 
@@ -130,6 +130,8 @@ g_sFixerFlow = {
 }
 
 
+
+
 -- FMMC_GLOBAL_STRUCT
 g_FMMC_STRUCT = 4718592
 FMMC_STRUCT = {
@@ -150,6 +152,7 @@ FMMC_STRUCT = {
     iCriticalMinimumForTeam = g_FMMC_STRUCT + 178821 + 1 -- +[0~3]
 }
 
+
 -- TRANSITION_SESSION_NON_RESET_VARS
 local _g_TransitionSessionNonResetVars = 2685444
 g_TransitionSessionNonResetVars = {
@@ -158,15 +161,26 @@ g_TransitionSessionNonResetVars = {
     bAnyPlayerDiedDuringMission = _g_TransitionSessionNonResetVars + 6488
 }
 
--- FMMC_STRAND_MISSION_DATA
-g_sTransitionSessionData = 2684504
-sStrandMissionData = g_sTransitionSessionData + 43
-StrandMissionData = {
-    bPassedFirstMission = sStrandMissionData + 55,
-    bPassedFirstStrandNoReset = sStrandMissionData + 56,
-    bIsThisAStrandMission = sStrandMissionData + 57,
-    bLastMission = sStrandMissionData + 58
+-- TRANSITION_SESSION_MAINTAIN_VARS
+local _sTransVars = _g_TransitionSessionNonResetVars + 1
+g_TransitionSessionNonResetVars.sTransVars = {
+    iCoronaBitSet = _sTransVars + 2813
 }
+
+
+
+-- FMMC_TRANSITION_SESSION_DATA
+g_sTransitionSessionData = 2684504
+
+-- FMMC_STRAND_MISSION_DATA
+local _sStrandMissionData = g_sTransitionSessionData + 43
+sStrandMissionData = {
+    bPassedFirstMission = _sStrandMissionData + 55,
+    bPassedFirstStrandNoReset = _sStrandMissionData + 56,
+    bIsThisAStrandMission = _sStrandMissionData + 57,
+    bLastMission = _sStrandMissionData + 58
+}
+
 
 
 
@@ -182,6 +196,7 @@ local _g_HeistPlanningClient = 1930926
 g_HeistPlanningClient = {
     bHeistCoronaActive = _g_HeistPlanningClient + 2816
 }
+
 
 
 -- CASINO_HEIST_MISSION_CONFIGURATION_DATA
@@ -224,19 +239,21 @@ g_sCasinoHeistMissionConfigData = {
 }
 
 
+
 -- HEIST_ISLAND_PLAYER_BD_DATA
 GlobalPlayerBD_HeistIsland = {
     -- HEIST_ISLAND_CONFIG
     sConfig = function()
-        -- GlobalPlayerBD_HeistIsland[NATIVE_TO_INT(sData.piLeader)].sConfig
+        -- GlobalPlayerBD_HeistIsland[NATIVE_TO_INT(PLAYER_ID())].sConfig
         return 1973625 + 1 + players.user() * 53 + 5
     end
 }
 
 -- NET_HEIST_PLANNING_GENERIC_PLAYER_BD_DATA
 GlobalPlayerBD_NetHeistPlanningGeneric = {
+    -- GlobalPlayerBD_NetHeistPlanningGeneric[NATIVE_TO_INT(PLAYER_ID())].stFinaleLaunchTimer
     stFinaleLaunchTimer = function()
-        return Globals.GlobalPlayerBD_NetHeistPlanningGeneric() + 18
+        return 1972760 + 1 + players.user() * 27 + 18
     end
 }
 
@@ -263,12 +280,16 @@ g_sHangarCargoSourcingDataBitset = function()
 end
 
 
+
 -- MP_SAVED_TUNER_CLIENT_VEHICLE_STRUCT
 g_sClientVehicleSetupStruct = 2709424
+
 -- MP_SAVED_TUNER_CLIENT_VEHICLE_STRUCT
 g_sBikerClientVehicleSetupStruct = 2710310
 
+
 g_iFactoryPaidResupplyTimers = 1663174
+
 
 -- BUSINESS_APP_MANAGEMENT_DATA
 local _g_sBusAppManagement = 1963007
@@ -279,12 +300,14 @@ g_sBusAppManagement = {
 }
 
 
---------------------------------
--- Locals
---------------------------------
+
+
+----------------------------------------------
+--                LOCALS
+----------------------------------------------
 
 Locals = {
-    -------- Business Mission --------
+    --------  Business Mission  --------
 
     ["gb_contraband_buy"] = {
         -- iServerBitSet1 = 601 + 186,
@@ -362,7 +385,7 @@ Locals = {
         },
     },
 
-    -------- Freemode Mission --------
+    --------  Freemode Mission  --------
 
     ["fm_content_security_contract"] = {
         iGenericBitset = 7058,
@@ -403,12 +426,64 @@ Locals = {
         eEndReason = 3521 + 475
     },
     ["fm_content_daily_bounty"] = {
-        iBitSet = 2533 + 369,
+        iMissionBitSet = 2533 + 369,
 
         eEndReason = 2533 + 325,
         iGenericBitset = 2480
     },
 
+    -- Salvage Yard Robbery Preps
+    ["fm_content_vehrob_scoping"] = {
+        eEndReason = 3752 + 508,
+        iGenericBitset = 3695
+    },
+    ["fm_content_vehrob_prep"] = {
+        eEndReason = 11366 + 1272,
+        iGenericBitset = 11265
+    },
+    ["fm_content_vehrob_task"] = {
+        eEndReason = 4773 + 1043,
+        iGenericBitset = 4705
+    },
+    ["fm_content_vehrob_disrupt"] = {
+        eEndReason = 4570 + 924,
+        iGenericBitset = 4511
+    },
+    -- Salvage Yard Robbery Final
+    ["fm_content_vehrob_arena"] = {
+        iChallengeCondition = 7807 + 1342 + 14,
+        iChallengeBitset = 7807 + 1340,
+
+        eEndReason = 7807 + 1285,
+        iGenericBitset = 7748
+    },
+    ["fm_content_vehrob_cargo_ship"] = {
+        iChallengeBitset = 7025 + 1286,
+
+        eEndReason = 7025 + 1224,
+        iGenericBitset = 6934
+    },
+    ["fm_content_vehrob_casino_prize"] = {
+        iChallengeBitset = 9060 + 1310,
+
+        eEndReason = 9060 + 1231,
+        iGenericBitset = 8979
+    },
+    ["fm_content_vehrob_police"] = {
+        iChallengeCondition = 8847 + 1333 + 8 + 1, -- +[0~2]
+
+        eEndReason = 8847 + 1276,
+        iGenericBitset = 8772
+    },
+    ["fm_content_vehrob_submarine"] = {
+        iChallengeCondition = 6125 + 1199 + 19,
+        iChallengeBitset = 6125 + 1196,
+
+        eEndReason = 6125 + 1137,
+        iGenericBitset = 6041
+    },
+
+    -- Heist Preps
     ["fm_content_island_heist"] = {
         iGenericBitset = 13220,
         eEndReason = 13311 + 1339
@@ -429,7 +504,7 @@ Locals = {
         eModeState = 1963 + 781
     },
 
-    -------- Heist Planning Board --------
+    --------  Heist Planning Board  --------
 
     ["gb_casino_heist_planning"] = {
         iScriptStage = 185,
@@ -447,7 +522,7 @@ Locals = {
         iScriptStage = 512,
     },
 
-    -------- Heist Mission --------
+    --------  Heist Mission  --------
 
     ["fm_mission_controller"] = {
         iNextMission = 19746 + 1062,
@@ -493,7 +568,7 @@ Locals = {
         iMultiObjectiveTimeLimit = 56798 + 322 + 1,   -- +[0~3]
     },
 
-    -------- Other --------
+    --------  Other  --------
 
     ["carmod_shop"] = {
         iPersonalCarModShopFlags = 1585
@@ -509,13 +584,16 @@ Locals = {
     },
 }
 
+
 -- `fmmc_launcher`
 -- MISSION_TO_LAUNCH_DETAILS
 local _sLaunchMissionDetails = 19709
 sLaunchMissionDetails = {
     iMinPlayers = _sLaunchMissionDetails + 15,
+    iMaxParticipants = _sLaunchMissionDetails + 32,
     iMissionVariation = _sLaunchMissionDetails + 34
 }
+
 
 -- `freemode` Time Trial
 -- AMTT_VARS_STRUCT
@@ -526,6 +604,7 @@ sTTVarsStruct = {
     iPersonalBest = _sTTVarsStruct + 25,
     eAMTT_Stage = _sTTVarsStruct + 29
 }
+
 
 -- `freemode` RC Bandito Time Trial
 -- AMRCTT_VARS_STRUCT
@@ -540,10 +619,9 @@ sRCTTVarsStruct = {
 
 
 
-
---------------------------------
--- Functions
---------------------------------
+----------------------------------------------
+--                FUNCTIONS
+----------------------------------------------
 
 local g_sCURRENT_UGC_STATUS = 2693440
 local g_iMissionEnteryType = 1057440
@@ -729,6 +807,34 @@ function INSTANT_FINISH_CASINO_HEIST_PREPS()
     LOCAL_SET_INT(script, serverBD + 1329, 3) -- SET_END_REASON(eENDREASON_MISSION_ENTITY_DELIVERED)
 end
 
+function INSTANT_FINISH_CASINO_WORK()
+    local script = "gb_casino"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    local eMissionVariation = LOCAL_GET_INT(script, 2845 + 1321)
+    if eMissionVariation == 14 then -- CSV_TRACKING_CHIPS
+        for i = 0, 4 do
+            -- SET_FIND_ITEM_BIT(iChip, eFINDITEMBITSET_COLLECTED)
+            LOCAL_SET_BIT(script, 2845 + 1573 + 1 + i, 1)
+        end
+    end
+
+    local iNumEntitiesThisVariation = LOCAL_GET_INT(script, 2845 + 1541)
+    local partId = NETWORK.NETWORK_GET_PARTICIPANT_INDEX(players.user())
+    for i = 0, iNumEntitiesThisVariation - 1, 1 do
+        -- SET_MISSION_ENTITY_BIT(iMissionEntity, eMISSIONENTITYBITSET_DELIVERED)
+        LOCAL_SET_BIT(script, 2845 + 63 + 1 + i * 3 + 1 + 0, 4)
+
+        -- SET_MISSION_ENTITY_CLIENT_BIT(iMissionEntity, NETWORK_GET_PARTICIPANT_INDEX(playerID), eMISSIONENTITYCLIENTBITSET_MY_GANG_DELIVERED_MISSION_ENTITY)
+        LOCAL_SET_BIT(script, 4517 + 1 + partId * 266 + 9 + 1 + i * 3 + 1 + 1, 3)
+    end
+
+    LOCAL_SET_INT(script, 2845 + 1324, 3)  -- SET_END_REASON(eENDREASON_MISSION_ENTITY_DELIVERED)
+    LOCAL_SET_INT(script, 2845 + 1323, 33) -- SET_MODE_STATE(eMODESTATE_REWARDS)
+end
+
 function COMPLETE_DAILY_CHALLENGE()
     -- g_savedMPGlobalsNew.g_savedMPGlobals[GET_SAVE_GAME_ARRAY_SLOT()].MpSavedGeneral.Current_Daily_Objectives[i].bCompleted
     for i = 0, 2, 1 do
@@ -767,6 +873,7 @@ end
 local HACKING_MINIGAME = {}
 
 local iHackStage = 4543372
+local g_sHackingData = 2737663
 
 HACKING_MINIGAME.MISSION_CONTROLLER = function(script)
     local sFingerprintCloneGameplay = 53019
@@ -835,8 +942,8 @@ HACKING_MINIGAME.MISSION_CONTROLLER = function(script)
     end
 
     if LOCAL_BITS_TEST(script, sHackingData, 0, 29) then -- BS_IS_HACKING, BS_WALLPAPER_INITIALISED
-        -- BS_BRUTE_FORCE_GAME_SOLVED, BS_HACK_CONNECT_GAME_SOLVED
-        LOCAL_SET_BITS(script, sHackingData, 9, 18)
+        -- BS_BRUTE_FORCE_GAME_SOLVED, BS_HACK_CONNECT_GAME_SOLVED, BS_NEW_HACKING_GAME_SOLVED
+        LOCAL_SET_BITS(script, sHackingData, 9, 18, 26)
     end
 
     if LOCAL_BIT_TEST(script, SafeCrackData.iBitSet, 1) then    -- SC_BS_IS_PLAYER_SAFE_CRACKING
@@ -949,11 +1056,18 @@ function SKIP_HACKING_MINIGAME()
         return
     end
 
+
     local script_list = {
         "fm_content_stash_house",
     }
     for _, script_name in pairs(script_list) do
         HACKING_MINIGAME[script_name](script_name)
         return
+    end
+
+
+    if GLOBAL_BIT_TEST(g_sHackingData, 0, 29) then -- BS_IS_HACKING, BS_WALLPAPER_INITIALISED
+        -- BS_BRUTE_FORCE_GAME_SOLVED, BS_HACK_CONNECT_GAME_SOLVED, BS_NEW_HACKING_GAME_SOLVED
+        GLOBAL_SET_BITS(g_sHackingData, 9, 18, 26)
     end
 end

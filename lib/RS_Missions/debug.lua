@@ -6,767 +6,6 @@ local Freemode_Mission = Menu_Root
 local Heist_Mission = Menu_Root
 
 
-local LocalsTest = {
-    ["fm_content_vehrob_arena"] = {
-        iChallengeCondition = 7807 + 1342 + 14,
-        iChallengeBitset = 7807 + 1340,
-
-        eEndReason = 7807 + 1285,
-        iGenericBitset = 7748
-    },
-    ["fm_content_vehrob_cargo_ship"] = {
-        iChallengeBitset = 7025 + 1286,
-
-        eEndReason = 7025 + 1224,
-        iGenericBitset = 6934
-    },
-    ["fm_content_vehrob_casino_prize"] = {
-        iChallengeBitset = 9060 + 1310,
-
-        eEndReason = 9060 + 1231,
-        iGenericBitset = 8979
-    },
-    ["fm_content_vehrob_police"] = {
-        iChallengeCondition = 8847 + 1333 + 8 + 1, -- +[0~2]
-
-        eEndReason = 8847 + 1276,
-        iGenericBitset = 8772
-    },
-    ["fm_content_vehrob_submarine"] = {
-        iChallengeCondition = 6125 + 1199 + 19,
-        iChallengeBitset = 6125 + 1196,
-
-        eEndReason = 6125 + 1137,
-        iGenericBitset = 6041
-    },
-    ["fm_content_chop_shop_delivery"] = {
-        iMissionEntityBitSet = 1893 + 2 + 14,
-
-        eEndReason = 1893 + 137,
-        iGenericBitset = 1835
-    },
-}
-
-
-local function draw_top_centred_text(text)
-    local scale = 0.6
-
-    local text_width, text_height = directx.get_text_size(text, scale)
-    local text_x = 0.5 - text_width / 2
-
-    directx.draw_rect(text_x - 0.01, 0.0,
-        text_width + 0.03, text_height + 0.02,
-        { r = 0.0, g = 0.0, b = 0.0, a = 0.6 })
-    directx.draw_text(text_x, 0.01, text, ALIGN_TOP_LEFT, scale,
-        { r = 1, g = 0, b = 1, a = 1 })
-end
-
-
-
-local bTransitionSessionSkipLbAndNjvs = g_sTransitionSessionData + 702
-
--- `fmmc_launcher`
--- CORONA_MENU_DATA
-local _coronaMenuData = 17445
-local coronaMenuData = {
-    iCurrentSelection = _coronaMenuData + 911,
-}
-
-local _sLaunchMissionDetails = 19709
-local sLaunchMissionDetails2 = {
-    iIntroStatus = _sLaunchMissionDetails,
-    iHeistStatus = _sLaunchMissionDetails + 3,
-    iLobbyStatus = _sLaunchMissionDetails + 4,
-    iInviteScreenStatus = _sLaunchMissionDetails + 6,
-    iInCoronaStatus = _sLaunchMissionDetails + 7,
-    iBettingStatus = _sLaunchMissionDetails + 10,
-    iLoadStatus = _sLaunchMissionDetails + 11,
-
-    iMaxParticipants = _sLaunchMissionDetails + 32,
-}
-
-
-
-
-GlobalplayerBD_FM.eCoronaStatus = function()
-    return Globals.GlobalplayerBD_FM() + 193
-end
-
-g_TransitionSessionNonResetVars.sTransVars = {
-    iCoronaBitSet = 2685444 + 1 + 2813
-}
-
-g_HeistPlanningClient.bLaunchTimerExpired = 1930926 + 2812
-
-
-
-local CORONA_STATUS_ENUM = {
-    CORONA_STATUS_IDLE = 0,
-    CORONA_STATUS_INTRO = 9,
-    CORONA_STATUS_TEAM_DM = 26,
-    CORONA_STATUS_HEIST_PLANNING = 27,
-    CORONA_STATUS_GENERIC_HEIST_PLANNING = 34
-}
-
-local function GET_CORONA_STATUS()
-    return GLOBAL_GET_INT(GlobalplayerBD_FM.eCoronaStatus())
-end
-
-local function IS_PLAYER_IN_CORONA()
-    return GLOBAL_GET_INT(GlobalplayerBD_FM.eCoronaStatus()) ~= CORONA_STATUS_ENUM.CORONA_STATUS_IDLE
-end
-
-
-
-
-------------------------------------
---    Auto Island Heist
-------------------------------------
-
-local Auto_Island_Heist <const> = menu.list(Menu_Root, "全自动佩里科岛抢劫", {}, "")
-
-
-local AutoIslandHeistStatus <const> = {
-    Disable = 0,
-    Freemode = 1,
-    InKotsatka = 2,
-    RegisterAsCEO = 3,
-    CoronaIntro = 4,
-    CoronaHeistPlanning = 5,
-    CoronaTeamDM = 6,
-    InMission = 7,
-    MissionEnd = 8,
-    Cleanup = 9
-}
-
-
-local AutoIslandHeist = {
-    menuAction = 0,
-    enable = false,
-    status = AutoIslandHeistStatus.Disable,
-
-    spawnLocation = nil,
-
-    setting = {
-        rewardValue = 2000000,
-        addRandom = true,
-        disableCut = false,
-        delay = 1500,
-        disableToast = false,
-        disableDraw = false
-    }
-}
-
-function AutoIslandHeist.setStatus(eStatus)
-    AutoIslandHeist.status = eStatus
-end
-
-function AutoIslandHeist.getSpawnLocation()
-    return STAT_GET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"))
-end
-
-function AutoIslandHeist.setSpawnLocation(iLocation)
-    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), iLocation)
-end
-
-function AutoIslandHeist.toggleActionName(toggle)
-    if toggle then
-        menu.set_menu_name(AutoIslandHeist.menuAction, "开启 全自动佩里科岛抢劫")
-    else
-        menu.set_menu_name(AutoIslandHeist.menuAction, "停止 全自动佩里科岛抢劫")
-    end
-end
-
-function AutoIslandHeist.cleanup()
-    if AutoIslandHeist.spawnLocation then
-        AutoIslandHeist.setSpawnLocation(AutoIslandHeist.spawnLocation)
-    end
-
-    AutoIslandHeist.enable = false
-    AutoIslandHeist.status = AutoIslandHeistStatus.Disable
-    AutoIslandHeist.toggleActionName(true)
-end
-
-function AutoIslandHeist.toast(text)
-    if not AutoIslandHeist.setting.disableToast then
-        util.toast("[全自动佩里科岛抢劫] " .. text)
-    end
-end
-
-function AutoIslandHeist.draw(text)
-    if not AutoIslandHeist.setting.disableDraw then
-        draw_top_centred_text("[全自动佩里科岛抢劫] " .. text)
-    end
-end
-
-AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩里科岛抢劫", {}, "[仅适用于单人]", function()
-    if AutoIslandHeist.enable then
-        AutoIslandHeist.enable = false
-        return
-    end
-
-    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
-        return
-    end
-    if not DOES_PLAYER_OWN_KOSATKA() then
-        util.toast("你需要拥有虎鲸")
-        return
-    end
-
-    if AutoIslandHeist.setting.rewardValue ~= -1 then
-        -- Add random value
-        if AutoIslandHeist.setting.addRandom then
-            AutoIslandHeist.setting.rewardValue = AutoIslandHeist.setting.rewardValue +
-                math.random(0, 50000)
-        end
-
-        -- Calculate estimated reward value
-        local estimatedValue = AutoIslandHeist.setting.rewardValue
-        if not AutoIslandHeist.setting.disableCut then
-            estimatedValue = math.ceil(estimatedValue * 0.88)
-        end
-        AutoIslandHeist.toast("预计收入: " .. estimatedValue)
-    end
-
-    AutoIslandHeist.toggleActionName(false)
-    AutoIslandHeist.enable = true
-    AutoIslandHeist.spawnLocation = nil
-
-    AutoIslandHeist.setStatus(AutoIslandHeistStatus.Freemode)
-
-    util.create_tick_handler(function()
-        if not AutoIslandHeist.enable then
-            AutoIslandHeist.cleanup()
-            AutoIslandHeist.toast("已停止...")
-            return false
-        end
-
-        local setting = AutoIslandHeist.setting
-        local eStatus = AutoIslandHeist.status
-        local statusText = ""
-
-        if eStatus == AutoIslandHeistStatus.Freemode then
-            if not IS_PLAYER_IN_KOSATKA() then
-                AutoIslandHeist.spawnLocation = AutoIslandHeist.getSpawnLocation()
-                AutoIslandHeist.setSpawnLocation(16) -- MP_SETTING_SPAWN_SUBMARINE
-                menu.trigger_commands("go inviteonly")
-
-                AutoIslandHeist.toast("切换战局到虎鲸...")
-            end
-            AutoIslandHeist.setStatus(AutoIslandHeistStatus.InKotsatka)
-        elseif eStatus == AutoIslandHeistStatus.InKotsatka then
-            if IS_IN_SESSION() then
-                if IS_PLAYER_IN_KOSATKA() then
-                    util.yield(setting.delay)
-
-                    if not IS_PLAYER_BOSS_OF_A_GANG() then
-                        menu.trigger_commands("ceostart")
-
-                        AutoIslandHeist.toast("注册为CEO...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.RegisterAsCEO)
-                    else
-                        local Data = {
-                            iRootContentID = -1172878953, -- HIM_STUB
-                            iMissionType = 260,           -- FMMC_TYPE_HEIST_ISLAND_FINALE
-                            iMissionEnteryType = 67,      -- ciMISSION_ENTERY_TYPE_HEIST_ISLAND_TABLE
-                        }
-                        LAUNCH_MISSION(Data)
-
-                        AutoIslandHeist.toast("启动差事...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaIntro)
-                    end
-                end
-            end
-        elseif eStatus == AutoIslandHeistStatus.RegisterAsCEO then
-            if IS_PLAYER_BOSS_OF_A_GANG() then
-                util.yield(setting.delay)
-
-                AutoIslandHeist.setStatus(AutoIslandHeistStatus.InKotsatka)
-            end
-        elseif eStatus == AutoIslandHeistStatus.CoronaIntro then
-            statusText = "等待差事加载..."
-
-            local script = "fmmc_launcher"
-            if IS_SCRIPT_RUNNING(script) then
-                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_INTRO then
-                    util.yield(setting.delay)
-
-                    LOCAL_SET_INT(script, sLaunchMissionDetails2.iMaxParticipants, 1)
-
-                    AutoIslandHeist.toast("开始游戏...")
-                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaHeistPlanning)
-                end
-            end
-        elseif eStatus == AutoIslandHeistStatus.CoronaHeistPlanning then
-            statusText = "等待继续..."
-
-            if IS_SCRIPT_RUNNING("heist_island_planning") then
-                local script = "fmmc_launcher"
-                if IS_SCRIPT_RUNNING(script) then
-                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_GENERIC_HEIST_PLANNING then
-                        util.yield(setting.delay)
-
-
-                        local sConfig = GlobalPlayerBD_HeistIsland.sConfig()
-
-                        local Data = {
-                            bHardModeEnabled = false,
-                            eApproachVehicle = 6,
-                            eInfiltrationPoint = 3,
-                            eCompoundEntrance = 0,
-                            eEscapePoint = 1,
-                            eTimeOfDay = 1,
-                            eWeaponLoadout = 1,
-                            bUseSuppressors = true
-                        }
-                        GLOBAL_SET_INT(sConfig + 35, Data.eWeaponLoadout)
-                        GLOBAL_SET_BOOL(sConfig + 38, Data.bHardModeEnabled)
-                        GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_NORMAL)
-
-                        GLOBAL_SET_INT(sConfig + 39, Data.eApproachVehicle)
-                        GLOBAL_SET_INT(sConfig + 40, Data.eInfiltrationPoint)
-                        GLOBAL_SET_INT(sConfig + 41, Data.eCompoundEntrance)
-                        GLOBAL_SET_INT(sConfig + 42, Data.eEscapePoint)
-                        GLOBAL_SET_INT(sConfig + 43, Data.eTimeOfDay)
-                        GLOBAL_SET_BOOL(sConfig + 44, Data.bUseSuppressors)
-
-                        GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer() + 1, 1)
-                        GLOBAL_SET_INT(GlobalPlayerBD_NetHeistPlanningGeneric.stFinaleLaunchTimer(), 0)
-
-                        AutoIslandHeist.toast("设置面板并继续...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.CoronaTeamDM)
-                    end
-                end
-            end
-        elseif eStatus == AutoIslandHeistStatus.CoronaTeamDM then
-            local script = "fmmc_launcher"
-            if IS_SCRIPT_RUNNING(script) then
-                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_TEAM_DM then
-                    util.yield(setting.delay)
-
-                    -- ciCORONA_LOBBY_START_GAME
-                    LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
-
-                    -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
-                    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
-
-                    AutoIslandHeist.toast("准备就绪，进入任务...")
-                    AutoIslandHeist.setStatus(AutoIslandHeistStatus.InMission)
-                end
-            end
-        elseif eStatus == AutoIslandHeistStatus.InMission then
-            statusText = "等待任务开始..."
-
-            if IS_IN_SESSION() then
-                local script = "fm_mission_controller_2020"
-                if IS_SCRIPT_RUNNING(script) then
-                    -- GAME_STATE_RUNNING
-                    if LOCAL_GET_INT(script, Locals[script].iServerGameState) == 6 then
-                        util.yield(setting.delay + 3000)
-
-                        if setting.rewardValue ~= -1 then
-                            Tunables.SetIntList("IslandHeistPrimaryTargetValue", setting.rewardValue)
-                        end
-                        if setting.disableCut then
-                            Tunables.SetFloatList("NpcCut", 0)
-                        end
-                        INSTANT_FINISH_FM_MISSION_CONTROLLER()
-
-                        -- g_sTransitionSessionData.bTransitionSessionSkipLbAndNjvs
-                        GLOBAL_SET_BOOL(bTransitionSessionSkipLbAndNjvs, true)
-
-                        AutoIslandHeist.toast("直接完成任务...")
-                        AutoIslandHeist.setStatus(AutoIslandHeistStatus.MissionEnd)
-                    end
-                end
-            end
-        elseif eStatus == AutoIslandHeistStatus.MissionEnd then
-            statusText = "等待任务结束..."
-
-            if not IS_SCRIPT_RUNNING("fm_mission_controller_2020") then
-                AutoIslandHeist.toast("任务已完成...")
-                AutoIslandHeist.setStatus(AutoIslandHeistStatus.Cleanup)
-            end
-        elseif eStatus == AutoIslandHeistStatus.Cleanup then
-            AutoIslandHeist.cleanup()
-            AutoIslandHeist.toast("结束...")
-            return false
-        end
-
-        if statusText ~= "" then
-            AutoIslandHeist.draw(statusText)
-        end
-    end)
-end)
-
-menu.divider(Auto_Island_Heist, "收入")
-local Auto_Island_Heist_Reward = menu.slider(Auto_Island_Heist, "主要目标价值", { "AutoIslandHeistRewardValue" }, "",
-    -1, 2550000, AutoIslandHeist.setting.rewardValue, 50000, function(value)
-        AutoIslandHeist.setting.rewardValue = value
-    end)
-menu.add_value_replacement(Auto_Island_Heist_Reward, -1, Labels.Default)
-menu.toggle(Auto_Island_Heist, "添加随机数", {}, "主要目标价值加0 ~ 50000的随机数", function(toggle)
-    AutoIslandHeist.setting.addRandom = toggle
-end, true)
-menu.toggle(Auto_Island_Heist, "禁用NPC分红", {}, "", function(toggle)
-    AutoIslandHeist.setting.disableCut = toggle
-end)
-
-menu.divider(Auto_Island_Heist, "设置")
-menu.slider(Auto_Island_Heist, "延迟", { "AutoIslandHeistDelay" }, "到达新的状态后的等待时间",
-    0, 5000, AutoIslandHeist.setting.delay, 100, function(value)
-        AutoIslandHeist.setting.delay = value
-    end)
-menu.toggle(Auto_Island_Heist, "禁用通知提示", {}, "", function(toggle)
-    AutoIslandHeist.setting.disableToast = toggle
-end)
-menu.toggle(Auto_Island_Heist, "禁用绘制提示文本", {}, "", function(toggle)
-    AutoIslandHeist.setting.disableDraw = toggle
-end)
-
-
-
-
-
-------------------------------------
---    Auto Apartment Heist
-------------------------------------
-
-local Auto_Apartment_Heist <const> = menu.list(Menu_Root, "全自动公寓抢劫", {}, "")
-
-
-local AutoApartmentHeistStatus <const> = {
-    Disable = 0,
-    InPlanningRoom = 1,
-    CoronaIntro = 2,
-    CoronaHeistPlanning = 3,
-    CoronaTeamDM = 4,
-    InMission = 5,
-    MissionEnd = 6,
-    Cleanup = 7
-}
-
-
-local AutoApartmentHeist = {
-    menuAction = 0,
-    enable = false,
-    status = AutoApartmentHeistStatus.Disable,
-
-    minPlayers = false,
-    maxTeams = false,
-
-    setting = {
-        delay = 1500,
-        disableToast = false,
-        disableDraw = false
-    }
-}
-
-function AutoApartmentHeist.processHeistAward()
-    for _, item in pairs(Tables.HeistAwardsStats) do
-        STAT_SET_INT(item[1], 268435455)
-        STAT_SET_BOOL(item[2], false)
-    end
-
-    local script = "fm_mission_controller"
-
-    -- Ultimate Challenge
-    GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_HARD)
-    -- First Person
-    GLOBAL_SET_INT(FMMC_STRUCT.iFixedCamera, 1)
-    -- Member
-    GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
-    LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST
-end
-
-function AutoApartmentHeist.setStatus(eStatus)
-    AutoApartmentHeist.status = eStatus
-end
-
-function AutoApartmentHeist.toggleActionName(toggle)
-    if toggle then
-        menu.set_menu_name(AutoApartmentHeist.menuAction, "开启 全自动公寓抢劫")
-    else
-        menu.set_menu_name(AutoApartmentHeist.menuAction, "停止 全自动公寓抢劫")
-    end
-end
-
-function AutoApartmentHeist.cleanup()
-    menu.set_value(MissionMinPlayers, AutoApartmentHeist.minPlayers)
-    menu.set_value(MissionMaxTeams, AutoApartmentHeist.maxTeams)
-
-    AutoApartmentHeist.enable = false
-    AutoApartmentHeist.status = AutoApartmentHeistStatus.Disable
-    AutoApartmentHeist.toggleActionName(true)
-end
-
-function AutoApartmentHeist.toast(text)
-    if not AutoApartmentHeist.setting.disableToast then
-        util.toast("[全自动公寓抢劫] " .. text)
-    end
-end
-
-function AutoApartmentHeist.draw(text)
-    if not AutoApartmentHeist.setting.disableDraw then
-        draw_top_centred_text("[全自动公寓抢劫] " .. text)
-    end
-end
-
-AutoApartmentHeist.menuAction = menu.action(Auto_Apartment_Heist, "开启 全自动公寓抢劫", {},
-    "[仅适用于单人]\n同时完成所有奖章挑战, 可获得1400多万\n1. 需要在公寓内部 抢劫计划面板附近\n2. 启动差事后右下角没有提示下载，就动两下\n3. 如果精英挑战没有完成就增加延迟", function()
-        if AutoApartmentHeist.enable then
-            AutoApartmentHeist.enable = false
-            return
-        end
-
-        if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
-            return
-        end
-        if not IS_PLAYER_IN_INTERIOR() then
-            util.toast("你需要在公寓内部")
-            return
-        end
-        if not IS_PLAYER_IN_APARTMENT_PLANNING_ROOM() then
-            util.toast("你需要在抢劫计划面板附近")
-            return
-        end
-
-        AutoApartmentHeist.minPlayers = menu.get_value(MissionMinPlayers)
-        AutoApartmentHeist.maxTeams = menu.get_value(MissionMaxTeams)
-
-        menu.set_value(MissionMinPlayers, true)
-        menu.set_value(MissionMaxTeams, true)
-
-        AutoApartmentHeist.toggleActionName(false)
-        AutoApartmentHeist.enable = true
-
-        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.InPlanningRoom)
-
-        util.create_tick_handler(function()
-            if not AutoApartmentHeist.enable then
-                AutoApartmentHeist.cleanup()
-                AutoApartmentHeist.toast("已停止...")
-                return false
-            end
-
-            local setting = AutoApartmentHeist.setting
-            local eStatus = AutoApartmentHeist.status
-            local statusText = ""
-
-            if eStatus == AutoApartmentHeistStatus.InPlanningRoom then
-                local ContentID = "tYc3SkqXTk6ia7j0lezrbQ"
-                LAUNCH_APARTMENT_HEIST(ContentID)
-
-                AutoApartmentHeist.toast("启动差事...")
-                AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaIntro)
-            elseif eStatus == AutoApartmentHeistStatus.CoronaIntro then
-                statusText = "等待差事加载... (右下角没有提示下载就动两下)"
-
-                local script = "fmmc_launcher"
-                if IS_SCRIPT_RUNNING(script) then
-                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_INTRO then
-                        util.yield(setting.delay)
-
-                        LOCAL_SET_INT(script, sLaunchMissionDetails2.iMaxParticipants, 1)
-
-                        GLOBAL_SET_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 0)   -- CORONA_HEIST_CUTSCENE_HAS_BEEN_VALIDATED
-                        GLOBAL_CLEAR_BIT(g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet + 1 + 4, 1) -- CORONA_HEIST_FINALE_CUTSCENE_CAN_PLAY
-
-                        AutoApartmentHeist.toast("开始游戏...")
-                        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaHeistPlanning)
-                    end
-                end
-            elseif eStatus == AutoApartmentHeistStatus.CoronaHeistPlanning then
-                statusText = "等待继续..."
-
-                if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_HEIST_PLANNING then
-                    util.yield(setting.delay)
-
-                    GLOBAL_SET_BOOL(g_HeistPlanningClient.bLaunchTimerExpired, true)
-
-                    AutoApartmentHeist.toast("继续...")
-                    AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.CoronaTeamDM)
-                end
-            elseif eStatus == AutoApartmentHeistStatus.CoronaTeamDM then
-                local script = "fmmc_launcher"
-                if IS_SCRIPT_RUNNING(script) then
-                    if GET_CORONA_STATUS() == CORONA_STATUS_ENUM.CORONA_STATUS_TEAM_DM then
-                        util.yield(setting.delay)
-
-                        -- ciCORONA_LOBBY_START_GAME
-                        LOCAL_SET_INT(script, coronaMenuData.iCurrentSelection, 14)
-
-                        -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
-                        PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
-
-                        AutoApartmentHeist.toast("准备就绪，进入任务...")
-                        AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.InMission)
-                    end
-                end
-            elseif eStatus == AutoApartmentHeistStatus.InMission then
-                statusText = "等待任务开始..."
-
-                if IS_IN_SESSION() then
-                    local script = "fm_mission_controller"
-                    if IS_SCRIPT_RUNNING(script) then
-                        -- GAME_STATE_RUNNING
-                        if LOCAL_GET_INT(script, Locals[script].iServerGameState) == 9 then
-                            util.yield(setting.delay + 1000)
-
-                            AutoApartmentHeist.processHeistAward()
-                            INSTANT_FINISH_FM_MISSION_CONTROLLER()
-
-                            AutoApartmentHeist.toast("直接完成任务...")
-                            AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.MissionEnd)
-                        end
-                    end
-                end
-            elseif eStatus == AutoApartmentHeistStatus.MissionEnd then
-                statusText = "等待任务结束..."
-
-                if not IS_SCRIPT_RUNNING("fm_mission_controller") then
-                    AutoApartmentHeist.toast("任务已完成...")
-                    AutoApartmentHeist.setStatus(AutoApartmentHeistStatus.Cleanup)
-                end
-            elseif eStatus == AutoApartmentHeistStatus.Cleanup then
-                AutoApartmentHeist.cleanup()
-                AutoApartmentHeist.toast("结束...")
-                return false
-            end
-
-            if statusText ~= "" then
-                AutoApartmentHeist.draw(statusText)
-            end
-        end)
-    end)
-
-
-menu.divider(Auto_Apartment_Heist, "设置")
-menu.slider(Auto_Apartment_Heist, "延迟", { "AutoApartmentHeistDelay" }, "到达新的状态后的等待时间",
-    0, 5000, AutoApartmentHeist.setting.delay, 100, function(value)
-        AutoApartmentHeist.setting.delay = value
-    end)
-menu.toggle(Auto_Apartment_Heist, "禁用通知提示", {}, "", function(toggle)
-    AutoApartmentHeist.setting.disableToast = toggle
-end)
-menu.toggle(Auto_Apartment_Heist, "禁用绘制提示文本", {}, "", function(toggle)
-    AutoApartmentHeist.setting.disableDraw = toggle
-end)
-
-menu.divider(Auto_Apartment_Heist, "")
-menu.action(Auto_Apartment_Heist, "清除奖章挑战记录", {}, "", function()
-    for _, item in pairs(Tables.HeistAwardsStats) do
-        STAT_SET_INT(item[1], 0)
-        STAT_SET_BOOL(item[2], false)
-    end
-    util.toast("完成！")
-end)
-
-
-
-
-
-
-
-
-------------------------------------
---    Salvage Yard Robbery
-------------------------------------
-
-local Salvage_Yard_Robbery <const> = menu.list(Freemode_Mission, get_label_text("SCOUT_BIG_START"), {}, "")
-
-local SalvageYardRobberyVars = {
-    challengeCompleted = true
-}
-
-local SalvageYardRobberyChallenge = {
-    ["fm_content_vehrob_arena"] = function(script)
-        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
-        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 17, 18)
-    end,
-    ["fm_content_vehrob_cargo_ship"] = function(script)
-        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 31)
-        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 0, 1) -- 32, 33
-    end,
-    ["fm_content_vehrob_casino_prize"] = function(script)
-        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 0, 24, 25, 26)
-    end,
-    ["fm_content_vehrob_police"] = function(script)
-        for i = 0, 2 do
-            LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition + i, 1)
-        end
-    end,
-    ["fm_content_vehrob_submarine"] = function(script)
-        LOCAL_SET_INT(script, LocalsTest[script].iChallengeCondition, 100)
-        LOCAL_CLEAR_BITS(script, LocalsTest[script].iChallengeBitset + 1 + 1, 9, 10) -- 41, 42
-    end
-}
-
-menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 前置任务", {}, "", function()
-    local data = {
-        ["fm_content_vehrob_scoping"] = {
-            eEndReason = 3752 + 508,
-            iGenericBitset = 3695
-        },
-        ["fm_content_vehrob_prep"] = {
-            eEndReason = 11366 + 1272,
-            iGenericBitset = 11265
-        },
-        ["fm_content_vehrob_task"] = {
-            eEndReason = 4773 + 1043,
-            iGenericBitset = 4705
-        },
-        ["fm_content_vehrob_disrupt"] = {
-            eEndReason = 4570 + 924,
-            iGenericBitset = 4511
-        }
-    }
-
-    for script, item in pairs(data) do
-        if IS_SCRIPT_RUNNING(script) then
-            LOCAL_SET_BIT(script, item.iGenericBitset + 1 + 0, 11)
-            LOCAL_SET_INT(script, item.eEndReason, 3)
-        end
-    end
-end)
-
-menu.toggle(Salvage_Yard_Robbery, get_label_text("SAL23_ENDS_CHAL"), {}, "", function(toggle)
-    SalvageYardRobberyVars.challengeCompleted = toggle
-end, true)
-
-menu.action(Salvage_Yard_Robbery, "直接完成 回收站抢劫 终章", {}, "", function()
-    for script, func in pairs(SalvageYardRobberyChallenge) do
-        if IS_SCRIPT_RUNNING(script) then
-            if SalvageYardRobberyVars.challengeCompleted then
-                func(script)
-            end
-            LOCAL_SET_BIT(script, LocalsTest[script].iGenericBitset + 1 + 0, 11)
-            LOCAL_SET_INT(script, LocalsTest[script].eEndReason, 3)
-        end
-    end
-end)
-
-
-menu.divider(Salvage_Yard_Robbery, "Sell")
-
-menu.action(Salvage_Yard_Robbery, "直接完成 出售任务", {}, "", function()
-    local script = "fm_content_chop_shop_delivery"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    if PED.IS_PED_IN_ANY_VEHICLE(players.user_ped(), false) then
-        TASK.CLEAR_PED_TASKS_IMMEDIATELY(players.user_ped())
-    end
-
-    local iMissionEntity = 0
-    LOCAL_SET_BIT(script, LocalsTest[script].iMissionEntityBitSet + 1 + iMissionEntity * 3 + 1 + 0, 4) -- eMISSIONENTITYBITSET_DELIVERED
-
-    LOCAL_SET_BIT(script, LocalsTest[script].iGenericBitset + 1 + 0, 11)
-    LOCAL_SET_INT(script, LocalsTest[script].eEndReason, 3)
-end)
-
-
 
 
 ----------------------------------------
@@ -800,87 +39,159 @@ end)
 
 
 
+----------------------------------------
+--    Start Freemode Mission
+----------------------------------------
 
+local Start_Freemode_Mission <const> = menu.list(Heist_Mission, "开始自由模式任务", {}, "")
 
-
-local fm_content_xxx = {
-    { script = "fm_content_acid_lab_sell",       eEndReason = 5483 + 1294,  iGenericBitset = 5418 },
-    { script = "fm_content_acid_lab_setup",      eEndReason = 3348 + 541,   iGenericBitset = 3294 },
-    { script = "fm_content_acid_lab_source",     eEndReason = 7654 + 1162,  iGenericBitset = 7577 },
-    { script = "fm_content_ammunation",          eEndReason = 2079 + 204,   iGenericBitset = 2025 },
-    { script = "fm_content_armoured_truck",      eEndReason = 1902 + 113,   iGenericBitset = 1836 },
-    { script = "fm_content_auto_shop_delivery",  eEndReason = 1572 + 83,    iGenericBitset = 1518 },
-    { script = "fm_content_bank_shootout",       eEndReason = 2209 + 221,   iGenericBitset = 2138 },
-    { script = "fm_content_bar_resupply",        eEndReason = 2275 + 287,   iGenericBitset = 2219 },
-    { script = "fm_content_bicycle_time_trial",  eEndReason = 2942 + 83,    iGenericBitset = 2886 },
-    { script = "fm_content_bike_shop_delivery",  eEndReason = 1574 + 83,    iGenericBitset = 1518 },
-    { script = "fm_content_bounty_targets",      eEndReason = 7019 + 1251,  iGenericBitset = 6941 },
-    { script = "fm_content_business_battles",    eEndReason = 5257 + 1138,  iGenericBitset = 5186 },
-    { script = "fm_content_cargo",               eEndReason = 5830 + 1148,  iGenericBitset = 5761 },
-    { script = "fm_content_cerberus",            eEndReason = 1589 + 91,    iGenericBitset = 1539 },
-    { script = "fm_content_chop_shop_delivery",  eEndReason = 1893 + 137,   iGenericBitset = 1835 },
-    { script = "fm_content_clubhouse_contracts", eEndReason = 6639 + 1255,  iGenericBitset = 6573 },
-    { script = "fm_content_club_management",     eEndReason = 5207 + 775,   iGenericBitset = 5148 },
-    { script = "fm_content_club_odd_jobs",       eEndReason = 1794 + 83,    iGenericBitset = 1738 },
-    { script = "fm_content_club_source",         eEndReason = 3540 + 674,   iGenericBitset = 3467 },
-    { script = "fm_content_convoy",              eEndReason = 2736 + 437,   iGenericBitset = 2672 },
-    { script = "fm_content_crime_scene",         eEndReason = 1948 + 151,   iGenericBitset = 1892 },
-    { script = "fm_content_daily_bounty",        eEndReason = 2533 + 325,   iGenericBitset = 2480 },
-    { script = "fm_content_dispatch_work",       eEndReason = 4856 + 755,   iGenericBitset = 4797 },
-    { script = "fm_content_drug_lab_work",       eEndReason = 7884 + 1253,  iGenericBitset = 7820 },
-    { script = "fm_content_drug_vehicle",        eEndReason = 1762 + 115,   iGenericBitset = 1707 },
-    { script = "fm_content_export_cargo",        eEndReason = 2200 + 191,   iGenericBitset = 2146 },
-    { script = "fm_content_ghosthunt",           eEndReason = 1552 + 88,    iGenericBitset = 1499 },
-    { script = "fm_content_golden_gun",          eEndReason = 1762 + 93,    iGenericBitset = 1711 },
-    { script = "fm_content_gunrunning",          eEndReason = 5639 + 1237,  iGenericBitset = 5566 },
-    { script = "fm_content_island_dj",           eEndReason = 3451 + 495,   iGenericBitset = 3374 },
-    { script = "fm_content_island_heist",        eEndReason = 13311 + 1339, iGenericBitset = 13220 },
-    { script = "fm_content_metal_detector",      eEndReason = 1810 + 93,    iGenericBitset = 1757 },
-    { script = "fm_content_movie_props",         eEndReason = 1888 + 137,   iGenericBitset = 1833 },
-    { script = "fm_content_parachuter",          eEndReason = 1568 + 83,    iGenericBitset = 1518 },
-    { script = "fm_content_payphone_hit",        eEndReason = 5675 + 683,   iGenericBitset = 5616 },
-    { script = "fm_content_phantom_car",         eEndReason = 1577 + 83,    iGenericBitset = 1527 },
-    { script = "fm_content_pizza_delivery",      eEndReason = 1704 + 83,    iGenericBitset = 1648 },
-    { script = "fm_content_possessed_animals",   eEndReason = 1593 + 83,    iGenericBitset = 1541 },
-    { script = "fm_content_robbery",             eEndReason = 1732 + 87,    iGenericBitset = 1666 },
-    { script = "fm_content_security_contract",   eEndReason = 7136 + 1278,  iGenericBitset = 7058 },
-    { script = "fm_content_sightseeing",         eEndReason = 1822 + 84,    iGenericBitset = 1770 },
-    { script = "fm_content_skydive",             eEndReason = 3010 + 93,    iGenericBitset = 2953 },
-    { script = "fm_content_slasher",             eEndReason = 1597 + 83,    iGenericBitset = 1545 },
-    { script = "fm_content_smuggler_ops",        eEndReason = 7600 + 1270,  iGenericBitset = 7523 },
-    { script = "fm_content_smuggler_plane",      eEndReason = 1838 + 178,   iGenericBitset = 1771 },
-    { script = "fm_content_smuggler_resupply",   eEndReason = 6045 + 1271,  iGenericBitset = 5966 },
-    { script = "fm_content_smuggler_sell",       eEndReason = 4015 + 489,   iGenericBitset = 3880 },
-    { script = "fm_content_smuggler_trail",      eEndReason = 2051 + 130,   iGenericBitset = 1980 },
-    { script = "fm_content_source_research",     eEndReason = 4318 + 1195,  iGenericBitset = 4261 },
-    { script = "fm_content_stash_house",         eEndReason = 3521 + 475,   iGenericBitset = 3467 },
-    { script = "fm_content_taxi_driver",         eEndReason = 1993 + 83,    iGenericBitset = 1941 },
-    { script = "fm_content_tow_truck_work",      eEndReason = 1755 + 91,    iGenericBitset = 1702 },
-    { script = "fm_content_tuner_robbery",       eEndReason = 7313 + 1194,  iGenericBitset = 7226 },
-    { script = "fm_content_ufo_abduction",       eEndReason = 2858 + 334,   iGenericBitset = 2792 },
-    { script = "fm_content_vehicle_list",        eEndReason = 1568 + 83,    iGenericBitset = 1518 },
-    { script = "fm_content_vehrob_arena",        eEndReason = 7807 + 1285,  iGenericBitset = 7748 },
-    { script = "fm_content_vehrob_cargo_ship",   eEndReason = 7025 + 1224,  iGenericBitset = 6934 },
-    { script = "fm_content_vehrob_casino_prize", eEndReason = 9060 + 1231,  iGenericBitset = 8979 },
-    { script = "fm_content_vehrob_disrupt",      eEndReason = 4570 + 924,   iGenericBitset = 4511 },
-    { script = "fm_content_vehrob_police",       eEndReason = 8847 + 1276,  iGenericBitset = 8772 },
-    { script = "fm_content_vehrob_prep",         eEndReason = 11366 + 1272, iGenericBitset = 11265 },
-    { script = "fm_content_vehrob_scoping",      eEndReason = 3752 + 508,   iGenericBitset = 3695 },
-    { script = "fm_content_vehrob_submarine",    eEndReason = 6125 + 1137,  iGenericBitset = 6041 },
-    { script = "fm_content_vehrob_task",         eEndReason = 4773 + 1043,  iGenericBitset = 4705 },
-    { script = "fm_content_vip_contract_1",      eEndReason = 8692 + 1157,  iGenericBitset = 8619 },
-    { script = "fm_content_xmas_mugger",         eEndReason = 1620 + 83,    iGenericBitset = 1568 },
-    { script = "fm_content_xmas_truck",          eEndReason = 1461 + 91,    iGenericBitset = 1409 },
+local StartFreemodeMission = {
+    iMission = 0,
+    iVariation = -1,
+    iSubVariation = -1,
 }
-menu.action(Menu_Root, "Complete fm_content_xxx Mission", {}, "", function()
-    for _, item in pairs(fm_content_xxx) do
-        if IS_SCRIPT_RUNNING(item.script) then
-            LOCAL_SET_BIT(item.script, item.iGenericBitset + 1 + 0, 11)
-            LOCAL_SET_INT(item.script, item.eEndReason, 3)
 
-            util.toast(item.script, TOAST_ALL)
-        end
+
+local MissionCategory = {
+    VIP_Work = "VIP 工作",
+    VIP_Challenges = "VIP 挑战",
+    Club_Work = "摩托帮工作",
+    Club_Challenges = "摩托帮挑战",
+    Club_Contracts = "摩托帮会所合约",
+    Client_Jobs = "恐霸客户差事",
+    Heist_Preps = "抢劫前置任务",
+    Salvage_Yard_Robbery = "回收站抢劫",
+}
+
+local FreemodeMissions = {
+    { 0, "NONE", {}, "" },
+
+    { 214, "毁货不倦", {}, "", MissionCategory.VIP_Work },
+    { 215, "火力满载", {}, "", MissionCategory.VIP_Work },
+    { 216, "两栖突击", {}, "", MissionCategory.VIP_Work },
+    { 217, "押送员", {}, "", MissionCategory.VIP_Work },
+    { 218, "铜墙铁壁", {}, "", MissionCategory.VIP_Work },
+    { 219, "生死极速", {}, "", MissionCategory.VIP_Work },
+    { 220, "加足马力", {}, "", MissionCategory.VIP_Work },
+    { 221, "囤积居奇", {}, "", MissionCategory.VIP_Work },
+    { 166, "猎杀专员", {}, "", MissionCategory.VIP_Work },
+    { 170, "空运货物", {}, "", MissionCategory.VIP_Work },
+    { 173, "货物运输", {}, "", MissionCategory.VIP_Work },
+    { 159, "野蛮接管", {}, "", MissionCategory.VIP_Work },
+    { 157, "资产回收", {}, "", MissionCategory.VIP_Work },
+    { 148, "老大对决", {}, "", MissionCategory.VIP_Work },
+    { 164, "猎杀老大", {}, "", MissionCategory.VIP_Work },
+    { 142, "观光客", {}, "", MissionCategory.VIP_Work },
+    { 152, "游艇保卫战", {}, "", MissionCategory.VIP_Work },
+
+    { 171, "提领一空", {}, "", MissionCategory.VIP_Challenges },
+    { 172, "打捞行动", {}, "", MissionCategory.VIP_Challenges },
+    { 163, "垄断车市", {}, "", MissionCategory.VIP_Challenges },
+    { 160, "先到先得", {}, "", MissionCategory.VIP_Challenges },
+    { 153, "亡命天涯/头号通缉犯", {}, "", MissionCategory.VIP_Challenges },
+    { 162, "点对点", {}, "", MissionCategory.VIP_Challenges },
+    { 155, "快递服务", {}, "", MissionCategory.VIP_Challenges },
+    { 154, "市场炒作", {}, "", MissionCategory.VIP_Challenges },
+
+
+    { 148, "死斗游戏", {}, "", MissionCategory.Club_Work },
+    { 179, "骑士死斗", {}, "", MissionCategory.Club_Work },
+    { 201, "划地为阵", {}, "", MissionCategory.Club_Work },
+    { 200, "摩托车卡位战", {}, "", MissionCategory.Club_Work },
+
+    { 189, "抢先抵达", {}, "", MissionCategory.Club_Challenges },
+    { 194, "破坏狂人", {}, "", MissionCategory.Club_Challenges },
+    { 193, "驾驶射击", {}, "", MissionCategory.Club_Challenges },
+    { 199, "索命追击", {}, "", MissionCategory.Club_Challenges },
+    { 205, "飞车整蛊", {}, "", MissionCategory.Club_Challenges },
+    { 210, "独轮骑士", {}, "", MissionCategory.Club_Challenges },
+
+    { 182, "克克皆辛苦", {}, "", MissionCategory.Club_Contracts },
+    { 183, "营救俘虏", {}, "", MissionCategory.Club_Contracts },
+    { 185, "佣兵送忠", {}, "", MissionCategory.Club_Contracts },
+    { 186, "奉命行凶", {}, "", MissionCategory.Club_Contracts },
+    { 180, "军火贸易", {}, "", MissionCategory.Club_Contracts },
+    { 195, "占车为王", {}, "", MissionCategory.Club_Contracts },
+    { 197, "逃狱威龙", {}, "", MissionCategory.Club_Contracts },
+    { 198, "直捣黄龙", {}, "", MissionCategory.Club_Contracts },
+    { 207, "易碎货物", {}, "", MissionCategory.Club_Contracts },
+    { 208, "火光冲天", {}, "", MissionCategory.Club_Contracts },
+    { 209, "摩的飙客", {}, "", MissionCategory.Club_Contracts },
+    { 293, "摩托帮会所合约 (两个新的)", {}, "", MissionCategory.Club_Contracts },
+
+
+    { 151, "追杀令/下达暗杀令", {}, "" },
+
+
+    { 158, "赌场抢劫 前置任务", {}, "", MissionCategory.Heist_Preps },
+    { 233, "末日豪劫 前置任务", {}, "", MissionCategory.Heist_Preps },
+    { 256, "佩里科岛抢劫 前置任务", {}, "", MissionCategory.Heist_Preps },
+    { 264, "别惹德瑞 前置任务", {}, "", MissionCategory.Heist_Preps },
+    { 271, "改装铺合约 前置任务", {}, "", MissionCategory.Heist_Preps },
+
+    { 242, "银行劫案", {}, "", MissionCategory.Client_Jobs },
+    { 244, "数据检索", {}, "", MissionCategory.Client_Jobs },
+    { 248, "致命数据", {}, "", MissionCategory.Client_Jobs },
+    { 241, "钻石买卖", {}, "", MissionCategory.Client_Jobs },
+    { 239, "典藏珍品", {}, "", MissionCategory.Client_Jobs },
+    { 240, "插手交易", {}, "", MissionCategory.Client_Jobs },
+
+
+    { 243, "赌场工作", {}, "" },
+    { 258, "DJ 任务", {}, "" },
+    { 262, "电话暗杀", {}, "" },
+    { 263, "安保合约", {}, "" },
+    { 267, "拉机能量时间挑战赛", {}, "" },
+    { 291, "摩托帮 酒吧重新补给", {}, "" },
+    { 294, "办公室 购买特种货物 (卢佩)", {}, "" },
+    { 295, "办公室 出口混合货物", {}, "" },
+    { 296, "地堡 武装国度合约", {}, "" },
+    { 297, "地堡 补充原材料任务 (两个新的)", {}, "" },
+    { 298, "请求地堡研究", {}, "" },
+    { 299, "夜总会管理 (两个)", {}, "" },
+    { 300, "夜总会管理 (两个人气事件)", {}, "" },
+    { 301, "请求夜总会货物 (两个)", {}, "" },
+    { 304, "致幻剂实验室 准备任务", {}, "" },
+    { 305, "致幻剂实验室 补充原材料任务", {}, "" },
+    { 307, "蠢人帮差事", {}, "" },
+    { 308, "藏匿屋", {}, "" },
+    { 309, "出租车工作", {}, "" },
+
+
+    { 314, "UFO Basement", {}, "" },
+    { 316, "机库 偷取货物任务 (陆地)", {}, "" },
+    { 317, "LSA 行动", {}, "" },
+
+    { 325, "Salvage_Scope", {}, "", MissionCategory.Salvage_Yard_Robbery },
+    { 326, "Salvage_Task", {}, "", MissionCategory.Salvage_Yard_Robbery },
+    { 327, "Salvage_Prep", {}, "", MissionCategory.Salvage_Yard_Robbery },
+    { 328, "Salvage_Prep", {}, "", MissionCategory.Salvage_Yard_Robbery },
+
+    { 337, "保金办公室悬赏目标", {}, "" },
+    { 338, "玛德拉索雇凶", {}, "" },
+    { 339, "派遣工作", {}, "" },
+}
+
+
+menu.list_select(Start_Freemode_Mission, "Mission", {}, "", FreemodeMissions, 0, function(value)
+    StartFreemodeMission.iMission = value
+end)
+
+menu.slider(Start_Freemode_Mission, "Variation", {}, "",
+    -1, 999, -1, 1, function(value)
+        StartFreemodeMission.iVariation = value
+    end)
+menu.slider(Start_Freemode_Mission, "Sub Variation", {}, "",
+    -1, 999, -1, 1, function(value)
+        StartFreemodeMission.iSubVariation = value
+    end)
+
+menu.action(Start_Freemode_Mission, "Start Mission", {}, "", function()
+    if StartFreemodeMission.iMission == 0 then
+        return
     end
+    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(StartFreemodeMission.iMission,
+        StartFreemodeMission.iVariation, StartFreemodeMission.iSubVariation)
 end)
 
 
@@ -1226,19 +537,14 @@ local Test_Start_Mission <const> = menu.list(Menu_Root, "Start Mission Test", {}
 
 menu.toggle_loop(Test_Start_Mission, "Show Global Info", {}, "", function()
     local text = string.format(
-        "iMissionToLaunch: %s\niMission: %s, iVariation: %s",
-        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()),
-        GLOBAL_GET_INT(g_sContactRequestGBMissionLaunch.iType),
-        GLOBAL_GET_INT(g_sContactRequestGBMissionLaunch.iVariation)
+        "iActiveMission: %s\niMissionToLaunch: %s",
+        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iActiveMission()),
+        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch())
     )
 
     draw_text(text)
 end)
-menu.toggle_loop(Test_Start_Mission, "Monitor iMissionToLaunch", {}, "", function()
-    if GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()) ~= -1 then
-        toast(GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()))
-    end
-end)
+
 
 menu.divider(Test_Start_Mission, "Freemode Mission")
 
@@ -1383,10 +689,10 @@ menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", functio
 
 
 
-    if GLOBAL_GET_BOOL(StrandMissionData.bIsThisAStrandMission) then
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstMission, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bPassedFirstStrandNoReset, true)
-        GLOBAL_SET_BOOL(StrandMissionData.bLastMission, true)
+    if GLOBAL_GET_BOOL(sStrandMissionData.bIsThisAStrandMission) then
+        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstMission, true)
+        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstStrandNoReset, true)
+        GLOBAL_SET_BOOL(sStrandMissionData.bLastMission, true)
     end
 
     -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
