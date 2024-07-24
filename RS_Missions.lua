@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/23"
+local SCRIPT_VERSION <const> = "2024/7/24"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
@@ -47,8 +47,6 @@ require("RS_Missions.tunables")
 
 --- Instant Finish Mission `fm_content_xxx`
 --- @param script string
---- @param iGenericBitset integer
---- @param eEndReason integer
 function INSTANT_FINISH_FM_CONTENT_MISSION(script)
     LOCAL_SET_BIT(script, Locals[script].iGenericBitset + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
     LOCAL_SET_INT(script, Locals[script].eEndReason, 3)              -- SET_END_REASON(eENDREASON_MISSION_PASSED)
@@ -147,9 +145,17 @@ function GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(iVariation, iSubvariation, iL
 end
 
 --- @param timer integer
-function SET_NET_TIMER_STARTED_AND_EXPIRED(timer)
-    GLOBAL_SET_INT(timer + 1, 1) -- bInitialisedTimer
-    GLOBAL_SET_INT(timer, 0)     -- Timer
+--- @param script string
+function SET_NET_TIMER_STARTED_AND_EXPIRED(timer, script)
+    if script == nil then
+        GLOBAL_SET_INT(timer + 1, 1) -- bInitialisedTimer
+        GLOBAL_SET_INT(timer, 0)     -- Timer
+    else
+        if IS_SCRIPT_RUNNING(script) then
+            LOCAL_SET_INT(script, timer + 1, 1) -- bInitialisedTimer
+            LOCAL_SET_INT(script, timer, 0)     -- Timer
+        end
+    end
 end
 
 START_APP = {

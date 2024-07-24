@@ -45,14 +45,18 @@ Globals = {
 
 
 -- GlobalPlayerBroadcastDataFM
-GlobalplayerBD_FM = {}
+GlobalplayerBD_FM = {
+    iCurrentMissionType = function()
+        return Globals.GlobalplayerBD_FM()
+    end
+}
 
 -- PROPERTY_BROADCAST_DETAILS
 GlobalplayerBD_FM.propertyDetails = {
     _ = 268, -- offset
 
     iCurrentlyInsideProperty = function()
-        return Globals.GlobalplayerBD() + GlobalplayerBD_FM.propertyDetails._ + 35
+        return Globals.GlobalplayerBD_FM() + GlobalplayerBD_FM.propertyDetails._ + 35
     end
 }
 
@@ -74,7 +78,7 @@ GlobalplayerBD_FM_3.sMagnateGangBossData = {
     end,
     iNumGoonsInGang = function()
         return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 19
-    end,
+    end
 }
 
 -- CONTRABAND_MISSION_DATA
@@ -90,7 +94,7 @@ GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = {
     bSpecialItem = function()
         return Globals.GlobalplayerBD_FM_3() +
             GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData._ + 3
-    end,
+    end
 }
 
 
@@ -99,8 +103,8 @@ GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = {
 MPGlobalsAmbience = {
     -- MAGNATE_GANG_BOSS_LOCAL_GLOBALS
     sMagnateGangBossData = {
-        iMissionVariation = Globals.MPGlobalsAmbience + 5249 + 347,
-    },
+        iMissionVariation = Globals.MPGlobalsAmbience + 5249 + 347
+    }
 }
 
 
@@ -119,7 +123,7 @@ g_sContactRequestGBMissionLaunch = {
 -- PAYPHONE_FLOW_GLOBAL_STRUCT
 local _g_PayphoneFlow = 2709088
 g_PayphoneFlow = {
-    iBitset = _g_PayphoneFlow + 1,
+    iBitset = _g_PayphoneFlow + 1
 }
 
 -- FIXER_FLOW_DATA
