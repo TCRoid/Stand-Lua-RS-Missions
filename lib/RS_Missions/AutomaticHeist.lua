@@ -480,7 +480,7 @@ AutoApartmentHeist.menuAction = menu.action(Auto_Apartment_Heist, "开启 全自
             util.toast("你需要在公寓内部")
             return
         end
-        if not IS_PLAYER_IN_APARTMENT_PLANNING_ROOM() then
+        if not IS_PLAYER_NEAR_HEIST_PLANNING_BOARD() then
             util.toast("你需要在抢劫计划面板附近")
             return
         end

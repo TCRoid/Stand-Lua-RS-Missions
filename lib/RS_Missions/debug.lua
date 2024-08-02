@@ -537,9 +537,10 @@ local Test_Start_Mission <const> = menu.list(Menu_Root, "Start Mission Test", {}
 
 menu.toggle_loop(Test_Start_Mission, "Show Global Info", {}, "", function()
     local text = string.format(
-        "iActiveMission: %s\niMissionToLaunch: %s",
+        "iActiveMission: %s\niMissionToLaunch: %s\niCurrentMissionType: %s",
         GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iActiveMission()),
-        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch())
+        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()),
+        GLOBAL_GET_INT(GlobalplayerBD_FM.iCurrentMissionType())
     )
 
     draw_text(text)
@@ -672,28 +673,23 @@ menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", functio
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
 
-    -- CHECK_TO_SEE_IF_THIS_IS_THE_LAST_STRAND_MISSION()
-    for i = 0, 5 do
-        local tl23NextContentID = GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6)
-        if tl23NextContentID ~= "" then
-            GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
-        end
-    end
+    -- CHECK_TO_SEE_IF_THIS_IS_THE_LAST_STRAND_MISSION
+    -- for i = 0, 5 do
+    --     local tl23NextContentID = GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6)
+    --     if tl23NextContentID ~= "" then
+    --         -- String Null, get out
+    --         GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
+    --     end
+    -- end
 
-    -- g_FMMC_STRUCT.iCelebrationType
-    -- GLOBAL_SET_INT(4718592 + 178859, 5)
+    -- (not) More than max (FMMC_MAX_STRAND_MISSIONS), get out
+    LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
 
-    -- ciMISSION_CUTSCENE_ISLAND_HEIST_HS4F_DRP_OFF
-    -- LOCAL_SET_INT(script, 50150 + 3016, 69)    -- MISSION_HAS_VALID_MOCAP
-    -- LOCAL_SET_INT(script, 50150 + 2525 + 1, 0) -- SHOULD_PLAY_END_MOCAP
-
-
-
-    if GLOBAL_GET_BOOL(sStrandMissionData.bIsThisAStrandMission) then
-        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstMission, true)
-        GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstStrandNoReset, true)
-        GLOBAL_SET_BOOL(sStrandMissionData.bLastMission, true)
-    end
+    -- if GLOBAL_GET_BOOL(sStrandMissionData.bIsThisAStrandMission) then
+    --     GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstMission, true)
+    --     GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstStrandNoReset, true)
+    --     GLOBAL_SET_BOOL(sStrandMissionData.bLastMission, true)
+    -- end
 
     -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
     LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
@@ -703,8 +699,8 @@ menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", functio
         LOCAL_SET_INT(script, Locals[script].iTeamScore + i, 999999)
     end
 
-    -- SSBOOL_TEAMx_FINISHED
-    LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12)
+    -- SSBOOL_TEAMx_FINISHED, SBBOOL_MISSION_OVER
+    LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12, 16)
 end)
 
 menu.action(Job_Mission_Test, "Mission Failed", { "MissionFailed" }, "", function()
@@ -822,18 +818,21 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
 end)
 
 
-
 menu.toggle_loop(Job_Mission_Test, "Show Global Info 2", {}, "", function()
-    local text = string.format(
-        "tlGlobalFinaleRContID: %s\nmhcContentID: %s\ng_HeistPlanningClient.eHeistFlowState: %s\ng_HeistPrePlanningClient.eHeistFlowState: %s",
-        GLOBAL_GET_STRING(1934536 + 10),    -- g_HeistSharedClient.tlGlobalFinaleRContID
-        GLOBAL_GET_STRING(2635126 + 3 + 1), -- g_sLocalMPHeistControl.lhcMyCorona.mhcContentID
-        GLOBAL_GET_INT(1930926 + 2768),     -- g_HeistPlanningClient.eHeistFlowState
-        GLOBAL_GET_INT(1928993)
-    )
+    local t = {
+        "g_HeistPlanningClient.eHeistFlowState: " .. GLOBAL_GET_INT(1930926 + 2768),
+        "g_HeistPrePlanningClient.eHeistFlowState: " .. GLOBAL_GET_INT(1928993),
+        "g_HeistStrandClient.eHeistFlowState: " .. GLOBAL_GET_INT(1934106),
+        "g_HeistSharedClient.PlanningBoardIndex: " .. GLOBAL_GET_INT(1934536),
+        "g_HeistSharedClient.vBoardPosition: " .. v3.toString(GLOBAL_GET_VECTOR3(1934536 + 16)),
+        "Player Pos: " .. v3.toString(ENTITY.GET_ENTITY_COORDS(players.user_ped()))
+    }
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
+
+
 
 
 
@@ -889,12 +888,17 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     end
 
     local MC_serverBD = 19746
+    local MC_serverBD_4 = 28365
 
     local iTeam = 0
 
     local text = string.format(
-        "iServerGameState: %s",
-        LOCAL_GET_INT(script, MC_serverBD)
+        "iServerGameState: %s\niNextMission: %s\niEndCutscene: %s, iEndCutsceneNum[0]: %s\niCurrentHighestPriority[0]: %s",
+        LOCAL_GET_INT(script, MC_serverBD),
+        LOCAL_GET_INT(script, MC_serverBD + 1062),
+        LOCAL_GET_INT(script, MC_serverBD + 2687),
+        LOCAL_GET_INT(script, MC_serverBD + 1845 + 1 + iTeam),
+        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam)
     )
 
     draw_text(text)
@@ -910,6 +914,18 @@ menu.toggle_loop(Job_Mission_Test, "LEADERBOARD_TIMER", {}, "", function()
 
     -- tdresultstimer.Timer
     LOCAL_SET_INT(script, 3240, NETWORK.GET_NETWORK_TIME())
+end)
+
+menu.toggle_loop(Job_Mission_Test, "iNextMission", {}, "", function()
+    local script = "fm_mission_controller"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    local iNextMission = LOCAL_GET_INT(script, Locals[script].iNextMission)
+    if iNextMission ~= 0 then
+        util.toast(iNextMission)
+    end
 end)
 
 
@@ -929,12 +945,17 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     end
 
     local MC_serverBD = 50150
+    local MC_serverBD_4 = 59029
 
     local iTeam = 0
 
     local text = string.format(
-        "iServerGameState: %s",
-        LOCAL_GET_INT(script, MC_serverBD)
+        "iServerGameState: %s\niNextMission: %s\niEndCutscene: %s, iEndCutsceneNum[0]: %s\niCurrentHighestPriority[0]: %s",
+        LOCAL_GET_INT(script, MC_serverBD),
+        LOCAL_GET_INT(script, MC_serverBD + 1583),
+        LOCAL_GET_INT(script, MC_serverBD + 3016),
+        LOCAL_GET_INT(script, MC_serverBD + 2525 + 1 + iTeam),
+        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam)
     )
 
     draw_text(text)
@@ -988,7 +1009,7 @@ end)
 
 
 menu.divider(Job_Mission_Test, "")
-menu.toggle_loop(Job_Mission_Test, "Show Mission Controller Script", {}, "", function()
+menu.toggle_loop(Job_Mission_Test, "Show fm_mission_controller Script", {}, "", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
 
@@ -1020,16 +1041,22 @@ menu.toggle_loop(Job_Mission_Test, "Show Mission Controller Script", {}, "", fun
 
     draw_text(text)
 end)
-menu.action(Job_Mission_Test, "Request Mission Controller Script Host", {}, "", function()
-    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
-    if script == nil then return end
+menu.toggle_loop(Job_Mission_Test, "Show Script Host", {}, "", function()
+    local text = ""
 
-    if util.request_script_host(script) then
-        util.toast("Success")
-    else
-        util.toast("Fail")
+    if IS_SCRIPT_RUNNING("fmmc_launcher") then
+        local fmmc_launcher_host = players.get_name(NETWORK.NETWORK_GET_HOST_OF_SCRIPT("fmmc_launcher", -1, 0))
+        text = text .. "fmmc_launcher host: " .. fmmc_launcher_host .. "\n"
     end
+
+    if IS_SCRIPT_RUNNING("freemode") then
+        local freemode_host = players.get_name(NETWORK.NETWORK_GET_HOST_OF_SCRIPT("freemode", -1, 0))
+        text = text .. "freemode host: " .. freemode_host
+    end
+
+    draw_text(text)
 end)
+
 
 
 
@@ -1960,7 +1987,7 @@ menu.toggle_loop(Script_Event_Test, "Get Network Script Event", {}, "", function
 
                 local eventName = AllScriptEvents[eventHash]
                 if eventName then
-                    eventName = eventName .. "( " .. eventHash .. " )"
+                    eventName = eventName .. " (" .. eventHash .. ")"
                 else
                     eventName = eventHash
                 end

@@ -343,24 +343,6 @@ function GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     return nil
 end
 
---- @param func function
---- @param script_host boolean
-function FMMC_SCRIPT(func, script_host)
-    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
-    if script == nil then
-        return
-    end
-
-    if script_host and NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0) ~= players.user() then
-        if not util.request_script_host(script) then
-            util.toast("请求成为任务脚本主机失败，请重试")
-            return
-        end
-    end
-
-    func(script)
-end
-
 --------------------------------
 -- Global Functions
 --------------------------------
@@ -411,6 +393,12 @@ end
 --- @return boolean
 function GLOBAL_GET_BOOL(global)
     return memory.read_int(memory.script_global(global)) == 1
+end
+
+--- @param global integer
+--- @return Vector3
+function GLOBAL_GET_VECTOR3(global)
+    return memory.read_vector3(memory.script_global(global))
 end
 
 --- @param global integer

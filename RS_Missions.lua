@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/7/24"
+local SCRIPT_VERSION <const> = "2024/8/1"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
@@ -45,31 +45,75 @@ require("RS_Missions.tunables")
 -- Functions
 ------------------------
 
---- Instant Finish Mission `fm_content_xxx`
+-- `fm_mission_controller` and `fm_mission_controller_2020`
+FM_MISSION_CONTROLLER = {}
+
 --- @param script string
-function INSTANT_FINISH_FM_CONTENT_MISSION(script)
-    LOCAL_SET_BIT(script, Locals[script].iGenericBitset + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
-    LOCAL_SET_INT(script, Locals[script].eEndReason, 3)              -- SET_END_REASON(eENDREASON_MISSION_PASSED)
+--- @return integer
+function FM_MISSION_CONTROLLER.GET_SCRIPT_HOST(script)
+    return NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0)
 end
 
---- Instant Finish `fm_mission_controller` and `fm_mission_controller_2020`
-function INSTANT_FINISH_FM_MISSION_CONTROLLER()
-    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
-    if script == nil then
-        return
+--- @param script string
+--- @return boolean
+function FM_MISSION_CONTROLLER.IS_SCRIPT_HOST(script)
+    -- return NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0) == players.user()
+    local isHost = false
+    util.spoof_script(script, function()
+        isHost = NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT()
+    end)
+    return isHost
+end
+
+--- @param script string
+function FM_MISSION_CONTROLLER.REQUEST_SCRIPT_HOST(script)
+    if FM_MISSION_CONTROLLER.IS_SCRIPT_HOST(script) then
+        return true
     end
 
     util.request_script_host(script)
 
-    -- String Null, get out
+    local timeout = 2000
+    local start_time = util.current_time_millis()
+
+    while not FM_MISSION_CONTROLLER.IS_SCRIPT_HOST(script) do
+        if util.current_time_millis() - start_time >= timeout then
+            break
+        end
+        util.yield()
+        util.request_script_host(script)
+    end
+
+    return FM_MISSION_CONTROLLER.IS_SCRIPT_HOST(script)
+end
+
+--- @param func function
+function FM_MISSION_CONTROLLER.SPOOF_SCRIPT(func)
+    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
+    if script == nil then return end
+
+    if not FM_MISSION_CONTROLLER.REQUEST_SCRIPT_HOST(script) then
+        return
+    end
+
+    util.spoof_script(script, function()
+        func(script)
+    end)
+end
+
+--- @param script string
+function FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    -- CHECK_TO_SEE_IF_THIS_IS_THE_LAST_STRAND_MISSION
     for i = 0, 5 do
         local tl23NextContentID = GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6)
         if tl23NextContentID ~= "" then
+            -- String Null, get out
             GLOBAL_SET_STRING(FMMC_STRUCT.tl23NextContentID + i * 6, "")
         end
     end
+
     -- (not) More than max (FMMC_MAX_STRAND_MISSIONS), get out
-    -- LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
+    LOCAL_SET_INT(script, Locals[script].iNextMission, 5)
 
     if GLOBAL_GET_BOOL(sStrandMissionData.bIsThisAStrandMission) then
         GLOBAL_SET_BOOL(sStrandMissionData.bPassedFirstMission, true)
@@ -87,6 +131,20 @@ function INSTANT_FINISH_FM_MISSION_CONTROLLER()
 
     -- SSBOOL_TEAMx_FINISHED, SBBOOL_MISSION_OVER
     LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12, 16)
+end
+
+--- Instant Finish `fm_mission_controller` and `fm_mission_controller_2020`
+function INSTANT_FINISH_FM_MISSION_CONTROLLER()
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    end)
+end
+
+--- Instant Finish Mission `fm_content_xxx`
+--- @param script string
+function INSTANT_FINISH_FM_CONTENT_MISSION(script)
+    LOCAL_SET_BIT(script, Locals[script].iGenericBitset + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
+    LOCAL_SET_INT(script, Locals[script].eEndReason, 3)              -- SET_END_REASON(eENDREASON_MISSION_PASSED)
 end
 
 --- Start Mission (By Script Event)
@@ -156,6 +214,17 @@ function SET_NET_TIMER_STARTED_AND_EXPIRED(timer, script)
             LOCAL_SET_INT(script, timer, 0)     -- Timer
         end
     end
+end
+
+--- @return boolean
+function IS_PLAYER_NEAR_HEIST_PLANNING_BOARD()
+    if GLOBAL_GET_INT(g_HeistSharedClient.PlanningBoardIndex) == 0 then
+        return false
+    end
+
+    local playerPos = ENTITY.GET_ENTITY_COORDS(players.user_ped())
+    local boardPos = GLOBAL_GET_VECTOR3(g_HeistSharedClient.vBoardPosition)
+    return v3.distance(playerPos, boardPos) < 3.5 -- HEIST_CUTSCENE_TRIGGER_m
 end
 
 START_APP = {
@@ -2511,10 +2580,10 @@ local Heist_Mission_Helper <const> = menu.list(Heist_Mission, "抢劫任务助�
 --#region Heist Mission Helper
 
 menu.action(Heist_Mission_Helper, "跳到下一个检查点", { "SkipNextObjective" }, "解决单人进行任务卡关问题", function()
-    FMMC_SCRIPT(function(script)
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
         -- SBBOOL1_PROGRESS_OBJECTIVE_FOR_TEAM_0
         LOCAL_SET_BIT(script, Locals[script].iServerBitSet1, 17)
-    end, true)
+    end)
 end)
 
 menu.list_action(Heist_Mission_Helper, "更改任务难度", { "mcDifficulity" }, "", {
@@ -2526,38 +2595,38 @@ menu.list_action(Heist_Mission_Helper, "更改任务难度", { "mcDifficulity" }
 end)
 
 menu.toggle_loop(Heist_Mission_Helper, "禁止因触发惊动而任务失败", {}, "", function()
-    FMMC_SCRIPT(function(script)
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
         -- SBBOOL1_AGGRO_TRIGGERED_FOR_TEAM_0, SBBOOL1_AGGRO_WILL_FAIL_FOR_TEAM_0
         LOCAL_CLEAR_BITS(script, Locals[script].iServerBitSet1, 24, 28)
-    end, true)
+    end)
 end)
 
-menu.toggle_loop(Heist_Mission_Helper, "禁止任务失败", {}, "", function()
-    FMMC_SCRIPT(function(script)
+menu.toggle_loop(Heist_Mission_Helper, "禁止任务失败", {}, "仅单人可用", function()
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
         -- LBOOL11_STOP_MISSION_FAILING_DUE_TO_EARLY_CELEBRATION
         LOCAL_SET_BIT(script, Locals[script].iLocalBoolCheck11, 7)
-    end, true)
+    end)
 end)
 
 menu.click_slider(Heist_Mission_Helper, "增加团队生命数", { "mcTeamLives" }, "", -1, 30000, 0, 1, function(value)
-    FMMC_SCRIPT(function(script)
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
         for i = 0, 3 do
             LOCAL_SET_INT(script, Locals[script].iAdditionalTeamLives + i, value)
         end
-    end, true)
+    end)
 end)
 
 
 menu.click_slider(Heist_Mission_Helper, "设置任务剩余时间", { "mcTimeDuration" }, "单位：分钟\n右下角的剩余时间倒计时",
     0, 600, 20, 10, function(value)
-        FMMC_SCRIPT(function(script)
+        FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
             local team = PLAYER.GET_PLAYER_TEAM(players.user())
 
             LOCAL_SET_INT(script, Locals[script].iMultiObjectiveTimeLimit + team, value * 60 * 1000)
-        end, true)
+        end)
     end)
 menu.toggle_loop(Heist_Mission_Helper, "锁定任务剩余时间", { "mcTimeLock" }, "右下角的剩余时间倒计时", function()
-    FMMC_SCRIPT(function(script)
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
         local team = PLAYER.GET_PLAYER_TEAM(players.user())
 
         if LOCAL_GET_BOOL(script, Locals[script].tdObjectiveLimitTimer + team * 2 + 1) then
@@ -2566,7 +2635,7 @@ menu.toggle_loop(Heist_Mission_Helper, "锁定任务剩余时间", { "mcTimeLock
         if LOCAL_GET_BOOL(script, Locals[script].tdMultiObjectiveLimitTimer + team * 2 + 1) then
             LOCAL_SET_INT(script, Locals[script].tdMultiObjectiveLimitTimer + team * 2, NETWORK.GET_NETWORK_TIME())
         end
-    end, true)
+    end)
 end)
 
 
@@ -2692,25 +2761,10 @@ menu.action(Heist_Mission, "重新加载抢劫计划面板", { "ReloadHeistBoard
 end)
 
 menu.action(Heist_Mission, "直接完成任务 (通用)", { "InsFinJob" }, "联系人任务", function()
-    menu.trigger_commands("scripthost")
-    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    end)
 end)
-
-menu.action(Heist_Mission, "成为任务脚本主机", { "fmmcHost" }, "", function()
-    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
-    if script == nil then
-        return
-    end
-
-
-    if util.request_script_host(script) then
-        util.toast("成为任务脚本主机 成功")
-    else
-        util.toast("成为任务脚本主机 失败")
-    end
-end)
-
-
 
 
 
@@ -2820,21 +2874,18 @@ rs.menu_slider(Apartment_Heist, "拿取财物收入", { "ApartmentHeistTotalTake
     end)
 
 menu.action(Apartment_Heist, "直接完成 公寓抢劫", {}, "", function()
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        if ApartmentHeistVars.iCashReward ~= -1 then
+            Tunables.SetIntList("HeistFinalCashReward", ApartmentHeistVars.iCashReward)
+        end
+        if ApartmentHeistVars.iCashTotalTake ~= -1 then
+            LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, ApartmentHeistVars.iCashTotalTake)
+        end
 
-    if ApartmentHeistVars.iCashReward ~= -1 then
-        Tunables.SetIntList("HeistFinalCashReward", ApartmentHeistVars.iCashReward)
-    end
-    if ApartmentHeistVars.iCashTotalTake ~= -1 then
-        LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, ApartmentHeistVars.iCashTotalTake)
-    end
+        HANDLE_HEIST_ELITE_CHALLENGE(script, ApartmentHeistVars.eEliteChallenge)
 
-    HANDLE_HEIST_ELITE_CHALLENGE(script, ApartmentHeistVars.eEliteChallenge)
-
-    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+        FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    end)
 end)
 
 menu.divider(Apartment_Heist, "")
@@ -2855,7 +2906,7 @@ menu.list_action(Apartment_Heist, "启动差事: 抢劫任务 终章", {},
             util.toast("你需要在公寓内部")
             return
         end
-        if not IS_PLAYER_IN_APARTMENT_PLANNING_ROOM() then
+        if not IS_PLAYER_NEAR_HEIST_PLANNING_BOARD() then
             util.toast("你需要在抢劫计划面板附近")
             return
         end
@@ -2941,18 +2992,15 @@ rs.menu_slider(Doomsday_Heist, "终章收入奖励", { "DoomsdayHeistCashReward"
     end)
 
 menu.action(Doomsday_Heist, "直接完成 末日豪劫", {}, "", function()
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        if DoomsdayHeistVars.iCashReward ~= -1 then
+            Tunables.SetIntList("GangopsFinalCashReward", DoomsdayHeistVars.iCashReward)
+        end
 
-    if DoomsdayHeistVars.iCashReward ~= -1 then
-        Tunables.SetIntList("GangopsFinalCashReward", DoomsdayHeistVars.iCashReward)
-    end
+        HANDLE_HEIST_ELITE_CHALLENGE(script, DoomsdayHeistVars.eEliteChallenge)
 
-    HANDLE_HEIST_ELITE_CHALLENGE(script, DoomsdayHeistVars.eEliteChallenge)
-
-    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+        FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    end)
 end)
 
 menu.divider(Doomsday_Heist, "")
@@ -3072,24 +3120,21 @@ menu.toggle(Casino_Heist, "重置前置任务面板", {}, "不重置则可以直
 end)
 
 menu.list_action(Casino_Heist, "直接完成 赌场抢劫", {}, "", Tables.CasinoHeistApproach, function(value)
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        if CasinoHeistVars.iCashTotalTake ~= -1 then
+            LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, CasinoHeistVars.iCashTotalTake)
+        end
 
-    if CasinoHeistVars.iCashTotalTake ~= -1 then
-        LOCAL_SET_INT(script, Locals[script].iCashGrabTotalTake, CasinoHeistVars.iCashTotalTake)
-    end
+        HANDLE_HEIST_ELITE_CHALLENGE(script, CasinoHeistVars.eEliteChallenge)
 
-    HANDLE_HEIST_ELITE_CHALLENGE(script, CasinoHeistVars.eEliteChallenge)
+        GLOBAL_SET_INT(g_sCasinoHeistMissionConfigData.eChosenApproachType, value)
 
-    GLOBAL_SET_INT(g_sCasinoHeistMissionConfigData.eChosenApproachType, value)
+        if CasinoHeistVars.bResetPrepStats then
+            GLOBAL_SET_INT(FMMC_STRUCT.iRootContentIDHash, Tables.CasinoHeistFinalRootContent[value])
+        end
 
-    if CasinoHeistVars.bResetPrepStats then
-        GLOBAL_SET_INT(FMMC_STRUCT.iRootContentIDHash, Tables.CasinoHeistFinalRootContent[value])
-    end
-
-    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+        FM_MISSION_CONTROLLER.INSTANT_FINISH(script)
+    end)
 end)
 
 
@@ -3371,21 +3416,18 @@ menu.toggle(Island_Heist, "重置前置任务面板", {}, "不重置则可以直
     IslandHeistVars.bResetPrepStats = toggle
 end)
 
-menu.action(Island_Heist, "直接完成 佩里科岛抢劫", {}, "", function()
-    local script = "fm_mission_controller_2020"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+menu.action(Island_Heist, "直接完成 佩里科岛抢劫", {}, "进入豪宅后再完成会卡住", function()
+    FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+        if IslandHeistVars.iTargetValue ~= -1 then
+            Tunables.SetIntList("IslandHeistPrimaryTargetValue", IslandHeistVars.iTargetValue)
+        end
 
-    if IslandHeistVars.iTargetValue ~= -1 then
-        Tunables.SetIntList("IslandHeistPrimaryTargetValue", IslandHeistVars.iTargetValue)
-    end
+        if IslandHeistVars.bResetPrepStats then
+            GLOBAL_SET_INT(FMMC_STRUCT.iRootContentIDHash, 1601836271) -- H4_STEALTH_3
+        end
 
-    if IslandHeistVars.bResetPrepStats then
-        GLOBAL_SET_INT(FMMC_STRUCT.iRootContentIDHash, 1601836271) -- H4_STEALTH_3
-    end
-
-    INSTANT_FINISH_FM_MISSION_CONTROLLER()
+        INSTANT_FINISH_FM_MISSION_CONTROLLER()
+    end)
 end)
 
 

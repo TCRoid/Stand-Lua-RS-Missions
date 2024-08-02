@@ -187,7 +187,6 @@ sStrandMissionData = {
 
 
 
-
 -- HEIST_CLIENT_PRE_PLANNING_LOCAL_DATA
 local _g_HeistPrePlanningClient = 1928993
 g_HeistPrePlanningClient = {
@@ -199,6 +198,13 @@ g_HeistPrePlanningClient = {
 local _g_HeistPlanningClient = 1930926
 g_HeistPlanningClient = {
     bHeistCoronaActive = _g_HeistPlanningClient + 2816
+}
+
+-- HEIST_CLIENT_SHARED_LOCAL_DATA
+local _g_HeistSharedClient = 1934536
+g_HeistSharedClient = {
+    PlanningBoardIndex = _g_HeistSharedClient,
+    vBoardPosition = _g_HeistSharedClient + 16
 }
 
 
