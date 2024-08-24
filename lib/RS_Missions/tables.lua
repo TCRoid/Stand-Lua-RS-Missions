@@ -43,6 +43,7 @@ Labels = {
     SalvageYard = get_label_text("CELL_SLVG_YRD"),
     Terrorbyte = get_label_text("TERBYTE"),
     MasterControlTerminal = get_label_text("ARC_MCT_BLIP"),
+    RecordAStudios= get_label_text("CELL_REC_A"),
 
     MotorcycleClub = get_label_text("HP_GANG_MC"),
     BikerClubhouse = get_label_text("BLIP_492"),
@@ -619,6 +620,13 @@ Tables = {
         { 6,  get_label_text("CLUB_STOCK6"), {}, get_label_text("HAPP_BTYPE_HP6") }, -- BUSINESS_TYPE_COUNTERFEIT_CASH
     },
 
+    ClientJobs = {
+        { 242, get_label_text("HT_BW_T0"), {}, "" }, -- Robbery in Progress, FMMC_TYPE_FMBB_BANK_JOB
+        { 244, get_label_text("HT_BW_T1"), {}, "" }, -- Data Sweep, FMMC_TYPE_FMBB_DATA_HACK
+        { 248, get_label_text("HT_BW_T2"), {}, "" }, -- Targeted Data, FMMC_TYPE_FMBB_INFILTRATION
+        { 241, get_label_text("HT_BW_T3"), {}, "" }, -- Diamond Shopping, FMMC_TYPE_FMBB_JEWEL_STORE_GRAB
+    },
+
     DrugLabWork = {
         { -1, Labels.RANDOM,  {}, "" },
         { 0,  "Crop Dusting", {}, "" },
@@ -645,6 +653,12 @@ Tables = {
         { 13, get_label_text("GBC_ST_SP"),  {}, "" }, -- CSV_STAFF_PROBLEMS
         { 14, get_label_text("GBC_ST_TC"),  {}, "" }, -- CSV_TRACKING_CHIPS
         { 15, get_label_text("GBC_ST_UTI"), {}, "" }, -- CSV_UNDER_THE_INFLUENCE
+    },
+    SmugglerOperation = {
+        { -1, Labels.RANDOM,                   {}, "" },
+        { 0,  get_label_text("AOT_SMU_MIS_1"), {}, "" },
+        { 1,  get_label_text("AOT_SMU_MIS_2"), {}, "" },
+        { 2,  get_label_text("AOT_SMU_MIS_3"), {}, "" },
     },
 
     ------------------------

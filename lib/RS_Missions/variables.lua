@@ -416,10 +416,23 @@ Locals = {
     ["gb_data_hack"] = {
         eEndReason = 1927 + 7
     },
+    ["gb_infiltration"] = {
+        eEndReason = 1715 + 6
+    },
+    ["gb_jewel_store_grab"] = {
+        piDeliverer = 1247 + 8,
+        eEndReason = 1247 + 6
+    },
+
 
     ["fm_content_drug_lab_work"] = {
         iGenericBitset = 7820,
         eEndReason = 7884 + 1253
+    },
+    ["fm_content_smuggler_ops"] = {
+        iMissionBitSet = 7600 + 1327,
+        iGenericBitset = 7523,
+        eEndReason = 7600 + 1270
     },
     ["fm_content_auto_shop_delivery"] = {
         iGenericBitset = 1518,
@@ -730,10 +743,10 @@ function LAUNCH_MISSION(Data)
 
     -- SET_TRANSITION_SESSIONS_STARTING_QUICK_MATCH()
     ---- SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_STARTING_QUICK_MATCH)
-    GLOBAL_SET_BIT(g_sTransitionSessionData, 5)
+    --GLOBAL_SET_BIT(g_sTransitionSessionData, 5)
     ---- SET_TRANSITION_SESSIONS_SETTING_UP_QUICKMATCH()
     ------ SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_SETTING_UP_QUICKMATCH)
-    GLOBAL_SET_BIT(g_sTransitionSessionData, 8)
+    --GLOBAL_SET_BIT(g_sTransitionSessionData, 8)
 
     -- CLEAR_TRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM()
     ---- CLEAR_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM)

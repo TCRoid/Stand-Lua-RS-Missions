@@ -48,7 +48,8 @@ local Start_Freemode_Mission <const> = menu.list(Heist_Mission, "开始自由模
 local StartFreemodeMission = {
     iMission = 0,
     iVariation = -1,
-    iSubVariation = -1,
+
+    sendPlayer = 0,
 }
 
 
@@ -173,7 +174,7 @@ local FreemodeMissions = {
 }
 
 
-menu.list_select(Start_Freemode_Mission, "Mission", {}, "", FreemodeMissions, 0, function(value)
+menu.list_select(Start_Freemode_Mission, "选择任务", {}, "", FreemodeMissions, 0, function(value)
     StartFreemodeMission.iMission = value
 end)
 
@@ -181,17 +182,44 @@ menu.slider(Start_Freemode_Mission, "Variation", {}, "",
     -1, 999, -1, 1, function(value)
         StartFreemodeMission.iVariation = value
     end)
-menu.slider(Start_Freemode_Mission, "Sub Variation", {}, "",
-    -1, 999, -1, 1, function(value)
-        StartFreemodeMission.iSubVariation = value
-    end)
 
-menu.action(Start_Freemode_Mission, "Start Mission", {}, "", function()
-    if StartFreemodeMission.iMission == 0 then
-        return
+menu.list_select(Start_Freemode_Mission, "发送到玩家", {}, "", {
+    { 0, "仅自己" },
+    { 1, "仅组织成员" },
+    { 2, "全部玩家" }
+}, 0, function(value)
+    StartFreemodeMission.sendPlayer = value
+end)
+
+menu.action(Start_Freemode_Mission, "开始任务", {}, "", function()
+    if StartFreemodeMission.iMission == 0 then return end
+
+    local function getPlayerBitSet(sendPlayer)
+        if sendPlayer == 0 then
+            return 1 << players.user()
+        end
+
+        if sendPlayer == 1 and players.get_org_type(players.user()) ~= -1 then
+            local playerBit = 1 << players.user()
+            for _, pid in pairs(players.list(false, true, true)) do
+                if players.get_boss(pid) == players.user() then
+                    playerBit = SET_BIT(playerBit, pid)
+                end
+            end
+            return playerBit
+        end
+
+        if sendPlayer == 2 then
+            return util.get_session_players_bitflag()
+        end
     end
-    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(StartFreemodeMission.iMission,
-        StartFreemodeMission.iVariation, StartFreemodeMission.iSubVariation)
+
+    local playerBit = getPlayerBitSet(StartFreemodeMission.sendPlayer)
+
+    -- GB_NON_BOSS_CHALLENGE_REQUEST
+    util.trigger_script_event(playerBit, {
+        1450115979, players.user(), StartFreemodeMission.iMission, StartFreemodeMission.iVariation
+    })
 end)
 
 
@@ -209,7 +237,7 @@ local Instant_Finish_Test <const> = menu.list(Menu_Root, "Instant Finish Test", 
 
 menu.divider(Instant_Finish_Test, "fm_content Mission")
 
-local TestScript1 = "fm_content_bicycle_time_trial"
+local TestScript1 = "fm_content_smuggler_ops"
 
 menu.toggle_loop(Instant_Finish_Test, "Show Local Info", {}, "", function()
     local script = TestScript1
@@ -261,17 +289,17 @@ menu.action(Instant_Finish_Test, "Test Complete fm_content", {}, "", function()
     local script = TestScript1
     if not IS_SCRIPT_RUNNING(script) then return end
 
-    LOCAL_SET_BIT(script, 2873 + 1 + 0, 0)
+    LOCAL_SET_BIT(script, 7600 + 1327 + 1 + 0, 0)
 
-    LOCAL_SET_BIT(script, 2860 + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
-    -- LOCAL_SET_INT(script, 2913 + 83, 3)     -- SET_END_REASON(eENDREASON_MISSION_PASSED)
+    LOCAL_SET_BIT(script, 7523 + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
+    LOCAL_SET_INT(script, 7600 + 1270, 3)   -- SET_END_REASON(eENDREASON_MISSION_PASSED)
 end)
 
 
 
 menu.divider(Instant_Finish_Test, "gb Mission")
 
-local TestScript2 = "gb_vehicle_export"
+local TestScript2 = "gb_infiltration"
 
 local TestSelectMission2 = 13
 menu.slider(Instant_Finish_Test, "Select Mission", { "TestSelectMission2" }, "",
@@ -297,22 +325,15 @@ menu.action(Instant_Finish_Test, "End Mission", {}, "", function()
 end)
 
 menu.action(Instant_Finish_Test, "Test Complete Vehicle Export", {}, "", function()
-    local script = "gb_vehicle_export"
+    local script = TestScript2
     if not IS_SCRIPT_RUNNING(script) then
         return
     end
 
-    -- LOCAL_SET_INT(script, 388 + 1, 1)
+    LOCAL_SET_INT(script, 834 + 460, 4) -- SET_END_REASON(eENDREASON_WIN_CONDITION_TRIGGERED)
 
-    -- SET_EXPORT_ENTITY_BIT(iExportEntity,
-    -- eEXPORTENTITYBITSET_DELIVERED, eEXPORTENTITYBITSET_FADED_OUT_FOR_DELIVERY, eEXPORTENTITYBITSET_DELIVERED_BY_KEY_ORGINISATION
-    LOCAL_SET_BITS(script, 834 + 48 + 1 + 0 * 2 + 1 + 0, 6, 16, 18)
-
-
-    LOCAL_SET_INT(script, 834 + 460, 4)  -- SET_END_REASON(eENDREASON_EXPORT_ENTITY_DELIVERED)
-    LOCAL_SET_INT(script, 834 + 459, 13) -- SET_MODE_STATE(eMODESTATE_REWARDS)
+    -- LOCAL_SET_INT(script, 834 + 459, 13) -- SET_MODE_STATE(eMODESTATE_REWARDS)
 end)
-
 
 
 
@@ -328,23 +349,18 @@ end)
 
 local Freemode_Test <const> = menu.list(Menu_Root, "Freemode Test", {}, "")
 
-menu.toggle_loop(Freemode_Test, "Show Local Info", { "t" }, "", function()
-    local script = "am_pi_menu"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+menu.toggle_loop(Freemode_Test, "Show Local Info", {}, "", function()
+    local script = "am_mp_fixer_hq"
+    if not IS_SCRIPT_RUNNING(script) then return end
 
-    local text = string.format(
-        "ePiStage: %s, bCursorAccept: %s, iCursorValueChange: %s\nbiStoreActive: %s, bGBMenuShouldRefresh: %s, biListenForDoubleTap: %s",
-        LOCAL_GET_INT(script, 1526),
-        LOCAL_GET_INT(script, 1679),
-        LOCAL_GET_INT(script, 1683),
-        LOCAL_BIT_TEST(script, 1691, 18),
-        LOCAL_GET_INT(script, 1501),
-        LOCAL_BIT_TEST(script, 1691, 31)
+    -- Local_527.f_469->f_10
+    -- sData.eVaultSafeStage
 
-    )
+    local t = {
+        "ssData.eVaultSafeStage: " .. LOCAL_GET_INT(script, 527 + 469 + 10)
+    }
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
@@ -501,6 +517,18 @@ menu.action(Freemode_Test, "切换战局 到 设施", {}, "", function()
 end)
 
 
+menu.action(Freemode_Test, "CPCS_PAYOUT", {}, "", function()
+    local script = "am_mp_nightclub"
+    if not IS_SCRIPT_RUNNING(script) then return end
+
+    -- "CLUB_SAFE_OPEN"
+
+    -- Local_181.f_32->f_4
+    -- ref_data.eStage
+    LOCAL_SET_INT(script, 181 + 32 + 4, 3) -- CPCS_PAYOUT
+end)
+
+
 
 
 
@@ -518,6 +546,40 @@ menu.action(Freemode_Test, "iProductTotal = 100", {}, "", function()
     end
 end)
 
+
+
+
+
+
+menu.divider(Freemode_Test, "Casino Horse Race")
+
+menu.action(Freemode_Test, "Set Win (Single)", {}, "", function()
+    local script = "am_mp_casino"
+    if not IS_SCRIPT_RUNNING(script) then return end
+
+    local sRaceData = 214 + 628 + 128
+    local iSelection = 214 + 628 + 39 + 16
+
+    local iWinningSegment = LOCAL_GET_INT(script, sRaceData + 17)
+    LOCAL_SET_INT(script, iSelection, iWinningSegment)
+end)
+menu.action(Freemode_Test, "SET_RACE_BIT", {}, "BS_RACE_INSIDE_TRACK_MINIGAME_READY_TO_START", function()
+    local script = "am_mp_casino"
+    if not IS_SCRIPT_RUNNING(script) then return end
+
+    local sRaceData = 2521 + 13 + 1
+    LOCAL_SET_BIT(script, sRaceData + 1, 8)
+end)
+menu.action(Freemode_Test, "Set Win (Multi)", {}, "", function()
+    local script = "am_mp_casino"
+    if not IS_SCRIPT_RUNNING(script) then return end
+
+    local sRaceData = 2521 + 13 + 1
+
+    local iWinningSegment = LOCAL_GET_INT(script, sRaceData + 17)
+
+    STAT_SET_INT(ADD_MP_INDEX("INSIDETRACK_BET_HORSEID"), iWinningSegment)
+end)
 
 
 
@@ -960,11 +1022,6 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
 
     draw_text(text)
 end)
-
-
-
-
-
 
 
 

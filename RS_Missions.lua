@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/8/1"
+local SCRIPT_VERSION <const> = "2024/8/24"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
@@ -32,7 +32,7 @@ APP_INTERNET_STACK_SIZE = 4592
 --#endregion
 
 
-util.require_natives("3095a", "init")
+util.require_natives("3274a", "init")
 
 require("RS_Missions.functions")
 require("RS_Missions.tables")
@@ -225,6 +225,31 @@ function IS_PLAYER_NEAR_HEIST_PLANNING_BOARD()
     local playerPos = ENTITY.GET_ENTITY_COORDS(players.user_ped())
     local boardPos = GLOBAL_GET_VECTOR3(g_HeistSharedClient.vBoardPosition)
     return v3.distance(playerPos, boardPos) < 3.5 -- HEIST_CUTSCENE_TRIGGER_m
+end
+
+function RELOAD_HEIST_PLANNING_BOARD()
+    if not INTERIOR.IS_INTERIOR_SCENE() then
+        return
+    end
+
+    if GLOBAL_GET_INT(g_HeistPrePlanningClient.eHeistFlowState) ~= -1 then
+        -- SET_HEIST_PREPLAN_STATE(HEIST_PRE_FLOW_CLEANUP)
+        GLOBAL_SET_INT(g_HeistPrePlanningClient.eHeistFlowState, 22)
+    end
+
+    local script_data = {
+        ["gb_casino_heist_planning"] = 2,
+        ["gb_gang_ops_planning"] = 6,
+        ["heist_island_planning"] = 2,
+        ["tuner_planning"] = 2,
+        ["vehrob_planning"] = 2,
+    }
+    for script, value in pairs(script_data) do
+        if IS_SCRIPT_RUNNING(script) then
+            -- SET_SCRIPT_STAGE(STAGE_CLEANUP)
+            LOCAL_SET_INT(script, Locals[script].iScriptStage, value)
+        end
+    end
 end
 
 START_APP = {
@@ -1432,7 +1457,10 @@ local BusinessMonitor = {
             [3] = 20, -- Meth
             [4] = 10  -- Cocaine
         },
-        Bunker = 100,
+        Bunker = {
+            product = 100,
+            research = 60
+        },
         AcidLab = 160,
         Warehouse = {
             [1]  = 16,  -- "MP_WHOUSE_0",
@@ -1469,11 +1497,43 @@ local BusinessMonitor = {
     },
 }
 
+function BusinessMonitor.initMenu()
+    menu.set_value(BusinessMonitor.Menu.Bunker.supplies, "")
+    menu.set_value(BusinessMonitor.Menu.Bunker.product, "")
+    menu.set_value(BusinessMonitor.Menu.Bunker.research, "")
+
+    menu.set_value(BusinessMonitor.Menu.Nightclub.popularity, "")
+    menu.set_value(BusinessMonitor.Menu.Nightclub.product, "")
+    menu.set_value(BusinessMonitor.Menu.Nightclub.safeCash, "")
+    for i = 0, 6 do
+        menu.set_value(BusinessMonitor.Menu.Nightclub.product[i], "")
+    end
+
+    menu.set_value(BusinessMonitor.Menu.AcidLab.supplies, "")
+    menu.set_value(BusinessMonitor.Menu.AcidLab.product, "")
+
+    menu.set_value(BusinessMonitor.Menu.Biker.barEarning, "")
+    for i = 0, 4 do
+        menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, "")
+        menu.set_value(BusinessMonitor.Menu.Biker[i].product, "")
+    end
+
+    menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], "")
+    menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], Labels.None)
+
+    menu.set_value(BusinessMonitor.Menu.Hangar.totalProducts, "")
+    for i = 0, 7 do
+        menu.set_value(BusinessMonitor.Menu.Hangar[i], "")
+    end
+end
+
 menu.action(Business_Monitor, "刷新状态", {}, "", function()
     if not IS_IN_SESSION() then
         util.toast("仅在线上模式战局内可用")
         return
     end
+
+    BusinessMonitor.initMenu()
 
     local text = ""
     local product = 0
@@ -1484,18 +1544,15 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
         menu.set_value(BusinessMonitor.Menu.Bunker.supplies, text)
 
         product = GET_FACTORY_PRODUCT(5)
-        text = product .. "/" .. BusinessMonitor.Caps.Bunker
-        if product >= BusinessMonitor.Caps.Bunker then
+        text = product .. "/" .. BusinessMonitor.Caps.Bunker.product
+        if product >= BusinessMonitor.Caps.Bunker.product then
             text = "[!] " .. text
         end
         menu.set_value(BusinessMonitor.Menu.Bunker.product, text)
 
-        text = STAT_GET_INT(ADD_MP_INDEX("RESEARCHTOTALFORFACTORY5")) .. "/60"
+        local research = STAT_GET_INT(ADD_MP_INDEX("RESEARCHTOTALFORFACTORY5"))
+        text = research .. "/" .. BusinessMonitor.Caps.Bunker.research
         menu.set_value(BusinessMonitor.Menu.Bunker.research, text)
-    else
-        menu.set_value(BusinessMonitor.Menu.Bunker.supplies, "")
-        menu.set_value(BusinessMonitor.Menu.Bunker.product, "")
-        menu.set_value(BusinessMonitor.Menu.Bunker.research, "")
     end
 
     -- Nightclub
@@ -1517,13 +1574,6 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
             end
             menu.set_value(BusinessMonitor.Menu.Nightclub.product[i], text)
         end
-    else
-        menu.set_value(BusinessMonitor.Menu.Nightclub.popularity, "")
-        menu.set_value(BusinessMonitor.Menu.Nightclub.product, "")
-        menu.set_value(BusinessMonitor.Menu.Nightclub.safeCash, "")
-        for i = 0, 6 do
-            menu.set_value(BusinessMonitor.Menu.Nightclub.product[i], "")
-        end
     end
 
     -- Acid Lab
@@ -1537,37 +1587,33 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
             text = "[!] " .. text
         end
         menu.set_value(BusinessMonitor.Menu.AcidLab.product, text)
-    else
-        menu.set_value(BusinessMonitor.Menu.AcidLab.supplies, "")
-        menu.set_value(BusinessMonitor.Menu.AcidLab.product, "")
     end
 
 
     -- Safe Cash
     text = STAT_GET_INT(ADD_MP_INDEX("ARCADE_SAFE_CASH_VALUE"))
-    if text == BusinessMonitor.Caps.SafeCash.Arcade then
+    if text >= BusinessMonitor.Caps.SafeCash.Arcade then
         text = "[!] " .. text
     end
     menu.set_value(BusinessMonitor.Menu.SafeCash.arcade, text)
 
     text = STAT_GET_INT(ADD_MP_INDEX("FIXER_SAFE_CASH_VALUE"))
-    if text == BusinessMonitor.Caps.SafeCash.Agency then
+    if text >= BusinessMonitor.Caps.SafeCash.Agency then
         text = "[!] " .. text
     end
     menu.set_value(BusinessMonitor.Menu.SafeCash.agency, text)
 
     text = STAT_GET_INT(ADD_MP_INDEX("SALVAGE_SAFE_CASH_VALUE"))
-    if text == BusinessMonitor.Caps.SafeCash.SalvageYard then
+    if text >= BusinessMonitor.Caps.SafeCash.SalvageYard then
         text = "[!] " .. text
     end
     menu.set_value(BusinessMonitor.Menu.SafeCash.salvageYard, text)
 
 
-
     -- Biker
     if GET_BIKER_CLUBHOUSE_PROPERTY_ID() > 0 then
         text = STAT_GET_INT(ADD_MP_INDEX("BIKER_BAR_RESUPPLY_CASH"))
-        if text == BusinessMonitor.Caps.SafeCash.BikerBar then
+        if text >= BusinessMonitor.Caps.SafeCash.BikerBar then
             text = "[!] " .. text
         end
         menu.set_value(BusinessMonitor.Menu.Biker.barEarning, text)
@@ -1588,33 +1634,26 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
                 menu.set_value(BusinessMonitor.Menu.Biker[eFactoryType].product, text)
             end
         end
-    else
-        menu.set_value(BusinessMonitor.Menu.Biker.barEarning, "")
-        for i = 0, 4 do
-            menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, "")
-            menu.set_value(BusinessMonitor.Menu.Biker[i].product, "")
-        end
     end
 
     -- Special Cargo
-    for i = 0, 4 do
-        local iWarehouse = GET_WAREHOUSE_PROPERTY_ID(i)
-        if iWarehouse > 0 then
-            local sp_crate = STAT_GET_INT(ADD_MP_INDEX("CONTOTALFORWHOUSE" .. i))
-            local sp_item = STAT_GET_INT(ADD_MP_INDEX("SPCONTOTALFORWHOUSE" .. i))
-            local warehouse_name = GET_SPECIAL_CARGO_WAREHOUSE_NAME(iWarehouse)
+    if GET_OFFICE_PROPERTY_ID() > 0 then
+        for i = 0, 4 do
+            local iWarehouse = GET_WAREHOUSE_PROPERTY_ID(i)
+            if iWarehouse > 0 then
+                local sp_crate = STAT_GET_INT(ADD_MP_INDEX("CONTOTALFORWHOUSE" .. i))
+                local sp_item = STAT_GET_INT(ADD_MP_INDEX("SPCONTOTALFORWHOUSE" .. i))
+                local warehouse_name = GET_SPECIAL_CARGO_WAREHOUSE_NAME(iWarehouse)
 
-            local warehouse_cap = BusinessMonitor.Caps.Warehouse[iWarehouse]
+                local warehouse_cap = BusinessMonitor.Caps.Warehouse[iWarehouse]
 
-            text = sp_crate .. "(" .. sp_item .. ")/" .. warehouse_cap
-            if sp_crate >= warehouse_cap then
-                text = "[!] " .. text
+                text = sp_crate .. "(" .. sp_item .. ")/" .. warehouse_cap
+                if sp_crate >= warehouse_cap then
+                    text = "[!] " .. text
+                end
+                menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], text)
+                menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], warehouse_name)
             end
-            menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], text)
-            menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], warehouse_name)
-        else
-            menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], "")
-            menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], Labels.None)
         end
     end
 
@@ -1647,11 +1686,6 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
         end
         for i = 0, 7 do
             menu.set_value(BusinessMonitor.Menu.Hangar[i], hangar_products[i])
-        end
-    else
-        menu.set_value(BusinessMonitor.Menu.Hangar.totalProducts, "")
-        for i = 0, 7 do
-            menu.set_value(BusinessMonitor.Menu.Hangar[i], "")
         end
     end
 end)
@@ -1818,7 +1852,7 @@ menu.textslider(Fixer_Payphone, Labels.LaunchMission, {}, "", {
     end
 end)
 
-menu.toggle(Fixer_Payphone, "暗杀奖励", {}, "", function(toggle)
+menu.toggle(Fixer_Payphone, "完成暗杀奖励", {}, "", function(toggle)
     FixerPayphoneVars.bBounsKill = toggle
 end)
 
@@ -1871,16 +1905,18 @@ local Client_Jobs <const> = menu.list(Freemode_Mission,
     string.format("%s (%s)", get_label_text("HTD_WORK"), Labels.Terrorbyte), {}, "")
 
 local ClientWorkVars = {
+    iMission = 242,
     iCashReward = -1
 }
 
--- Robbery in Progress
-menu.divider(Client_Jobs, get_label_text("HT_BW_T0"))
-
+menu.list_select(Client_Jobs, Lang.SelectMission, {}, "", Tables.ClientJobs,
+    ClientWorkVars.iMission, function(value)
+        ClientWorkVars.iMission = value
+    end)
 menu.textslider(Client_Jobs, Labels.LaunchMission, {}, "", {
     "Request", "Start"
 }, function(value)
-    local iMission = 242 -- FMMC_TYPE_FMBB_BANK_JOB
+    local iMission = ClientWorkVars.iMission
     if value == 1 then
         SET_CONTACT_REQUEST_GB_MISSION_LAUNCH_DATA(iMission)
     else
@@ -1888,39 +1924,29 @@ menu.textslider(Client_Jobs, Labels.LaunchMission, {}, "", {
     end
 end)
 
-menu.action(Client_Jobs, "直接完成 银行劫案", {}, "", function()
-    local script = "gb_bank_job"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
+local ClientWorkCompleteFunc = {
+    ["gb_bank_job"] = function(script)
+        LOCAL_SET_BIT(script, Locals[script].iMissionEntityBitSet, 2) -- SET_MISSION_ENTITY_BIT(iMissionEntity, eMISSIONENTITYBITSET_DELIVERED)
+        LOCAL_SET_INT(script, Locals[script].eModeState, 7)           -- SET_MODE_STATE(eMODESTATE_REWARDS)
+        LOCAL_SET_INT(script, Locals[script].eEndReason, 4)           -- SET_END_REASON(eENDREASON_WIN_CONDITION_TRIGGERED)
+    end,
+    ["gb_data_hack"] = function(script)
+        LOCAL_SET_INT(script, Locals[script].eEndReason, 6) -- SET_END_REASON(eENDREASON_GOODS_DELIVERED_LAUNCHING_GANG)
+    end,
+    ["gb_infiltration"] = function(script)
+        LOCAL_SET_INT(script, Locals[script].eEndReason, 4) -- SET_END_REASON(eENDREASON_WIN_CONDITION_TRIGGERED)
+    end,
+    ["gb_jewel_store_grab"] = function(script)
+        LOCAL_SET_INT(script, Locals[script].piDeliverer, players.user())
+        LOCAL_SET_INT(script, Locals[script].eEndReason, 4) -- SET_END_REASON(eENDREASON_WIN_CONDITION_TRIGGERED)
     end
-
-    LOCAL_SET_BIT(script, Locals[script].iMissionEntityBitSet, 2) -- SET_MISSION_ENTITY_BIT(iMissionEntity, eMISSIONENTITYBITSET_DELIVERED)
-    LOCAL_SET_INT(script, Locals[script].eModeState, 7)           -- SET_MODE_STATE(eMODESTATE_REWARDS)
-    LOCAL_SET_INT(script, Locals[script].eEndReason, 4)           -- SET_END_REASON(eENDREASON_WIN_CONDITION_TRIGGERED)
-end)
-
-
--- Data Sweep
-menu.divider(Client_Jobs, get_label_text("HT_BW_T1"))
-
-menu.textslider(Client_Jobs, Labels.LaunchMission, {}, "", {
-    "Request", "Start"
-}, function(value)
-    local iMission = 244 -- FMMC_TYPE_FMBB_DATA_HACK
-    if value == 1 then
-        SET_CONTACT_REQUEST_GB_MISSION_LAUNCH_DATA(iMission)
-    else
-        GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(iMission)
+}
+menu.action(Client_Jobs, "直接完成 客户差事", {}, "", function()
+    for script, func in pairs(ClientWorkCompleteFunc) do
+        if IS_SCRIPT_RUNNING(script) then
+            func(script)
+        end
     end
-end)
-
-menu.action(Client_Jobs, "直接完成 数据检索", {}, "", function()
-    local script = "gb_data_hack"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    LOCAL_SET_INT(script, Locals[script].eEndReason, 6) -- SET_END_REASON(eENDREASON_GOODS_DELIVERED_LAUNCHING_GANG)
 end)
 
 
@@ -1987,6 +2013,52 @@ menu.toggle_loop(Drug_Lab_Work, Lang.SetMissionReward, {}, "", function()
     end
 end, function()
     Tunables.RestoreIntDefault("XM22_DRUG_LAB_WORK_CASH_REWARD")
+end)
+
+
+
+----------------------------------------
+--    LSA Operation
+----------------------------------------
+
+local LSA_Operation <const> = menu.list(Freemode_Mission, "LSA 行动 (复仇者)", {}, "")
+
+local SmugglerOperationVars = {
+    iMissionVariation = -1,
+    bBouns = false,
+    iCashReward = -1,
+}
+
+menu.list_select(LSA_Operation, Lang.SelectMission, {}, "", Tables.SmugglerOperation, -1, function(value)
+    SmugglerOperationVars.iMissionVariation = value
+end)
+
+menu.textslider(LSA_Operation, Labels.LaunchMission, {}, "", {
+    "Request", "Start"
+}, function(value)
+    local iMission = 317 -- _FMMC_TYPE_SMUGGLER_OPERATION
+    local iMissionVariation = SmugglerOperationVars.iMissionVariation
+    if value == 1 then
+        SET_CONTACT_REQUEST_GB_MISSION_LAUNCH_DATA(iMission, iMissionVariation)
+    else
+        GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(iMission, iMissionVariation)
+    end
+end)
+
+menu.toggle(LSA_Operation, "完成附加行动", {}, "", function(toggle)
+    SmugglerOperationVars.bBouns = toggle
+end)
+
+menu.action(LSA_Operation, "直接完成 LSA 行动", {}, "", function()
+    local script = "fm_content_smuggler_ops"
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+
+    if SmugglerOperationVars.bBouns then
+        LOCAL_SET_BIT(script, Locals[script].iMissionBitSet + 1 + 0, 0)
+    end
+    INSTANT_FINISH_FM_CONTENT_MISSION(script)
 end)
 
 
@@ -2736,28 +2808,7 @@ end)
 
 
 menu.action(Heist_Mission, "重新加载抢劫计划面板", { "ReloadHeistBoard" }, "无需再重新进入室内来刷新面板了", function()
-    if not INTERIOR.IS_INTERIOR_SCENE() then
-        return
-    end
-
-    if GLOBAL_GET_INT(g_HeistPrePlanningClient.eHeistFlowState) ~= -1 then
-        -- SET_HEIST_PREPLAN_STATE(HEIST_PRE_FLOW_CLEANUP)
-        GLOBAL_SET_INT(g_HeistPrePlanningClient.eHeistFlowState, 22)
-    end
-
-    local script_data = {
-        ["gb_casino_heist_planning"] = 2,
-        ["gb_gang_ops_planning"] = 6,
-        ["heist_island_planning"] = 2,
-        ["tuner_planning"] = 2,
-        ["vehrob_planning"] = 2,
-    }
-    for script, value in pairs(script_data) do
-        if IS_SCRIPT_RUNNING(script) then
-            -- SET_SCRIPT_STAGE(STAGE_CLEANUP)
-            LOCAL_SET_INT(script, Locals[script].iScriptStage, value)
-        end
-    end
+    RELOAD_HEIST_PLANNING_BOARD()
 end)
 
 menu.action(Heist_Mission, "直接完成任务 (通用)", { "InsFinJob" }, "联系人任务", function()
@@ -2798,19 +2849,17 @@ menu.divider(Apartment_Heist, Labels.PREP)
 
 local Apartment_Heist_Prep <const> = menu.list(Apartment_Heist, "前置编辑", {}, "跳过前置任务")
 
-menu.textslider(Apartment_Heist, "全部前置", {}, "", Tables.CompleteReset, function(value)
-    if value == 1 then
-        STAT_SET_INT(ADD_MP_INDEX("HEIST_PLANNING_STAGE"), -1)
-    else
-        STAT_SET_INT(ADD_MP_INDEX("HEIST_PLANNING_STAGE"), 0)
-    end
-    util.toast("写入完成, 你可能需要重新进入公寓来刷新面板")
-end)
-
 local Apartment_Heist_Prep_Mission <const> = menu.list(Apartment_Heist, "前置任务编辑", {}, "自定义前置进行哪些任务")
 
-menu.toggle_loop(Apartment_Heist, "所有前置任务可开启", {}, "取消任务面板灰色不可开启状态\n需要刷新面板", function()
-    GLOBAL_SET_INT(g_HeistPrePlanningClient.iCurrentBoardDepth, 9)
+menu.action(Apartment_Heist, "所有前置任务可开启", {}, "取消任务面板灰色不可开启状态", function()
+    -- GLOBAL_SET_INT(g_HeistPrePlanningClient.iCurrentBoardDepth, 9)
+
+    for i = 1, 7, 1 do
+        local stat = ADD_MP_INDEX("HEIST_MISSION_DEPTH_LV_" .. i)
+        STAT_SET_INT(stat, 0)
+    end
+    RELOAD_HEIST_PLANNING_BOARD()
+    util.toast("完成")
 end)
 
 
@@ -3893,8 +3942,12 @@ end, function()
 end)
 menu.toggle_loop(Tunable_Options, "禁用产业劫货", {}, "", function()
     Tunables.SetIntList("DisableBusinessRaid", 1)
+    Tunables.SetIntList("BusinessRaidThreshold", 9999)
+    Tunables.SetFloatList("BusinessRaidThreshold", 9999)
 end, function()
     Tunables.RestoreIntDefaults("DisableBusinessRaid")
+    Tunables.RestoreIntDefaults("BusinessRaidThreshold")
+    Tunables.RestoreFloatDefaults("BusinessRaidThreshold")
 end)
 
 menu.toggle_loop(Tunable_Options, "获得经验倍率为0", {}, "避免升级太快:(", function()
@@ -4000,34 +4053,85 @@ end
 local Stat_Cutscene = menu.list(Stat_Options, "移除首次进入资产的动画教程", {}, "")
 
 local BusinessCutsceneBitList = {
-    { name = Labels.Office,                 bits = { 13 } }, -- biFmCut_OfficeCutscene
-    { name = Labels.SpecialCargoWarehouse,  bits = { 14 } },
-    { name = Labels.BikerClubhouse,         bits = { 15 } },
-    { name = Labels.MethLab,                bits = { 16, 21 } },
-    { name = Labels.CocaineLockup,          bits = { 17, 22 } },
-    { name = Labels.WeedFarm,               bits = { 18, 23 } },
-    { name = Labels.DocumentForgeryOffice,  bits = { 19, 24 } },
-    { name = Labels.CounterfeitCashFactory, bits = { 20, 25 } },
-    { name = Labels.VehicleWarehouse,       bits = { 26 } },
-    { name = Labels.Bunker,                 bits = { 27, 28 } },
-    { name = Labels.Hangar,                 bits = { 29, 30 } },
-    { name = Labels.Facility,               bits = { 31 } },
+    ["FM_CUT_DONE"] = {
+        { name = "Apartment",                   bits = { 1 } },
+        { name = "Apartment Heist",             bits = { 9, 10, 11 } },
+        { name = Labels.Office,                 bits = { 13 } }, -- biFmCut_OfficeCutscene
+        { name = Labels.SpecialCargoWarehouse,  bits = { 14 } },
+        { name = Labels.BikerClubhouse,         bits = { 15 } },
+        { name = Labels.MethLab,                bits = { 16, 21 } },
+        { name = Labels.CocaineLockup,          bits = { 17, 22 } },
+        { name = Labels.WeedFarm,               bits = { 18, 23 } },
+        { name = Labels.DocumentForgeryOffice,  bits = { 19, 24 } },
+        { name = Labels.CounterfeitCashFactory, bits = { 20, 25 } },
+        { name = Labels.VehicleWarehouse,       bits = { 26 } },
+        { name = Labels.Bunker,                 bits = { 27, 28 } },
+        { name = Labels.Hangar,                 bits = { 29, 30 } },
+        { name = Labels.Facility,               bits = { 31 } },
+    },
+    ["FM_CUT_DONE_2"] = {
+        { name = Labels.MasterControlTerminal, bits = { 0 } }, -- biFmCut2_Business_Hub_Intro_Cutscene
+        { name = "Nightclub Office",           bits = { 1 } },
+        { name = Labels.Terrorbyte,            bits = { 2 } },
+        { name = "Arena Box",                  bits = { 3 } },
+        { name = "Auto Shop Chalkboard",       bits = { 4 } },
+    }
 }
 
-for _, item in pairs(BusinessCutsceneBitList) do
+local function initStatCutsceneMenuList(stat)
+    for _, item in pairs(BusinessCutsceneBitList[stat]) do
+        menu.textslider(Stat_Cutscene, item.name, {}, "", {
+            "Set", "Reset"
+        }, function(value)
+            local iStatInt = STAT_GET_INT(ADD_MP_INDEX(stat))
+            if value == 1 then
+                iStatInt = SET_BITS(iStatInt, table.unpack(item.bits))
+            else
+                iStatInt = CLEAR_BITS(iStatInt, table.unpack(item.bits))
+            end
+            STAT_SET_INT(ADD_MP_INDEX(stat), iStatInt)
+            util.toast("写入完成!")
+        end)
+    end
+end
+
+initStatCutsceneMenuList("FM_CUT_DONE")
+initStatCutsceneMenuList("FM_CUT_DONE_2")
+
+local BusinessCutsceneStatList = {
+    {
+        name = Labels.Agency,
+        packed_stats = {
+            28256, -- PACKED_MP_BOOL_FIXER_HQ_VIEWED_INTRO_MOCAP
+            28257, -- PACKED_MP_BOOL_FIXER_HQ_VIEWED_POST_SETUP_MOCAP
+            28258, -- PACKED_MP_BOOL_FIXER_HQ_VIEWED_POST_DATALEAK_MOCAP
+
+            32284, -- PACKED_MP_BOOL_FIXER_WATCHED_ARMORY_CUTSCENE
+        }
+    },
+    {
+        name = Labels.RecordAStudios,
+        packed_stats = {
+            28265 -- PACKED_MP_BOOL_MUSIC_STUDIO_VIEWED_WEED_ROOM_INTRO_MOCAP
+        }
+    }
+}
+
+for _, item in pairs(BusinessCutsceneStatList) do
     menu.textslider(Stat_Cutscene, item.name, {}, "", {
         "Set", "Reset"
     }, function(value)
-        local iStatInt = STAT_GET_INT(ADD_MP_INDEX("FM_CUT_DONE"))
-        if value == 1 then
-            iStatInt = SET_BITS(iStatInt, table.unpack(item.bits))
-        else
-            iStatInt = CLEAR_BITS(iStatInt, table.unpack(item.bits))
+        local toggle = (value == 1)
+        for _, stat_index in pairs(item.packed_stats) do
+            SET_PACKED_STAT_BOOL_CODE(stat_index, toggle)
+            util.toast("写入完成!")
         end
-        STAT_SET_INT(ADD_MP_INDEX("FM_CUT_DONE"), iStatInt)
-        util.toast("写入完成!")
     end)
 end
+
+
+
+
 
 ------------------------
 -- Casino Heist
@@ -4202,7 +4306,7 @@ end)
 menu.divider(Packed_Stat_Editor, "Value")
 
 PackedStatEditor.intValue = menu.slider(Packed_Stat_Editor, "Int", { "PackedStatIntValue" }, "",
-    HIGHEST_INT, LOWEST_INT, 0, 1, function(value) end)
+    LOWEST_INT, HIGHEST_INT, 0, 1, function(value) end)
 
 PackedStatEditor.boolValue = menu.toggle(Packed_Stat_Editor, "Bool", {}, "", function(toggle) end)
 menu.set_visible(PackedStatEditor.boolValue, false)
@@ -4380,6 +4484,20 @@ local ApartmentHeistPrepVars = {
     },
 }
 
+menu.textslider(Apartment_Heist_Prep, "全部前置", {}, "", Tables.CompleteReset, function(value)
+    if value == 1 then
+        value = -1
+    else
+        value = 0
+    end
+
+    STAT_SET_INT(ADD_MP_INDEX("HEIST_PLANNING_STAGE"), value)
+    RELOAD_HEIST_PLANNING_BOARD()
+    util.toast("写入完成")
+end)
+
+menu.divider(Apartment_Heist_Prep, "自定义")
+
 menu.action(Apartment_Heist_Prep, "读取 HEIST_PLANNING_STAGE", {}, "", function()
     ApartmentHeistPrepVars.iBitset = nil
     menu.set_value(ApartmentHeistPrepVars.menuValue, "")
@@ -4437,10 +4555,12 @@ menu.action(Apartment_Heist_Prep, "写入 HEIST_PLANNING_STAGE", {}, "", functio
     end
 
     STAT_SET_INT(ADD_MP_INDEX("HEIST_PLANNING_STAGE"), ApartmentHeistPrepVars.iBitset)
-    util.toast("写入完成, 你可能需要重新进入公寓来刷新面板")
+    RELOAD_HEIST_PLANNING_BOARD()
+    util.toast("写入完成")
 end)
 
 ApartmentHeistPrepVars.menuDivider = menu.divider(Apartment_Heist_Prep, "")
+
 
 -- Apartment Heist Prep Mission
 
@@ -4487,7 +4607,9 @@ menu.action(Apartment_Heist_Prep_Mission, "写入 HEIST_MISSION_RCONT_ID_x", {},
             STAT_SET_STRING(ADD_MP_INDEX("HEIST_MISSION_RCONT_ID_" .. i), root_content_id)
         end
     end
-    util.toast("写入完成, 你可能需要重新进入公寓来刷新面板")
+
+    RELOAD_HEIST_PLANNING_BOARD()
+    util.toast("写入完成")
 end)
 
 ApartmentHeistPrepVars.Missions.menuDivider = menu.divider(Apartment_Heist_Prep_Mission, "")

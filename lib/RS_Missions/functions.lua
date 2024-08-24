@@ -27,7 +27,17 @@ function IS_THIS_HELP_MESSAGE_BEING_DISPLAYED(textLabel)
     return HUD.END_TEXT_COMMAND_IS_THIS_HELP_MESSAGE_BEING_DISPLAYED(0) -- HELP_TEXT_SLOT_STANDARD
 end
 
-get_label_text = util.get_label_text
+--- @param label_name string
+function get_label_text(label_name)
+    local text = util.get_label_text(label_name)
+    if text == "" or text == "NULL" then
+        return text
+    end
+
+    text = string.gsub(text, "~n~", "\n")
+    text = string.gsub(text, "µ", " ")
+    return text
+end
 
 --------------------------------
 -- Local Player Functions
@@ -196,6 +206,11 @@ end
 --- @return integer
 function GET_FACTORY_PRODUCT(eFactoryID)
     return STAT_GET_INT(ADD_MP_INDEX("PRODTOTALFORFACTORY" .. eFactoryID))
+end
+
+--- @return integer
+function GET_OFFICE_PROPERTY_ID()
+    return STAT_GET_INT(ADD_MP_INDEX("PROP_OFFICE"))
 end
 
 --- @return integer
