@@ -1503,7 +1503,6 @@ function BusinessMonitor.initMenu()
     menu.set_value(BusinessMonitor.Menu.Bunker.research, "")
 
     menu.set_value(BusinessMonitor.Menu.Nightclub.popularity, "")
-    menu.set_value(BusinessMonitor.Menu.Nightclub.product, "")
     menu.set_value(BusinessMonitor.Menu.Nightclub.safeCash, "")
     for i = 0, 6 do
         menu.set_value(BusinessMonitor.Menu.Nightclub.product[i], "")
@@ -1516,10 +1515,10 @@ function BusinessMonitor.initMenu()
     for i = 0, 4 do
         menu.set_value(BusinessMonitor.Menu.Biker[i].supplies, "")
         menu.set_value(BusinessMonitor.Menu.Biker[i].product, "")
-    end
 
-    menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], "")
-    menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], Labels.None)
+        menu.set_value(BusinessMonitor.Menu.SpecialCargo[i], "")
+        menu.set_menu_name(BusinessMonitor.Menu.SpecialCargo[i], Labels.None)
+    end
 
     menu.set_value(BusinessMonitor.Menu.Hangar.totalProducts, "")
     for i = 0, 7 do
