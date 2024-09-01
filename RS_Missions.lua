@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/8/24"
+local SCRIPT_VERSION <const> = "2024/9/1"
 
 local SUPPORT_GAME_VERSION <const> = "1.69-3274"
 
@@ -1493,6 +1493,7 @@ local BusinessMonitor = {
             Agency = 250000,
             SalvageYard = 250000,
             BikerBar = 100000,
+            BailOffice = 100000,
         },
     },
 }
@@ -1608,6 +1609,12 @@ menu.action(Business_Monitor, "刷新状态", {}, "", function()
     end
     menu.set_value(BusinessMonitor.Menu.SafeCash.salvageYard, text)
 
+    text = STAT_GET_INT(ADD_MP_INDEX("BAIL_SAFE_CASH_VALUE"))
+    if text >= BusinessMonitor.Caps.SafeCash.BailOffice then
+        text = "[!] " .. text
+    end
+    menu.set_value(BusinessMonitor.Menu.SafeCash.bailOffice, text)
+
 
     -- Biker
     if GET_BIKER_CLUBHOUSE_PROPERTY_ID() > 0 then
@@ -1710,6 +1717,7 @@ menu.divider(Business_Monitor, Labels.Safe)
 BusinessMonitor.Menu.SafeCash.arcade = menu.readonly(Business_Monitor, Labels.Arcade)
 BusinessMonitor.Menu.SafeCash.agency = menu.readonly(Business_Monitor, Labels.Agency)
 BusinessMonitor.Menu.SafeCash.salvageYard = menu.readonly(Business_Monitor, Labels.SalvageYard)
+BusinessMonitor.Menu.SafeCash.bailOffice = menu.readonly(Business_Monitor, Labels.BailOffice)
 
 
 menu.divider(Business_Monitor, "")

@@ -43,7 +43,8 @@ Labels = {
     SalvageYard = get_label_text("CELL_SLVG_YRD"),
     Terrorbyte = get_label_text("TERBYTE"),
     MasterControlTerminal = get_label_text("ARC_MCT_BLIP"),
-    RecordAStudios= get_label_text("CELL_REC_A"),
+    RecordAStudios = get_label_text("CELL_REC_A"),
+    BailOffice = get_label_text("CELL_BAIL_OF"),
 
     MotorcycleClub = get_label_text("HP_GANG_MC"),
     BikerClubhouse = get_label_text("BLIP_492"),
