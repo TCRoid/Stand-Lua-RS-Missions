@@ -1,5 +1,5 @@
 -- Game Variables
--- 1.69-3274
+-- 1.70-3411
 
 ----------------------------------------------
 --                GLOBALS
@@ -8,12 +8,12 @@
 Globals = {
     -- GlobalplayerBD[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD = function()
-        return 2657971 + 1 + players.user() * 465
+        return 2657991 + 1 + players.user() * 467
     end,
 
     -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD_FM = function()
-        return 1845281 + 1 + players.user() * 883
+        return 1845221 + 1 + players.user() * 889
     end,
 
     -- GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())]
@@ -23,23 +23,20 @@ Globals = {
 
     -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD_FM_3 = function()
-        return 1887305 + 1 + players.user() * 610
+        return 1887549 + 1 + players.user() * 611
     end,
 
 
 
     -- MPGlobalsAmbienceStruct
-    MPGlobalsAmbience = 2738934,
+    MPGlobalsAmbience = 2739811,
 
 
     bBrowserVisible = 76498,
 
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos]
-    sMissionHeaderVars = 794744 + 4 + 1,
-
 
     -- g_FMMC_STRUCT_ENTITIES.sPlacedZones[iZone].iZoneTimer_EnableTime
-    CasinoVault_ZoneTimer_EnableTime = 4718592 + 210289 + 1 + 0 * 190 + 41,
+    CasinoVault_ZoneTimer_EnableTime = 4718592 + 212658 + 1 + 0 * 191 + 42,
 }
 
 
@@ -82,20 +79,17 @@ GlobalplayerBD_FM_3.sMagnateGangBossData = {
 }
 
 -- CONTRABAND_MISSION_DATA
-GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = {
-    _ = GlobalplayerBD_FM_3.sMagnateGangBossData._ + 183, -- offset
+GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = function()
+    local _offset = GlobalplayerBD_FM_3.sMagnateGangBossData._ + 183
+    local _index = Globals.GlobalplayerBD_FM_3() + _offset
 
-    -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData.contrabandMissionData.
-
-    contrabandSize = function()
-        return Globals.GlobalplayerBD_FM_3() +
-            GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData._ + 1
-    end,
-    bSpecialItem = function()
-        return Globals.GlobalplayerBD_FM_3() +
-            GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData._ + 3
-    end
-}
+    return {
+        iMissionWarehouse = _index,
+        contrabandSize = _index + 1,
+        contrabandType = _index + 2,
+        bSpecialItem = _index + 3
+    }
+end
 
 
 
@@ -103,14 +97,16 @@ GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = {
 MPGlobalsAmbience = {
     -- MAGNATE_GANG_BOSS_LOCAL_GLOBALS
     sMagnateGangBossData = {
-        iMissionVariation = Globals.MPGlobalsAmbience + 5249 + 347
-    }
+        iMissionVariation = Globals.MPGlobalsAmbience + 5265 + 347
+    },
+
+    BountyMostWantedPayment = 7116
 }
 
 
 
 -- CONTACT_REQUEST_GB_MISSION_LAUNCH_STRUCT
-local _g_sContactRequestGBMissionLaunch = 1979230
+local _g_sContactRequestGBMissionLaunch = 1980677
 g_sContactRequestGBMissionLaunch = {
     iType = _g_sContactRequestGBMissionLaunch,
     iVariation = _g_sContactRequestGBMissionLaunch + 1,
@@ -120,49 +116,69 @@ g_sContactRequestGBMissionLaunch = {
     Timer = _g_sContactRequestGBMissionLaunch + 5
 }
 
--- PAYPHONE_FLOW_GLOBAL_STRUCT
-local _g_PayphoneFlow = 2709088
-g_PayphoneFlow = {
-    iBitset = _g_PayphoneFlow + 1
+-- -- PAYPHONE_FLOW_GLOBAL_STRUCT
+-- local _g_PayphoneFlow = 2709501
+-- g_PayphoneFlow = {
+--     iBitset = _g_PayphoneFlow + 1
+-- }
+
+-- -- FIXER_FLOW_DATA
+-- local _g_sFixerFlow = 1976231
+-- g_sFixerFlow = {
+--     -- FIXER_SECURITY_CONTRACT_DATA
+--     SecurityContracts = _g_sFixerFlow + 20
+-- }
+
+
+
+-- FMMC_ROCKSTAR_CREATED_STRUCT
+g_FMMC_ROCKSTAR_CREATED = {
+    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos]
+    _sMissionHeaderVars = 794744 + 4 + 1,
+
+    -- CLOUD_LOADED_MISSION_HEADER_DETAILS
+    sMissionHeaderVars = function(iArrayPos)
+        local _index = g_FMMC_ROCKSTAR_CREATED._sMissionHeaderVars + iArrayPos * 89
+
+        return {
+            tlName = _index,
+            iMinPlayers = _index + 69,
+            iMaxPlayers = _index + 71,
+            iMaxNumberOfTeams = _index + 72
+        }
+    end
 }
-
--- FIXER_FLOW_DATA
-local _g_sFixerFlow = 1975462
-g_sFixerFlow = {
-    -- FIXER_SECURITY_CONTRACT_DATA
-    SecurityContracts = _g_sFixerFlow + 20
-}
-
-
 
 
 -- FMMC_GLOBAL_STRUCT
-g_FMMC_STRUCT = 4718592
-FMMC_STRUCT = {
-    iNumParticipants = g_FMMC_STRUCT + 3522,
-    iMinNumParticipants = g_FMMC_STRUCT + 3523,
+local _g_FMMC_STRUCT = 4718592
+g_FMMC_STRUCT = {
+    iNumParticipants = _g_FMMC_STRUCT + 3522,
+    iMinNumParticipants = _g_FMMC_STRUCT + 3523,
 
-    iDifficulity = g_FMMC_STRUCT + 3525,
-    iNumberOfTeams = g_FMMC_STRUCT + 3526,
-    iMaxNumberOfTeams = g_FMMC_STRUCT + 3527,
-    iNumPlayersPerTeam = g_FMMC_STRUCT + 3529 + 1, -- +[0~3]
+    iDifficulity = _g_FMMC_STRUCT + 3525,
+    iNumberOfTeams = _g_FMMC_STRUCT + 3526,
+    iMaxNumberOfTeams = _g_FMMC_STRUCT + 3527,
+    iNumPlayersPerTeam = _g_FMMC_STRUCT + 3529 + 1, -- +[0~3]
 
-    iRootContentIDHash = g_FMMC_STRUCT + 127178,
-    tl63MissionName = g_FMMC_STRUCT + 127185,
-    tl31LoadedContentID = g_FMMC_STRUCT + 127465,
-    tl23NextContentID = g_FMMC_STRUCT + 127493 + 1, -- +[0~5]*6
+    iRootContentIDHash = _g_FMMC_STRUCT + 128476,
+    tl63MissionName = _g_FMMC_STRUCT + 127185,
+    tl31LoadedContentID = _g_FMMC_STRUCT + 128763,
+    tl23NextContentID = _g_FMMC_STRUCT + 128791 + 1, -- +[0~5]*6
 
-    iFixedCamera = g_FMMC_STRUCT + 155346,
-    iCriticalMinimumForTeam = g_FMMC_STRUCT + 178821 + 1 -- +[0~3]
+    iFixedCamera = _g_FMMC_STRUCT + 157365,
+    iCriticalMinimumForTeam = _g_FMMC_STRUCT + 180865 + 1 -- +[0~3]
 }
 
 
 -- TRANSITION_SESSION_NON_RESET_VARS
-local _g_TransitionSessionNonResetVars = 2685444
+local _g_TransitionSessionNonResetVars = 2685658
 g_TransitionSessionNonResetVars = {
-    bAmIHeistLeader = _g_TransitionSessionNonResetVars + 6381,
-    bHasQuickRestartedDuringStrandMission = _g_TransitionSessionNonResetVars + 6487,
-    bAnyPlayerDiedDuringMission = _g_TransitionSessionNonResetVars + 6488
+    bAmIHeistLeader = _g_TransitionSessionNonResetVars + 6393,
+
+    bHasQuickRestarted = _g_TransitionSessionNonResetVars + 6498,
+    bHasQuickRestartedDuringStrandMission = _g_TransitionSessionNonResetVars + 6499,
+    bAnyPlayerDiedDuringMission = _g_TransitionSessionNonResetVars + 6500
 }
 
 -- TRANSITION_SESSION_MAINTAIN_VARS
@@ -174,7 +190,7 @@ g_TransitionSessionNonResetVars.sTransVars = {
 
 
 -- FMMC_TRANSITION_SESSION_DATA
-g_sTransitionSessionData = 2684504
+g_sTransitionSessionData = 2684718
 
 -- FMMC_STRAND_MISSION_DATA
 local _sStrandMissionData = g_sTransitionSessionData + 43
@@ -188,20 +204,19 @@ sStrandMissionData = {
 
 
 -- HEIST_CLIENT_PRE_PLANNING_LOCAL_DATA
-local _g_HeistPrePlanningClient = 1928993
+local _g_HeistPrePlanningClient = 1929352
 g_HeistPrePlanningClient = {
-    eHeistFlowState = _g_HeistPrePlanningClient,
-    iCurrentBoardDepth = _g_HeistPrePlanningClient + 1708
+    eHeistFlowState = _g_HeistPrePlanningClient
 }
 
 -- HEIST_CLIENT_PLANNING_LOCAL_DATA
-local _g_HeistPlanningClient = 1930926
+local _g_HeistPlanningClient = 1931285
 g_HeistPlanningClient = {
     bHeistCoronaActive = _g_HeistPlanningClient + 2816
 }
 
 -- HEIST_CLIENT_SHARED_LOCAL_DATA
-local _g_HeistSharedClient = 1934536
+local _g_HeistSharedClient = 1934895
 g_HeistSharedClient = {
     PlanningBoardIndex = _g_HeistSharedClient,
     vBoardPosition = _g_HeistSharedClient + 16
@@ -210,7 +225,7 @@ g_HeistSharedClient = {
 
 
 -- CASINO_HEIST_MISSION_CONFIGURATION_DATA
-local _g_sCasinoHeistMissionConfigData = 1964815
+local _g_sCasinoHeistMissionConfigData = 1965580
 g_sCasinoHeistMissionConfigData = {
     -- Not determined by players
     eChosenApproachType = _g_sCasinoHeistMissionConfigData,
@@ -255,7 +270,7 @@ GlobalPlayerBD_HeistIsland = {
     -- HEIST_ISLAND_CONFIG
     sConfig = function()
         -- GlobalPlayerBD_HeistIsland[NATIVE_TO_INT(PLAYER_ID())].sConfig
-        return 1973625 + 1 + players.user() * 53 + 5
+        return 1974391 + 1 + players.user() * 53 + 5
     end
 }
 
@@ -263,14 +278,14 @@ GlobalPlayerBD_HeistIsland = {
 GlobalPlayerBD_NetHeistPlanningGeneric = {
     -- GlobalPlayerBD_NetHeistPlanningGeneric[NATIVE_TO_INT(PLAYER_ID())].stFinaleLaunchTimer
     stFinaleLaunchTimer = function()
-        return 1972760 + 1 + players.user() * 27 + 18
+        return 1973526 + 1 + players.user() * 27 + 18
     end
 }
 
 
 
 -- WAREHOUSE_CARGO_SOURCING_DATA_STRUCT
-local _g_sWarehouseCargoSourcingData = 1882599
+local _g_sWarehouseCargoSourcingData = 1882747
 g_sWarehouseCargoSourcingData = {
     bRequestDeliverCargo = _g_sWarehouseCargoSourcingData + 4 + 1, -- +[0~4]
     iNumCargo = _g_sWarehouseCargoSourcingData + 12,
@@ -279,30 +294,30 @@ g_sWarehouseCargoSourcingData = {
     eType = _g_sWarehouseCargoSourcingData + 15
 }
 
-local _g_sHangarCargoSourcingData = 1882623
+local _g_sHangarCargoSourcingData = 1882771
 g_sHangarCargoSourcingData = {
     iNum = _g_sHangarCargoSourcingData + 6,
     eType = _g_sHangarCargoSourcingData + 7
 }
 
 g_sHangarCargoSourcingDataBitset = function()
-    return Globals.GlobalplayerBD() + 202
+    return Globals.GlobalplayerBD() + 204
 end
 
 
 
 -- MP_SAVED_TUNER_CLIENT_VEHICLE_STRUCT
-g_sClientVehicleSetupStruct = 2709424
+g_sClientVehicleSetupStruct = 2710000
 
 -- MP_SAVED_TUNER_CLIENT_VEHICLE_STRUCT
-g_sBikerClientVehicleSetupStruct = 2710310
+g_sBikerClientVehicleSetupStruct = 2710900
 
 
-g_iFactoryPaidResupplyTimers = 1663174
+g_iFactoryPaidResupplyTimers = 1667995
 
 
 -- BUSINESS_APP_MANAGEMENT_DATA
-local _g_sBusAppManagement = 1963007
+local _g_sBusAppManagement = 1963766
 g_sBusAppManagement = {
     iPropertyID = _g_sBusAppManagement,
     bRunningPrimaryApp = _g_sBusAppManagement + 1,
@@ -317,290 +332,254 @@ g_sBusAppManagement = {
 ----------------------------------------------
 
 Locals = {
+    --------  Heist Mission  --------
+
+    ["fm_mission_controller"] = {
+        iNextMission = 19781 + 1062,
+        iTeamScore = 19781 + 1232 + 1, -- +[0~3]
+
+        iServerGameState = 19781,
+        iServerBitSet = 19781 + 1,
+        iServerBitSet1 = 19781 + 2,
+
+        iCashGrabTotalDrop = 19781 + 2685,
+        iCashGrabTotalTake = 19781 + 2686,
+
+        iTeamKills = 19781 + 1725 + 1,
+        iTeamHeadshots = 19781 + 1740 + 1,
+
+        iTotalMissionEndTime = 19781 + 987,
+
+        iClientBitSet = function()
+            -- MC_playerBD[PARTICIPANT_ID_TO_INT()].iClientBitSet
+            return 31656 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 293 + 127
+        end,
+
+
+        iLocalBoolCheck11 = 15200,
+
+
+        iAdditionalTeamLives = 26207 + 1325 + 1,      -- +[0~3]
+
+        tdObjectiveLimitTimer = 26207 + 740 + 1,      -- +[0~3]*2
+        tdMultiObjectiveLimitTimer = 26207 + 749 + 1, -- +[0~3]*2
+        iMultiObjectiveTimeLimit = 26207 + 765 + 1,   -- +[0~3]
+
+
+        stZoneTimers = 60654 + 1 + 0 * 2, -- casino vault
+    },
+    ["fm_mission_controller_2020"] = {
+        iNextMission = 52171 + 1589,
+        iTeamScore = 52171 + 1776 + 1, -- +[0~3]
+
+        iServerGameState = 52171,
+        iServerBitSet = 52171 + 1,
+        iServerBitSet1 = 52171 + 2,
+
+        iTotalMissionEndTime = 52171 + 1496,
+        sMissionContinuityVars = {
+            iTotalMissionTime = 55623 + 1518 + 29
+        },
+
+
+        iLocalBoolCheck11 = 50815,
+
+
+        iAdditionalTeamLives = 58874 + 1109 + 1,      -- +[0~3]
+
+        tdObjectiveLimitTimer = 58874 + 297 + 1,      -- +[0~3]*2
+        tdMultiObjectiveLimitTimer = 58874 + 306 + 1, -- +[0~3]*2
+        iMultiObjectiveTimeLimit = 58874 + 322 + 1,   -- +[0~3]
+    },
+
     --------  Business Mission  --------
 
     ["gb_contraband_buy"] = {
-        -- iServerBitSet1 = 601 + 186,
-        -- iLocalBitset5 = 476,
-        eEndReason = 603 + 192,
-        eModeState = 603 + 191,
-        contrabandSize = 603 + 1, -- serverBD.sContraband.sContrabandMissionData.contrabandSize
-        eType = 603 + 5           -- serverBD.sContraband.eType
+        eEndReason = 621 + 192,
+        eModeState = 621 + 191,
+        contrabandSize = 621 + 1, -- serverBD.sContraband.sContrabandMissionData.contrabandSize
+        eType = 621 + 5           -- serverBD.sContraband.eType
     },
     ["gb_contraband_sell"] = {
-        eSellVar = 545 + 7,
-        eEndReason = 545 + 6,
-        eModeState = 545 + 5
+        eSellVar = 563 + 7,
+        eEndReason = 563 + 6,
+        eModeState = 563 + 5
     },
     ["gb_gunrunning"] = {
-        iGunrunEntityBitSet = 1211 + 4 + 63,
-        eEndReason = 1211 + 582,
-        eModeState = 1211 + 581,
-        eMissionVariation = 1211 + 1,
-        iNumEntitiesThisVariation = 1211 + 774,
-        iTotalDeliveredCount = 1211 + 816
+        iGunrunEntityBitSet = 1262 + 4 + 63,
+        eEndReason = 1262 + 582,
+        eModeState = 1262 + 581,
+        eMissionVariation = 1262 + 1,
+        iNumEntitiesThisVariation = 1262 + 774,
+        iTotalDeliveredCount = 1262 + 816
     },
     ["gb_smuggler"] = {
-        iSmugglerEntityBitSet = 1934 + 6 + 63,
-        eEndReason = 1934 + 771,
-        eModeState = 1934 + 770,
-        eMissionVariation = 1934 + 2,
-        iNumEntitiesThisVariation = 1934 + 1035,
-        iTotalDeliveredCount = 1934 + 1078
-    },
-    ["fm_content_acid_lab_source"] = {
-        iGenericBitset = 7577,
-        eEndReason = 7654 + 1162
-    },
-    ["fm_content_acid_lab_sell"] = {
-        iGenericBitset = 5418,
-        eEndReason = 5483 + 1294,
-        iDropOffCount = 119 + 9 + 1,
-        iTotalDropoffs = 119 + 9
+        iSmugglerEntityBitSet = 1985 + 6 + 63,
+        eEndReason = 1985 + 771,
+        eModeState = 1985 + 770,
+        eMissionVariation = 1985 + 2,
+        iNumEntitiesThisVariation = 1985 + 1035,
+        iTotalDeliveredCount = 1985 + 1078
     },
     ["business_battles_sell"] = {
-        eEndReason = 2312 + 26,
-        eModeState = 2312 + 25,
-        sMissionEntity = 2312 + 32,
-        iTotalDeliveredCount = 2312 + 202,
-        iTotalDeliveriesToMake = 2312 + 203
-    },
-    ["fm_content_club_source"] = {
-        eGoodsType = 3540 + 720 + 3,
-        iLocalParticipantIndexAsInt = 3453,
-        iGoodsToTransfer = function(iLocalParticipantIndexAsInt)
-            return 4299 + 1 + iLocalParticipantIndexAsInt * 125 + 73
-        end,
-        iGenericBitset = 3467,
-        eEndReason = 3540 + 674
+        eEndReason = 2364 + 26,
+        eModeState = 2364 + 25,
+        sMissionEntity = 2364 + 32,
+        iTotalDeliveredCount = 2364 + 202,
+        iTotalDeliveriesToMake = 2364 + 203
     },
     ["gb_illicit_goods_resupply"] = {
-        iIllicitGoodBitset0 = 937 + 796,
-        eEndReason = 937 + 506,
-        eModeState = 937 + 505
+        iIllicitGoodBitset0 = 958 + 796,
+        eEndReason = 958 + 506,
+        eModeState = 958 + 505
     },
     ["gb_biker_contraband_sell"] = {
-        eSellVar = 704 + 17,
-        iVehicleCountDeliveredAllContraband = 704 + 978,
-        iDroppedOffCount = 704 + 122,
-        eEndReason = 704 + 15,
-        eModeState = 704 + 14
+        eSellVar = 725 + 17,
+        iVehicleCountDeliveredAllContraband = 725 + 978,
+        iDroppedOffCount = 725 + 122,
+        eEndReason = 725 + 15,
+        eModeState = 725 + 14
     },
     ["gb_vehicle_export"] = {
-        iExportEntityNetId = 836 + 29,
-        exportEntityIeVehicleEnum = 836 + 39,
-        eModeState = 836 + 459,
+        iExportEntityNetId = 876 + 29,
+        exportEntityIeVehicleEnum = 876 + 39,
+        eModeState = 876 + 459,
         sCarBombStruct = {
-            iCarBombBitSet = 369 + 1
+            iCarBombBitSet = 387 + 1
         },
     },
 
-    --------  Freemode Mission  --------
+    --------  Client Work  --------
 
-    ["fm_content_security_contract"] = {
-        iGenericBitset = 7058,
-        eEndReason = 7136 + 1278
-    },
-    ["fm_content_payphone_hit"] = {
-        iGenericBitset = 5616,
-        eEndReason = 5675 + 683,
-        iMissionServerBitSet = 5675 + 740
-    },
-
-    -- Client Work
     ["gb_bank_job"] = {
-        iMissionEntityBitSet = 1227 + 7 + 1 + 0 * 4 + 1 + 1 + 0, -- iMissionEntity = 0
-        eModeState = 1227 + 5,
-        eEndReason = 1227 + 6
+        iMissionEntityBitSet = 1248 + 7 + 1 + 0 * 4 + 1 + 1 + 0, -- iMissionEntity = 0
+        eModeState = 1248 + 5,
+        eEndReason = 1248 + 6
     },
     ["gb_data_hack"] = {
-        eEndReason = 1927 + 7
+        eEndReason = 1948 + 7
     },
     ["gb_infiltration"] = {
-        eEndReason = 1715 + 6
+        eEndReason = 1736 + 6
     },
     ["gb_jewel_store_grab"] = {
-        piDeliverer = 1247 + 8,
-        eEndReason = 1247 + 6
+        piDeliverer = 1268 + 8,
+        eEndReason = 1268 + 6
     },
 
+    --------  Heist Preps  --------
 
-    ["fm_content_drug_lab_work"] = {
-        iGenericBitset = 7820,
-        eEndReason = 7884 + 1253
+    ["gb_gangops"] = {
+        iPhotosTaken = 2015 + 1194,
+        iNumEntitiesThisVariation = 2015 + 1040,
+        iMissionEntityBitSet = 2015 + 6 + 63,
+        eEndReason = 2015 + 782,
+        eModeState = 2015 + 781
     },
-    ["fm_content_smuggler_ops"] = {
-        iMissionBitSet = 7600 + 1327,
-        iGenericBitset = 7523,
-        eEndReason = 7600 + 1270
+
+    --------  FM Content Mission  --------
+
+    ["fm_content_acid_lab_sell"] = {
+        iDropOffCount = 140 + 9 + 1,
+        iTotalDropoffs = 140 + 9
     },
     ["fm_content_auto_shop_delivery"] = {
-        iGenericBitset = 1518,
-        eEndReason = 1572 + 83,
-        iMissionEntityBitSet = 1572 + 2 + 5
+        iMissionEntityBitSet = 1625 + 2 + 5
     },
     ["fm_content_bike_shop_delivery"] = {
-        iGenericBitset = 1518,
-        eEndReason = 1574 + 83,
-        iMissionEntityBitSet = 1574 + 2 + 5
+        iMissionEntityBitSet = 1627 + 2 + 5
     },
-    ["fm_content_stash_house"] = {
-        iGenericBitset = 3467,
-        eEndReason = 3521 + 475
+    ["fm_content_club_source"] = {
+        iGoodsToTransfer = function()
+            return 4392 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 125 + 73
+        end,
+        eGoodsType = 3632 + 721 + 3
     },
     ["fm_content_daily_bounty"] = {
-        iMissionBitSet = 2533 + 369,
-
-        eEndReason = 2533 + 325,
-        iGenericBitset = 2480
+        iMissionBitSet = 2612 + 373
     },
-
-    -- Salvage Yard Robbery Preps
-    ["fm_content_vehrob_scoping"] = {
-        eEndReason = 3752 + 508,
-        iGenericBitset = 3695
+    ["fm_content_payphone_hit"] = {
+        iMissionServerBitSet = 5778 + 747
     },
-    ["fm_content_vehrob_prep"] = {
-        eEndReason = 11366 + 1272,
-        iGenericBitset = 11265
+    ["fm_content_smuggler_ops"] = {
+        iMissionBitSet = 7728 + 1334
     },
-    ["fm_content_vehrob_task"] = {
-        eEndReason = 4773 + 1043,
-        iGenericBitset = 4705
+    ["fm_content_smuggler_resupply"] = {
+        iNumEntitiesThisVariation = 250 + 19,
+        iSmugglerEntityBitSet = 6166 + 2 + 14
     },
-    ["fm_content_vehrob_disrupt"] = {
-        eEndReason = 4570 + 924,
-        iGenericBitset = 4511
+    ["fm_content_smuggler_sell"] = {
+        iDropOffCount = 140 + 60 + 1,
+        iTotalDropoffs = 140 + 60
     },
-    -- Salvage Yard Robbery Final
     ["fm_content_vehrob_arena"] = {
-        iChallengeCondition = 7807 + 1342 + 14,
-        iChallengeBitset = 7807 + 1340,
-
-        eEndReason = 7807 + 1285,
-        iGenericBitset = 7748
+        iChallengeCondition = 7922 + 1343 + 14,
+        iChallengeBitset = 7922 + 1341
     },
     ["fm_content_vehrob_cargo_ship"] = {
-        iChallengeBitset = 7025 + 1286,
-
-        eEndReason = 7025 + 1224,
-        iGenericBitset = 6934
+        iChallengeBitset = 7237 + 1290
     },
     ["fm_content_vehrob_casino_prize"] = {
-        iChallengeBitset = 9060 + 1310,
-
-        eEndReason = 9060 + 1231,
-        iGenericBitset = 8979
+        iChallengeBitset = 9221 + 1314
     },
     ["fm_content_vehrob_police"] = {
-        iChallengeCondition = 8847 + 1333 + 8 + 1, -- +[0~2]
-
-        eEndReason = 8847 + 1276,
-        iGenericBitset = 8772
+        iChallengeCondition = 9045 + 1337 + 8 + 1
     },
     ["fm_content_vehrob_submarine"] = {
-        iChallengeCondition = 6125 + 1199 + 19,
-        iChallengeBitset = 6125 + 1196,
-
-        eEndReason = 6125 + 1137,
-        iGenericBitset = 6041
+        iChallengeCondition = 6250 + 1200 + 19,
+        iChallengeBitset = 6250 + 1197
     },
 
-    -- Heist Preps
-    ["fm_content_island_heist"] = {
-        iGenericBitset = 13220,
-        eEndReason = 13311 + 1339
+    ["fm_content_hacker_cargo_finale"] = {
+        iChallengeBitset = 7671 + 1342,
+        iChallengeCondition = 7671 + 1344 + 18,
+        iChallengeBitset2 = 7671 + 1014,
+        iChallengeConditionArray = 274 + 2414 + 1
     },
-    ["fm_content_tuner_robbery"] = {
-        iGenericBitset = 7226,
-        eEndReason = 7313 + 1194
+    ["fm_content_hacker_house_finale"] = {
+        iChallengeBitset = 8126 + 1234
     },
-    ["fm_content_vip_contract_1"] = {
-        iGenericBitset = 8619,
-        eEndReason = 8692 + 1157
+    ["fm_content_hacker_whistle_fin"] = {
+        iChallengeBitset = 6653 + 1227
     },
-    ["gb_gangops"] = {
-        iPhotosTaken = 1963 + 1194,
-        iNumEntitiesThisVariation = 1963 + 1040,
-        iMissionEntityBitSet = 1963 + 6 + 63,
-        eEndReason = 1963 + 782,
-        eModeState = 1963 + 781
+    ["fm_content_hacker_zancudo_fin"] = {
+        iChallengeBitset = 8535 + 1223
     },
 
     --------  Heist Planning Board  --------
 
     ["gb_casino_heist_planning"] = {
-        iScriptStage = 185,
+        iScriptStage = 206,
     },
     ["gb_gang_ops_planning"] = {
-        iScriptStage = 184,
+        iScriptStage = 205,
     },
     ["heist_island_planning"] = {
-        iScriptStage = 1546,
+        iScriptStage = 1564,
     },
     ["tuner_planning"] = {
-        iScriptStage = 383,
+        iScriptStage = 401,
     },
     ["vehrob_planning"] = {
-        iScriptStage = 512,
-    },
-
-    --------  Heist Mission  --------
-
-    ["fm_mission_controller"] = {
-        iNextMission = 19746 + 1062,
-        iTeamScore = 19746 + 1232 + 1, -- +[0~3]
-
-        iServerGameState = 19746,
-        iServerBitSet = 19746 + 1,
-        iServerBitSet1 = 19746 + 2,
-
-        iCashGrabTotalTake = 19746 + 2686,
-        iTeamKills = 19746 + 1725 + 1,
-        iTeamHeadshots = 19746 + 1740 + 1,
-
-        iClientBitSet = function()
-            -- MC_playerBD[PARTICIPANT_ID_TO_INT()].iClientBitSet
-            return 31621 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 292 + 127
-        end,
-
-        iLocalBoolCheck11 = 15166,
-
-        iAdditionalTeamLives = 26172 + 1325 + 1,      -- +[0~3]
-
-        tdObjectiveLimitTimer = 26172 + 740 + 1,      -- +[0~3]*2
-        tdMultiObjectiveLimitTimer = 26172 + 749 + 1, -- +[0~3]*2
-        iMultiObjectiveTimeLimit = 26172 + 765 + 1,   -- +[0~3]
-
-        stZoneTimers = 59899 + 1 + 0 * 2,             -- casino vault
-    },
-    ["fm_mission_controller_2020"] = {
-        iNextMission = 50150 + 1583,
-        iTeamScore = 50150 + 1770 + 1, -- +[0~3]
-
-        iServerGameState = 50150,
-        iServerBitSet = 50150 + 1,
-        iServerBitSet1 = 50150 + 2,
-
-        iLocalBoolCheck11 = 48799,
-
-        iAdditionalTeamLives = 56798 + 868 + 1,       -- +[0~3]
-
-        tdObjectiveLimitTimer = 56798 + 297 + 1,      -- +[0~3]*2
-        tdMultiObjectiveLimitTimer = 56798 + 306 + 1, -- +[0~3]*2
-        iMultiObjectiveTimeLimit = 56798 + 322 + 1,   -- +[0~3]
+        iScriptStage = 530,
     },
 
     --------  Other  --------
 
+    ["am_imp_exp"] = {
+        CarList = {
+            iCar = 378 + 1,             -- +[0~4]
+            bIsDelivered = 378 + 6 + 1, -- +[0~4]
+        }
+    },
     ["carmod_shop"] = {
-        iPersonalCarModShopFlags = 1585
+        iPersonalCarModShopFlags = 1605
     },
     ["shop_controller"] = {
-        iLocalBS = 332,
+        iLocalBS = 355,
 
-        iAutoShopRandomTime = 333,
-        iBikerShopRandomTime = 347
+        iAutoShopRandomTime = 356,
+        iBikerShopRandomTime = 370
     },
     ["social_controller"] = {
         eMaintainStage = 65,
@@ -608,9 +587,10 @@ Locals = {
 }
 
 
+
 -- `fmmc_launcher`
 -- MISSION_TO_LAUNCH_DETAILS
-local _sLaunchMissionDetails = 19709
+local _sLaunchMissionDetails = 19875
 sLaunchMissionDetails = {
     iMinPlayers = _sLaunchMissionDetails + 15,
     iMaxParticipants = _sLaunchMissionDetails + 32,
@@ -620,7 +600,7 @@ sLaunchMissionDetails = {
 
 -- `freemode` Time Trial
 -- AMTT_VARS_STRUCT
-local _sTTVarsStruct = 14386
+local _sTTVarsStruct = 14486
 sTTVarsStruct = {
     iVariation = _sTTVarsStruct + 11,
     trialTimer = _sTTVarsStruct + 13,
@@ -631,7 +611,7 @@ sTTVarsStruct = {
 
 -- `freemode` RC Bandito Time Trial
 -- AMRCTT_VARS_STRUCT
-local _sRCTTVarsStruct = 14436
+local _sRCTTVarsStruct = 14536
 sRCTTVarsStruct = {
     eVariation = _sRCTTVarsStruct,
     eRunStage = _sRCTTVarsStruct + 2,
@@ -646,19 +626,20 @@ sRCTTVarsStruct = {
 --                FUNCTIONS
 ----------------------------------------------
 
-local g_sCURRENT_UGC_STATUS = 2693440
+local g_sCURRENT_UGC_STATUS = 2693671
 local g_iMissionEnteryType = 1057440
 
 function LAUNCH_MISSION(Data)
     local iArrayPos = MISC.GET_CONTENT_ID_INDEX(Data.iRootContentID)
 
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].tlName
-    local tlName = GLOBAL_GET_STRING(Globals.sMissionHeaderVars + iArrayPos * 89)
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].iMaxPlayers
-    local iMaxPlayers = GLOBAL_GET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 71)
+    local sMissionHeaderVars = g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars(iArrayPos)
+
+    local tlName = GLOBAL_GET_STRING(sMissionHeaderVars.tlName)
+    local iMaxPlayers = GLOBAL_GET_INT(sMissionHeaderVars.iMaxPlayers)
+
 
     -- g_TransitionSessionNonResetVars.bSaveBeforeCoronaVehicle = TRUE
-    GLOBAL_SET_INT(_g_TransitionSessionNonResetVars + 3850, 1)
+    GLOBAL_SET_INT(_g_TransitionSessionNonResetVars + 3851, 1)
 
     -- CLEAR_PAUSE_MENU_IS_USING_UGC()
     ---- g_sCURRENT_UGC_STATUS.g_bPAUSE_MENU_USING_UGC = FALSE
@@ -676,6 +657,7 @@ function LAUNCH_MISSION(Data)
     end
 
 
+    --[[
     if Data.iMissionType == 274 then
         -- FMMC_TYPE_TUNER_ROBBERY_FINALE
 
@@ -721,6 +703,7 @@ function LAUNCH_MISSION(Data)
         ---- SET_BIT(g_sTransitionSessionData.iSecondBitSet, ciTRANSITION_SESSIONS_PICKED_SPECIFIC_JOB)
         GLOBAL_SET_BIT(g_sTransitionSessionData + 2, 29)
     end
+    ]]
 
 
     -- SET_TRANSITION_SESSIONS_QUICK_MATCH_TYPE(FMMC_TYPE_XXX)
@@ -743,18 +726,23 @@ function LAUNCH_MISSION(Data)
 
     -- SET_TRANSITION_SESSIONS_STARTING_QUICK_MATCH()
     ---- SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_STARTING_QUICK_MATCH)
-    --GLOBAL_SET_BIT(g_sTransitionSessionData, 5)
+    GLOBAL_SET_BIT(g_sTransitionSessionData, 5)
     ---- SET_TRANSITION_SESSIONS_SETTING_UP_QUICKMATCH()
     ------ SET_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_SETTING_UP_QUICKMATCH)
-    --GLOBAL_SET_BIT(g_sTransitionSessionData, 8)
+    GLOBAL_SET_BIT(g_sTransitionSessionData, 8)
 
+    -- (bSkipSkyCam)
     -- CLEAR_TRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM()
     ---- CLEAR_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_NEED_TO_WARP_TO_START_SKYCAM)
     GLOBAL_CLEAR_BIT(g_sTransitionSessionData, 7)
-
     -- CLEAR_TRANSITION_SESSIONS_CORONA_CONTROLLER_MAINTAIN_CAMERA()
     ---- CLEAR_BIT(g_sTransitionSessionData.iBitSet, ciTRANSITION_SESSIONS_CORONA_CONTROLLER_MAINTAIN_CAMERA)
     GLOBAL_CLEAR_BIT(g_sTransitionSessionData, 15)
+
+
+    -- CLEAR_TRANSITION_SESSIONS_CREATE_WITH_OPEN_MATCHMAKING()
+    ---- g_sTransitionSessionData.bCreateWithOpenMatchMaking = FALSE
+    GLOBAL_SET_INT(g_sTransitionSessionData + 717, 0)
 
     -- SET_TRANSITION_SESSIONS_FORCE_ME_HOST_QUICK_MATCH()
     ---- g_sTransitionSessionData.bForceMeHost = TRUE
@@ -767,8 +755,7 @@ end
 
 -- g_structLocalHeistControl
 local g_sLocalMPHeistControl = {
-    _ = 2635126,
-    _lhcMyCorona = 2635126 + 3,
+    _lhcMyCorona = 2635079 + 3
 }
 
 -- g_structMyHeistCorona
@@ -800,13 +787,10 @@ end
 
 function INSTANT_FINISH_CASINO_HEIST_PREPS()
     local script = "gb_casino_heist"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
 
-    local serverBD = 4413
+    local serverBD = 4470
 
-    local eMissionVariation = LOCAL_GET_INT(script, serverBD + 1457)
+    local eMissionVariation = LOCAL_GET_INT(script, serverBD + 1325)
     if eMissionVariation == 4 then
         LOCAL_SET_INT(script, serverBD + 1568, 10)
     elseif eMissionVariation == 2 then
@@ -832,41 +816,41 @@ end
 
 function INSTANT_FINISH_CASINO_WORK()
     local script = "gb_casino"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
 
-    local eMissionVariation = LOCAL_GET_INT(script, 2845 + 1321)
+    local serverBD = 2904
+    local playerBD = 4576
+
+    local eMissionVariation = LOCAL_GET_INT(script, serverBD + 1321)
     if eMissionVariation == 14 then -- CSV_TRACKING_CHIPS
         for i = 0, 4 do
             -- SET_FIND_ITEM_BIT(iChip, eFINDITEMBITSET_COLLECTED)
-            LOCAL_SET_BIT(script, 2845 + 1573 + 1 + i, 1)
+            LOCAL_SET_BIT(script, serverBD + 1573 + 1 + i, 1)
         end
     end
 
-    local iNumEntitiesThisVariation = LOCAL_GET_INT(script, 2845 + 1541)
+    local iNumEntitiesThisVariation = LOCAL_GET_INT(script, serverBD + 1541)
     local partId = NETWORK.NETWORK_GET_PARTICIPANT_INDEX(players.user())
     for i = 0, iNumEntitiesThisVariation - 1, 1 do
         -- SET_MISSION_ENTITY_BIT(iMissionEntity, eMISSIONENTITYBITSET_DELIVERED)
-        LOCAL_SET_BIT(script, 2845 + 63 + 1 + i * 3 + 1 + 0, 4)
+        LOCAL_SET_BIT(script, serverBD + 63 + 1 + i * 3 + 1 + 0, 4)
 
         -- SET_MISSION_ENTITY_CLIENT_BIT(iMissionEntity, NETWORK_GET_PARTICIPANT_INDEX(playerID), eMISSIONENTITYCLIENTBITSET_MY_GANG_DELIVERED_MISSION_ENTITY)
-        LOCAL_SET_BIT(script, 4517 + 1 + partId * 266 + 9 + 1 + i * 3 + 1 + 1, 3)
+        LOCAL_SET_BIT(script, playerBD + 1 + partId * 266 + 9 + 1 + i * 3 + 1 + 1, 3)
     end
 
-    LOCAL_SET_INT(script, 2845 + 1324, 3)  -- SET_END_REASON(eENDREASON_MISSION_ENTITY_DELIVERED)
-    LOCAL_SET_INT(script, 2845 + 1323, 33) -- SET_MODE_STATE(eMODESTATE_REWARDS)
+    LOCAL_SET_INT(script, serverBD + 1324, 3)  -- SET_END_REASON(eENDREASON_MISSION_ENTITY_DELIVERED)
+    LOCAL_SET_INT(script, serverBD + 1323, 33) -- SET_MODE_STATE(eMODESTATE_REWARDS)
 end
 
 function COMPLETE_DAILY_CHALLENGE()
     -- g_savedMPGlobalsNew.g_savedMPGlobals[GET_SAVE_GAME_ARRAY_SLOT()].MpSavedGeneral.Current_Daily_Objectives[i].bCompleted
     for i = 0, 2, 1 do
-        GLOBAL_SET_INT(2359296 + 1 + 0 * 5569 + 681 + 4244 + 1 + i * 3 + 1, 1)
+        GLOBAL_SET_INT(2359296 + 1 + 0 * 5571 + 681 + 4245 + 1 + i * 3 + 1, 1)
     end
 end
 
 function COMPLETE_WEEKLY_CHALLENGE(bComplete)
-    local g_sWeeklyChallenge = 2737992
+    local g_sWeeklyChallenge = 2738865
 
     GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 3, 0)
     GLOBAL_SET_INT(g_sWeeklyChallenge + 1 + 0 * 6 + 4, 0)
@@ -882,10 +866,10 @@ end
 function CLEAR_BIG_MESSAGE()
     for i = 0, 3 do
         -- MPGlobals.g_BigMessage[i].iMessageState
-        GLOBAL_SET_INT(2672855 + 2557 + 1 + i * 80 + 2, 5) -- BIG_MESSAGE_STATE_CLEANUP
+        GLOBAL_SET_INT(2672939 + 2590 + 1 + i * 80 + 2, 5) -- BIG_MESSAGE_STATE_CLEANUP
 
         -- MPGlobals.g_BigMessage[i].iBigMessageBitSet
-        GLOBAL_SET_BIT(2672855 + 2557 + 1 + i * 80 + 69, 1) -- BIG_MESSAGE_BIT_CLEANUP_ALL
+        GLOBAL_SET_BIT(2672939 + 2590 + 1 + i * 80 + 69, 1) -- BIG_MESSAGE_BIT_CLEANUP_ALL
     end
 end
 
@@ -895,162 +879,188 @@ end
 
 local HACKING_MINIGAME = {}
 
-local iHackStage = 4543372
-local g_sHackingData = 2737663
+local HackingFunc = {
+    FingerprintClone = function(script, sFingerprintCloneGameplay)
+        if LOCAL_GET_INT(script, sFingerprintCloneGameplay) == 4 then -- HACKING_GAME_PLAY
+            LOCAL_SET_INT(script, sFingerprintCloneGameplay, 5)       -- HACKING_GAME_PASS
+        end
+    end,
+    OrderUnlock = function(script, sOrderUnlockGameplay)
+        if LOCAL_GET_INT(script, sOrderUnlockGameplay) == 4 then -- HACKING_GAME_PLAY
+            LOCAL_SET_INT(script, sOrderUnlockGameplay, 5)       -- HACKING_GAME_PASS
+        end
+    end,
+    VaultDrill = function(script, sVaultDrillData)
+        if LOCAL_GET_INT(script, sVaultDrillData.iCurrentState) == 5 then -- VAULT_DRILL_MINIGAME_STATE_DRILLING
+            LOCAL_SET_BIT(script, sVaultDrillData.iBitset, 13)            -- VAULT_DRILL_BITSET_HAS_PLAYER_PASSED_MINIGAME
+        end
+    end,
+    Hotwire = function(script, eHotwireState, hpsCurPassState)
+        if LOCAL_GET_INT(script, eHotwireState) == 1 then -- HOTWIRE_PLAY
+            LOCAL_SET_INT(script, hpsCurPassState, 3)     -- HPS_SUCCESS
+            LOCAL_SET_INT(script, eHotwireState, 2)       -- HOTWIRE_PASS
+        end
+    end,
+    BeamHack = function(script, sBeamHackGameplayData)
+        if LOCAL_GET_INT(script, sBeamHackGameplayData.eBeamHackState) == 2 then -- BEAM_HACK_PLAY
+            LOCAL_SET_INT(script, sBeamHackGameplayData.eBeamHackState, 3)       -- BEAM_HACK_PASS
+        end
+    end,
+    CircuitHacking = function(script, e_CircuitHackingMinigameState)
+        if LOCAL_GET_INT(script, e_CircuitHackingMinigameState) == 3 then -- CHMS_RUNNING
+            LOCAL_SET_INT(script, e_CircuitHackingMinigameState, 7)       -- CHMS_SYSTEM_HACKED
+        end
+    end,
+    Drill = function(script, sDrillData)
+        if LOCAL_GET_INT(script, sDrillData.iCurrentState) == 1 then -- DRILL_MINIGAME_STATE_DRILLING
+            LOCAL_SET_INT(script, sDrillData.iCurrentState, 2)       -- DRILL_MINIGAME_STATE_CLEANUP
+        end
+    end,
+    Hacking = function(script, sHackingData)
+        if LOCAL_BITS_TEST(script, sHackingData, 0, 29) then -- BS_IS_HACKING, BS_WALLPAPER_INITIALISED
+            -- BS_BRUTE_FORCE_GAME_SOLVED, BS_HACK_CONNECT_GAME_SOLVED, BS_NEW_HACKING_GAME_SOLVED
+            LOCAL_SET_BITS(script, sHackingData, 9, 18, 26)
+        end
+    end,
+    SafeCrack = function(script, SafeCrackData)
+        if LOCAL_BIT_TEST(script, SafeCrackData.iBitSet, 1) then    -- SC_BS_IS_PLAYER_SAFE_CRACKING
+            LOCAL_SET_INT(script, SafeCrackData.iSafeCrackStage, 3) -- MAX_NUM_LOCKS
+        end
+    end,
 
-HACKING_MINIGAME.MISSION_CONTROLLER = function(script)
-    local sFingerprintCloneGameplay = 53019
-    local sOrderUnlockGameplay = 54085
+    UnderwaterTunnelWeld = function(script, erUnderwaterTunnel_WeldStage)
+        if LOCAL_GET_INT(script, erUnderwaterTunnel_WeldStage) == 4 then -- UNDERWATER_TUNNEL_WELD_STAGE__RUNNING
+            LOCAL_SET_INT(script, erUnderwaterTunnel_WeldStage, 6)       -- UNDERWATER_TUNNEL_WELD_STAGE__PASSED
+        end
+    end,
+    GlassCutting = function(script, sGlassCuttingData)
+        if LOCAL_BITS_TEST(script, sGlassCuttingData.iBitset, 0, 2) then -- ciGLASS_CUTTING_BITSET__STARTED, ciGLASS_CUTTING_BITSET__STARTED_TIMECYCLE_MOD
+            LOCAL_SET_FLOAT(script, sGlassCuttingData.fGlassCuttingProgress, 100)
+        end
+    end,
+    SafeCombination = function(script, eEnterSafeCombinationStage, sEnterSafeCombinationData)
+        if LOCAL_GET_INT(script, eEnterSafeCombinationStage) == 3 then -- ENTER_SAFE_COMBINATION_STAGE__RUNNING
+            for iPanel = 0, 2, 1 do
+                -- sEnterSafeCombinationData.sEnterSafePanels[iPanel].fCurrentSafeValue
+                LOCAL_SET_FLOAT(script, sEnterSafeCombinationData.sEnterSafePanels + iPanel * 2, 0)
+                -- sEnterSafeCombinationData.sEnterSafePanels[iPanel].iCorrectSafeValue
+                LOCAL_SET_INT(script, sEnterSafeCombinationData.sEnterSafePanels + iPanel * 2 + 1, 0)
+            end
+            LOCAL_SET_INT(script, sEnterSafeCombinationData.iCurrentlySelectedDisplayPanel, 2)
+
+            PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 237, 1) -- INPUT_CURSOR_ACCEPT
+        end
+    end,
+    VoltageHack = function(script, sVoltage)
+        if LOCAL_GET_INT(script, sVoltage.eCurrentState) == 3 then -- VS_PICK_LINK
+            LOCAL_SET_INT(script, sVoltage.iTargetValue, 0)
+            LOCAL_SET_INT(script, sVoltage.iCurrentValue, 0)
+            LOCAL_SET_INT(script, sVoltage.iLinkCount, 3)
+
+            PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1) -- INPUT_FRONTEND_ACCEPT
+        end
+    end
+}
+
+-- local iHackStage = 4543372
+local g_sHackingData = 2738536
+
+HACKING_MINIGAME["fm_mission_controller"] = function(script)
+    local sFingerprintCloneGameplay = 53087
+    local sOrderUnlockGameplay = 54153
     local sVaultDrillData = {
-        iBitset = 10109,
-        iCurrentState = 10109 + 2
+        iBitset = 10143,
+        iCurrentState = 10143 + 2
     }
 
-    local eHotwireState = 1545
-    local hpsCurPassState = 1514
+    local eHotwireState = 1566
+    local hpsCurPassState = 1535
 
     local sBeamHackGameplayData = {
-        eBeamHackState = 1271 + 135
+        eBeamHackState = 1292 + 135
     }
-    local e_CircuitHackingMinigameState = 11778 + 24 -- hackingMinigameData.e_CircuitHackingMinigameState
+    local e_CircuitHackingMinigameState = 11812 + 24 -- hackingMinigameData.e_CircuitHackingMinigameState
 
     local sDrillData = {
-        iCurrentState = 10069 + 2
+        iCurrentState = 10103 + 2
     }
-    local sHackingData = 9775
+    local sHackingData = 9809
 
     local SafeCrackData = {
-        iBitSet = 11149,
-        iSafeCrackStage = 11149 + 5
+        iBitSet = 11183,
+        iSafeCrackStage = 11183 + 5
     }
 
     -- Securo Hack Objective
-    if GLOBAL_GET_INT(iHackStage) > 0 then
-        -- MC_playerBD[iLocalPart].iVehFollowing
-        local iVehFollowing = LOCAL_GET_INT(script, 31621 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 292 + 125)
-        if iVehFollowing ~= -1 then
-            -- MC_serverBD_1.tdControlVehTimer[iVeh]
-            LOCAL_SET_INT(script, 22960 + 1 + iVehFollowing * 2, 0)
-        end
-    end
+    -- if GLOBAL_GET_INT(iHackStage) > 0 then
+    --     -- MC_playerBD[iLocalPart].iVehFollowing
+    --     local iVehFollowing = LOCAL_GET_INT(script, 31621 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 292 + 125)
+    --     if iVehFollowing ~= -1 then
+    --         -- MC_serverBD_1.tdControlVehTimer[iVeh]
+    --         LOCAL_SET_INT(script, 22960 + 1 + iVehFollowing * 2, 0)
+    --     end
+    -- end
 
-
-    if LOCAL_GET_INT(script, sFingerprintCloneGameplay) == 4 then -- HACKING_GAME_PLAY
-        LOCAL_SET_INT(script, sFingerprintCloneGameplay, 5)       -- HACKING_GAME_PASS
-    end
-
-    if LOCAL_GET_INT(script, sOrderUnlockGameplay) == 4 then -- HACKING_GAME_PLAY
-        LOCAL_SET_INT(script, sOrderUnlockGameplay, 5)       -- HACKING_GAME_PASS
-    end
-
-    if LOCAL_GET_INT(script, sVaultDrillData.iCurrentState) == 5 then -- VAULT_DRILL_MINIGAME_STATE_DRILLING
-        LOCAL_SET_BIT(script, sVaultDrillData.iBitset, 13)            -- VAULT_DRILL_BITSET_HAS_PLAYER_PASSED_MINIGAME
-    end
-
-    if LOCAL_GET_INT(script, eHotwireState) == 1 then -- HOTWIRE_PLAY
-        LOCAL_SET_INT(script, hpsCurPassState, 3)     -- HPS_SUCCESS
-        LOCAL_SET_INT(script, eHotwireState, 2)       -- HOTWIRE_PASS
-    end
-
-    if LOCAL_GET_INT(script, sBeamHackGameplayData.eBeamHackState) == 2 then -- BEAM_HACK_PLAY
-        LOCAL_SET_INT(script, sBeamHackGameplayData.eBeamHackState, 3)       -- BEAM_HACK_PASS
-    end
-
-    if LOCAL_GET_INT(script, e_CircuitHackingMinigameState) == 3 then -- CHMS_RUNNING
-        LOCAL_SET_INT(script, e_CircuitHackingMinigameState, 7)       -- CHMS_SYSTEM_HACKED
-    end
-
-    if LOCAL_GET_INT(script, sDrillData.iCurrentState) == 1 then -- DRILL_MINIGAME_STATE_DRILLING
-        LOCAL_SET_INT(script, sDrillData.iCurrentState, 2)       -- DRILL_MINIGAME_STATE_CLEANUP
-    end
-
-    if LOCAL_BITS_TEST(script, sHackingData, 0, 29) then -- BS_IS_HACKING, BS_WALLPAPER_INITIALISED
-        -- BS_BRUTE_FORCE_GAME_SOLVED, BS_HACK_CONNECT_GAME_SOLVED, BS_NEW_HACKING_GAME_SOLVED
-        LOCAL_SET_BITS(script, sHackingData, 9, 18, 26)
-    end
-
-    if LOCAL_BIT_TEST(script, SafeCrackData.iBitSet, 1) then    -- SC_BS_IS_PLAYER_SAFE_CRACKING
-        LOCAL_SET_INT(script, SafeCrackData.iSafeCrackStage, 3) -- MAX_NUM_LOCKS
-    end
+    HackingFunc.FingerprintClone(script, sFingerprintCloneGameplay)
+    HackingFunc.OrderUnlock(script, sOrderUnlockGameplay)
+    HackingFunc.VaultDrill(script, sVaultDrillData)
+    HackingFunc.Hotwire(script, eHotwireState, hpsCurPassState)
+    HackingFunc.BeamHack(script, sBeamHackGameplayData)
+    HackingFunc.CircuitHacking(script, e_CircuitHackingMinigameState)
+    HackingFunc.Drill(script, sDrillData)
+    HackingFunc.Hacking(script, sHackingData)
+    HackingFunc.SafeCrack(script, SafeCrackData)
 end
 
-HACKING_MINIGAME.MISSION_CONTROLLER_2020 = function(script)
-    local sFingerprintCloneGameplay = 24880
-    local erUnderwaterTunnel_WeldStage = 29700
+HACKING_MINIGAME["fm_mission_controller_2020"] = function(script)
+    local sFingerprintCloneGameplay = 24986
+    local erUnderwaterTunnel_WeldStage = 29810
     local sGlassCuttingData = {
-        iBitset = 30939,
-        fGlassCuttingProgress = 30939 + 3
+        iBitset = 31049,
+        fGlassCuttingProgress = 31049 + 3
     }
 
-    local eEnterSafeCombinationStage = 30914
+    local eEnterSafeCombinationStage = 31024
     local sEnterSafeCombinationData = {
-        iCurrentlySelectedDisplayPanel = 30915,
-        sEnterSafePanels = 30915 + 1 + 1, -- +[0~2]*2
+        iCurrentlySelectedDisplayPanel = 31025,
+        sEnterSafePanels = 31025 + 1 + 1, -- +[0~2]*2
     }
 
-    local Voltage = {
-        iTargetValue = 1723,
-        iCurrentValue = 1724,
-        iLinkCount = 1725,
-        eCurrentState = 1739,
+    local sVoltage = {
+        iTargetValue = 1744,
+        iCurrentValue = 1745,
+        iLinkCount = 1746,
+        eCurrentState = 1760,
     }
 
     local sBeamHackGameplayData = {
-        eBeamHackState = 980 + 135
+        eBeamHackState = 1001 + 135
     }
 
 
-    if LOCAL_GET_INT(script, sFingerprintCloneGameplay) == 4 then -- HACKING_GAME_PLAY
-        LOCAL_SET_INT(script, sFingerprintCloneGameplay, 5)       -- HACKING_GAME_PASS
-    end
+    -- if GLOBAL_GET_INT(iHackStage) > 0 then
+    --     -- MC_playerBD[iLocalPart].iVehCapturing
+    --     local iVehCapturing = LOCAL_GET_INT(script, 60496 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 261 + 111)
+    --     if iVehCapturing ~= -1 then
+    --         -- MC_serverBD_1.iControlVehTimer[iVeh]
+    --         LOCAL_SET_INT(script, 51882 + 224 + 1 + iVehCapturing, 0)
+    --     end
+    -- end
 
-    if LOCAL_GET_INT(script, erUnderwaterTunnel_WeldStage) == 4 then -- UNDERWATER_TUNNEL_WELD_STAGE__RUNNING
-        LOCAL_SET_INT(script, erUnderwaterTunnel_WeldStage, 6)       -- UNDERWATER_TUNNEL_WELD_STAGE__PASSED
-    end
 
-    if LOCAL_BITS_TEST(script, sGlassCuttingData.iBitset, 0, 2) then -- ciGLASS_CUTTING_BITSET__STARTED, ciGLASS_CUTTING_BITSET__STARTED_TIMECYCLE_MOD
-        LOCAL_SET_FLOAT(script, sGlassCuttingData.fGlassCuttingProgress, 100)
-    end
-
-    if LOCAL_GET_INT(script, eEnterSafeCombinationStage) == 3 then -- ENTER_SAFE_COMBINATION_STAGE__RUNNING
-        for iPanel = 0, 2, 1 do
-            -- sEnterSafeCombinationData.sEnterSafePanels[iPanel].fCurrentSafeValue
-            LOCAL_SET_FLOAT(script, sEnterSafeCombinationData.sEnterSafePanels + iPanel * 2, 0)
-            -- sEnterSafeCombinationData.sEnterSafePanels[iPanel].iCorrectSafeValue
-            LOCAL_SET_INT(script, sEnterSafeCombinationData.sEnterSafePanels + iPanel * 2 + 1, 0)
-        end
-        LOCAL_SET_INT(script, sEnterSafeCombinationData.iCurrentlySelectedDisplayPanel, 2)
-
-        PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 237, 1) -- INPUT_CURSOR_ACCEPT
-    end
-
-    if LOCAL_GET_INT(script, Voltage.eCurrentState) == 3 then -- VS_PICK_LINK
-        LOCAL_SET_INT(script, Voltage.iTargetValue, 0)
-        LOCAL_SET_INT(script, Voltage.iCurrentValue, 0)
-        LOCAL_SET_INT(script, Voltage.iLinkCount, 3)
-
-        PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1) -- INPUT_FRONTEND_ACCEPT
-    end
-
-    if LOCAL_GET_INT(script, sBeamHackGameplayData.eBeamHackState) == 2 then -- BEAM_HACK_PLAY
-        LOCAL_SET_INT(script, sBeamHackGameplayData.eBeamHackState, 3)       -- BEAM_HACK_PASS
-    end
-
-    if GLOBAL_GET_INT(iHackStage) > 0 then
-        -- MC_playerBD[iLocalPart].iVehCapturing
-        local iVehCapturing = LOCAL_GET_INT(script, 60496 + 1 + NETWORK.PARTICIPANT_ID_TO_INT() * 261 + 111)
-        if iVehCapturing ~= -1 then
-            -- MC_serverBD_1.iControlVehTimer[iVeh]
-            LOCAL_SET_INT(script, 51882 + 224 + 1 + iVehCapturing, 0)
-        end
-    end
+    HackingFunc.FingerprintClone(script, sFingerprintCloneGameplay)
+    HackingFunc.UnderwaterTunnelWeld(script, erUnderwaterTunnel_WeldStage)
+    HackingFunc.GlassCutting(script, sGlassCuttingData)
+    HackingFunc.SafeCombination(script, eEnterSafeCombinationStage, sEnterSafeCombinationData)
+    HackingFunc.VoltageHack(script, sVoltage)
+    HackingFunc.BeamHack(script, sBeamHackGameplayData)
 end
 
 HACKING_MINIGAME["fm_content_stash_house"] = function(script)
     local sSafeData = {
-        eSafeStage = 119 + 15,
-        iCurrentlySelectedPanel = 119 + 20,
-        sSafePanel = 119 + 22 + 1,
+        eSafeStage = 140 + 15,
+        iCurrentlySelectedPanel = 140 + 20,
+        sSafePanel = 140 + 22 + 1,
     }
 
     if LOCAL_GET_INT(script, sSafeData.eSafeStage) == 3 then -- eSAFE_COMBINATIONSTAGE_RUN
@@ -1066,26 +1076,34 @@ HACKING_MINIGAME["fm_content_stash_house"] = function(script)
     end
 end
 
+HACKING_MINIGAME["fm_content_island_heist"] = function(script)
+    local e_CircuitHackingMinigameState = 10162 + 24
+    local sHackingData = 10162
+
+    local sVoltage = {
+        iTargetValue = 787,
+        iCurrentValue = 788,
+        iLinkCount = 789,
+        eCurrentState = 803,
+    }
+
+    HackingFunc.CircuitHacking(script, e_CircuitHackingMinigameState)
+    HackingFunc.Hacking(script, sHackingData)
+    HackingFunc.VoltageHack(script, sVoltage)
+end
+
 function SKIP_HACKING_MINIGAME()
-    local script = "fm_mission_controller"
-    if IS_SCRIPT_RUNNING(script) then
-        HACKING_MINIGAME.MISSION_CONTROLLER(script)
-        return
-    end
-
-    script = "fm_mission_controller_2020"
-    if IS_SCRIPT_RUNNING(script) then
-        HACKING_MINIGAME.MISSION_CONTROLLER_2020(script)
-        return
-    end
-
-
     local script_list = {
+        "fm_mission_controller",
+        "fm_mission_controller_2020",
         "fm_content_stash_house",
+        "fm_content_island_heist"
     }
     for _, script_name in pairs(script_list) do
-        HACKING_MINIGAME[script_name](script_name)
-        return
+        if IS_SCRIPT_RUNNING(script_name) then
+            HACKING_MINIGAME[script_name](script_name)
+            return
+        end
     end
 
 

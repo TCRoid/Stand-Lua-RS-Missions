@@ -45,6 +45,7 @@ Labels = {
     MasterControlTerminal = get_label_text("ARC_MCT_BLIP"),
     RecordAStudios = get_label_text("CELL_REC_A"),
     BailOffice = get_label_text("CELL_BAIL_OF"),
+    GarmentFactory = get_label_text("CELL_HCK_DEN"),
 
     MotorcycleClub = get_label_text("HP_GANG_MC"),
     BikerClubhouse = get_label_text("BLIP_492"),
@@ -71,6 +72,15 @@ Labels = {
     ACT_1_DATA_BREACHES = get_label_text("CELEB_ACT_1"),
     ACT_2_BOGDAN_PROBLEM = get_label_text("CELEB_ACT_2"),
     ACT_3_DOOMSDAY_SCENARIO = get_label_text("CELEB_ACT_3"),
+
+    TheUnionDepositoryContract = get_label_text("TUNPLAN_ROB0"),
+    TheSuperdollarDeal = get_label_text("TUNPLAN_ROB1"),
+    TheBankContract = get_label_text("TUNPLAN_ROB2"),
+    TheECUJob = get_label_text("TUNPLAN_ROB3"),
+    ThePrisonContract = get_label_text("TUNPLAN_ROB4"),
+    TheAgencyDeal = get_label_text("TUNPLAN_ROB5"),
+    TheLostContract = get_label_text("TUNPLAN_ROB6"),
+    TheDataContract = get_label_text("TUNPLAN_ROB7"),
 }
 
 Labels.SpecialCargoWarehouse = string.format("%s %s", Labels.SpecialCargo, Labels.Warehouse)
@@ -82,8 +92,8 @@ Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission,
 
 
 Lang = {
-    O_W_F_INS_FIN = "仅在直接完成任务生效",
-    E_B_S_M = "确保在任务开启前启用",
+    O_W_F_INS_FIN = "仅在使用直接完成任务功能时生效",
+    E_B_S_M = "确保在开始任务前启用本选项",
 
     SelectMission = "选择任务",
     CashReward = "收入奖励",
@@ -95,9 +105,9 @@ Lang = {
 
 
 Tables = {
-    ------------------------
-    -- Business Mission
-    ------------------------
+    ------------------------------------
+    --    BUSINESS MISSION
+    ------------------------------------
 
     ContrabandBuy = {
         { -1, Labels.RANDOM,              {}, "" },
@@ -497,9 +507,10 @@ Tables = {
         { 4, Labels.CocaineLockup }
     },
 
-    ------------------------
-    -- Business
-    ------------------------
+
+    ------------------------------------
+    --    BUSINESS
+    ------------------------------------
 
     NightclubGoodsName = {
         [0] = get_label_text("CLUB_STOCK0"), -- Cargo and Shipments
@@ -573,9 +584,10 @@ Tables = {
         [16] = 2,
     },
 
-    ------------------------
-    -- Freemode Mission
-    ------------------------
+
+    ------------------------------------
+    --    FREEMODE MISSION
+    ------------------------------------
 
     SecurityContract = {
         { -1, Labels.RANDOM },
@@ -662,30 +674,27 @@ Tables = {
         { 2,  get_label_text("AOT_SMU_MIS_3"), {}, "" },
     },
 
-    ------------------------
-    -- Freemode Preps
-    ------------------------
-
-    TunerRobbery = {
-        { -1, Labels.RANDOM },
-        { 0,  get_label_text("TR_STSTART_STP"), {}, "", get_label_text("TR_STSTART_T2") }, -- TRV_SETUP
-        { 1,  get_label_text("TR_STSTART_EP"),  {}, "", get_label_text("TUNPLAN_ROB0") },  -- TRV_ELEVATOR_PASS
-        { 2,  get_label_text("TR_STSTART_VK"),  {}, "", get_label_text("TUNPLAN_ROB0") },  -- TRV_VAULT_KEY_CODES
-        { 3,  get_label_text("TR_STSTART_ST"),  {}, "", get_label_text("TUNPLAN_ROB1") },  -- TRV_SCOPE_TRANSPORTER
-        { 4,  get_label_text("TR_STSTART_CV"),  {}, "", get_label_text("TUNPLAN_ROB1") },  -- TRV_COMPUTER_VIRUS
-        { 5,  get_label_text("TR_STSTART_TC"),  {}, "", get_label_text("TUNPLAN_ROB2") },  -- TRV_THERMAL_CHARGES
-        { 6,  get_label_text("TR_STSTART_SJ"),  {}, "", get_label_text("TUNPLAN_ROB2") },  -- TRV_SIGNAL_JAMMERS
-        { 7,  get_label_text("TR_STSTART_CM"),  {}, "", get_label_text("TUNPLAN_ROB3") },  -- TRV_CONTAINER_MANIFEST
-        { 8,  get_label_text("TR_STSTART_TS"),  {}, "", get_label_text("TUNPLAN_ROB3") },  -- TRV_TRAIN_SCHEDULE
-        { 9,  get_label_text("TR_STSTART_IM"),  {}, "", get_label_text("TUNPLAN_ROB4") },  -- TRV_INSIDE_MAN
-        { 10, get_label_text("TR_STSTART_SR"),  {}, "", get_label_text("TUNPLAN_ROB4") },  -- TRV_STUNT_RAMP
-        { 11, get_label_text("TR_STSTART_IA"),  {}, "", get_label_text("TUNPLAN_ROB5") },  -- TRV_IAA_PASS
-        { 12, get_label_text("TR_STSTART_SS"),  {}, "", get_label_text("TUNPLAN_ROB5") },  -- TRV_SEWER_SCHEMATICS
-        { 13, get_label_text("TR_STSTART_ML"),  {}, "", get_label_text("TUNPLAN_ROB6") },  -- TRV_METH_LAB_LOCATIONS
-        { 14, get_label_text("TR_STSTART_MT"),  {}, "", get_label_text("TUNPLAN_ROB6") },  -- TRV_METH_TANKER
-        { 15, get_label_text("TR_STSTART_LB"),  {}, "", get_label_text("TUNPLAN_ROB7") },  -- TRV_LOCATE_BUNKER
-        { 16, get_label_text("TR_STSTART_WD"),  {}, "", get_label_text("TUNPLAN_ROB7") },  -- TRV_WAREHOUSE_DEFENCES
+    SalvageYardRobbery = {
+        { 0, get_label_text("SAL23_ENDS_R0"), {}, "" },
+        { 1, get_label_text("SAL23_ENDS_R1"), {}, "" },
+        { 2, get_label_text("SAL23_ENDS_R2"), {}, "" },
+        { 3, get_label_text("SAL23_ENDS_R3"), {}, "" },
+        { 4, get_label_text("SAL23_ENDS_R4"), {}, "" },
     },
+
+    FIBFiles = {
+        { -1, Labels.None },
+        { 0,  get_label_text("HF_BMPS_4") }, -- The Black Box File
+        { 1,  get_label_text("HF_BMPS_2") }, -- The Brute Force File
+        { 2,  get_label_text("HF_BMPS_1") }, -- The Fine Art File
+        { 3,  get_label_text("HF_BMPS_3") }, -- The Project Breakaway File
+    },
+
+
+    ------------------------------------
+    --    FREEMODE PREP
+    ------------------------------------
+
     FixerVIP = {
         { -1, Labels.RANDOM },
         { 0,  get_label_text("FXR_BM_VC_T_S") },                                           -- FVV_SETUP
@@ -697,23 +706,61 @@ Tables = {
         { 6,  get_label_text("FIX_APP_DATA_L3_T2"), {}, get_label_text("FIX_APP_DL3_T") }, -- FVV_BALLAS
     },
 
+
+    ------------------------------------
+    --    HEIST
+    ------------------------------------
+
     ------------------------
-    -- Heists
+    -- Auto Shop Robbery
     ------------------------
 
-    ---- Auto Shop Robbery
+    TunerRobberyPreps = {
+        { -1, Labels.RANDOM },
+        { 0,  get_label_text("TR_STSTART_STP"), {}, "", get_label_text("TR_STSTART_T2") },   -- TRV_SETUP
+        { 1,  get_label_text("TR_STSTART_EP"),  {}, "", Labels.TheUnionDepositoryContract }, -- TRV_ELEVATOR_PASS
+        { 2,  get_label_text("TR_STSTART_VK"),  {}, "", Labels.TheUnionDepositoryContract }, -- TRV_VAULT_KEY_CODES
+        { 3,  get_label_text("TR_STSTART_ST"),  {}, "", Labels.TheSuperdollarDeal },         -- TRV_SCOPE_TRANSPORTER
+        { 4,  get_label_text("TR_STSTART_CV"),  {}, "", Labels.TheSuperdollarDeal },         -- TRV_COMPUTER_VIRUS
+        { 5,  get_label_text("TR_STSTART_TC"),  {}, "", Labels.TheBankContract },            -- TRV_THERMAL_CHARGES
+        { 6,  get_label_text("TR_STSTART_SJ"),  {}, "", Labels.TheBankContract },            -- TRV_SIGNAL_JAMMERS
+        { 7,  get_label_text("TR_STSTART_CM"),  {}, "", Labels.TheECUJob },                  -- TRV_CONTAINER_MANIFEST
+        { 8,  get_label_text("TR_STSTART_TS"),  {}, "", Labels.TheECUJob },                  -- TRV_TRAIN_SCHEDULE
+        { 9,  get_label_text("TR_STSTART_IM"),  {}, "", Labels.ThePrisonContract },          -- TRV_INSIDE_MAN
+        { 10, get_label_text("TR_STSTART_SR"),  {}, "", Labels.ThePrisonContract },          -- TRV_STUNT_RAMP
+        { 11, get_label_text("TR_STSTART_IA"),  {}, "", Labels.TheAgencyDeal },              -- TRV_IAA_PASS
+        { 12, get_label_text("TR_STSTART_SS"),  {}, "", Labels.TheAgencyDeal },              -- TRV_SEWER_SCHEMATICS
+        { 13, get_label_text("TR_STSTART_ML"),  {}, "", Labels.TheLostContract },            -- TRV_METH_LAB_LOCATIONS
+        { 14, get_label_text("TR_STSTART_MT"),  {}, "", Labels.TheLostContract },            -- TRV_METH_TANKER
+        { 15, get_label_text("TR_STSTART_LB"),  {}, "", Labels.TheDataContract },            -- TRV_LOCATE_BUNKER
+        { 16, get_label_text("TR_STSTART_WD"),  {}, "", Labels.TheDataContract },            -- TRV_WAREHOUSE_DEFENCES
+    },
+    TunerRobberyFinal = {
+        { -1, Labels.None },
+        { 0,  Labels.TheUnionDepositoryContract },
+        { 1,  Labels.TheSuperdollarDeal },
+        { 2,  Labels.TheBankContract },
+        { 3,  Labels.TheECUJob },
+        { 4,  Labels.ThePrisonContract },
+        { 5,  Labels.TheAgencyDeal },
+        { 6,  Labels.TheLostContract },
+        { 7,  Labels.TheDataContract }
+    },
     TunerRobberyFinalRootContent = {
-        { 2064133602,  get_label_text("TUNPLAN_ROB0") }, -- TR_UNION_DEPOSITORY
-        { 1364299584,  get_label_text("TUNPLAN_ROB1") }, -- TR_MILITARY_CONVOY
-        { 14434931,    get_label_text("TUNPLAN_ROB2") }, -- TR_FLEECA_BANK
-        { 808119513,   get_label_text("TUNPLAN_ROB3") }, -- TR_FREIGHT_TRAIN
-        { -554734818,  get_label_text("TUNPLAN_ROB4") }, -- TR_BOLINGBROKE
-        { -1750247281, get_label_text("TUNPLAN_ROB5") }, -- TR_IAA_RAID
-        { 1767266297,  get_label_text("TUNPLAN_ROB6") }, -- TR_METH_JOB
-        { -1931849607, get_label_text("TUNPLAN_ROB7") }  -- TR_BUNKER
+        { 2064133602,  Labels.TheUnionDepositoryContract }, -- TR_UNION_DEPOSITORY
+        { 1364299584,  Labels.TheSuperdollarDeal },         -- TR_MILITARY_CONVOY
+        { 14434931,    Labels.TheBankContract },            -- TR_FLEECA_BANK
+        { 808119513,   Labels.TheECUJob },                  -- TR_FREIGHT_TRAIN
+        { -554734818,  Labels.ThePrisonContract },          -- TR_BOLINGBROKE
+        { -1750247281, Labels.TheAgencyDeal },              -- TR_IAA_RAID
+        { 1767266297,  Labels.TheLostContract },            -- TR_METH_JOB
+        { -1931849607, Labels.TheDataContract }             -- TR_BUNKER
     },
 
-    ---- Apartment Heist
+    ------------------------
+    -- Apartment Heist
+    ------------------------
+
     HeistAwards = {
         { 1, get_label_text("AWT_777") }, -- All In Order
         { 2, get_label_text("AWT_778") }, -- Loyalty
@@ -803,7 +850,10 @@ Tables = {
         [5] = "tYc3SkqXTk6ia7j0lezrbQ"
     },
 
-    ---- Doomsday Heist
+    ------------------------
+    -- Doomsday Heist
+    ------------------------
+
     GangopsAwards = {
         { 1, get_label_text("AWD_GANGOPA") },  -- All In Order II
         { 2, get_label_text("AWD_GANGOPL2") }, -- Loyalty II
@@ -824,6 +874,13 @@ Tables = {
         [6] = { "MPPLY_GANGOPS_CRIMMASMD3", "MPPLY_AWD_GANGOPS_CRIMMASMD3" },
         [7] = { "MPPLY_GANGOPS_CRIMMASMD", "MPPLY_AWD_GANGOPS_CRIMMASMD" },
         [8] = { "MPPLY_GANGOPS_SUPPORT", "MPPLY_AWD_GANGOPS_SUPPORT" }
+    },
+
+    DoomsdayHeistFinal = {
+        { -1, Labels.None },
+        { 0,  Labels.TheDataBreaches },
+        { 1,  Labels.TheBogdanProblem },
+        { 2,  Labels.TheDoomsdayScenario }
     },
 
     DoomsdayHeistPrepListData = {
@@ -889,7 +946,10 @@ Tables = {
         { -1176220645, Labels.TheDoomsdayScenario } -- The Doomsday Scenario
     },
 
-    ---- Casino Heist
+    ------------------------
+    -- Casino Heist
+    ------------------------
+
     CasinoHeistApproach = {
         { 1, get_label_text("CHB_APPROACH_1") }, -- Silent & Sneaky
         { 2, get_label_text("CHB_APPROACH_2") }, -- The Big Con
@@ -996,7 +1056,10 @@ Tables = {
         { menu = "toggle",  name = get_label_text("CH_TODO_PREP_6b") .. " (?)", bit = 21, help_text = "" }
     },
 
-    ---- Island Heist
+    ------------------------
+    -- Island Heist
+    ------------------------
+
     IslandHeistMainTarget = {
         { 0, get_label_text("H4_LOOT_TEQ") },   -- SINSIMITO TEQUILA
         { 1, get_label_text("H4_LOOT_NKLC") },  -- RUBY NECKLACE
@@ -1014,10 +1077,22 @@ Tables = {
         -- { 5, get_label_text("H4P_INT2_PAIN_T") }, -- PAINTINGS
     },
 
+    ------------------------
+    -- Farm Raid
+    ------------------------
 
-    ------------------------
-    -- Misc
-    ------------------------
+    FarmRaidPrepListData = {
+        { bit = 0, name = get_label_text("SALV23_CFR_1"), help_text = "" }, -- Slush Fund
+        { bit = 1, name = get_label_text("SALV23_CFR_2"), help_text = "" }, -- Setup: Breaking and Entering
+        { bit = 2, name = get_label_text("SALV23_CFR_3"), help_text = "" }, -- Setup: Concealed Weapons
+        { bit = 3, name = get_label_text("SALV23_CFR_4"), help_text = "" }, -- Setup: Hit and Run
+        { bit = 4, name = get_label_text("SALV23_CFR_5"), help_text = "" }, -- Setup: Disorganized Crime
+    },
+
+
+    ------------------------------------
+    --    MISC
+    ------------------------------------
 
     EliteChallenge = {
         { 0, Labels.Default },

@@ -17,7 +17,7 @@ GlobalplayerBD_FM.eCoronaStatus = function()
     return Globals.GlobalplayerBD_FM() + 193
 end
 
-g_HeistPlanningClient.bLaunchTimerExpired = 1930926 + 2812
+g_HeistPlanningClient.bLaunchTimerExpired = 1931285 + 2812
 
 
 --------------------
@@ -26,9 +26,9 @@ g_HeistPlanningClient.bLaunchTimerExpired = 1930926 + 2812
 
 -- `fmmc_launcher`
 -- CORONA_MENU_DATA
-local _coronaMenuData = 17445
+local _coronaMenuData = 17602
 local coronaMenuData = {
-    iCurrentSelection = _coronaMenuData + 911
+    iCurrentSelection = _coronaMenuData + 920
 }
 
 
@@ -114,11 +114,11 @@ function AutoIslandHeist.setStatus(eStatus)
 end
 
 function AutoIslandHeist.getSpawnLocation()
-    return STAT_GET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"))
+    return STAT_GET_INT(MPX("SPAWN_LOCATION_SETTING"))
 end
 
 function AutoIslandHeist.setSpawnLocation(iLocation)
-    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), iLocation)
+    STAT_SET_INT(MPX("SPAWN_LOCATION_SETTING"), iLocation)
 end
 
 function AutoIslandHeist.toggleActionName(toggle)
@@ -273,7 +273,7 @@ AutoIslandHeist.menuAction = menu.action(Auto_Island_Heist, "开启 全自动佩
                         }
                         GLOBAL_SET_INT(sConfig + 35, Data.eWeaponLoadout)
                         GLOBAL_SET_BOOL(sConfig + 38, Data.bHardModeEnabled)
-                        GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_NORMAL)
+                        GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_NORMAL)
 
                         GLOBAL_SET_INT(sConfig + 39, Data.eApproachVehicle)
                         GLOBAL_SET_INT(sConfig + 40, Data.eInfiltrationPoint)
@@ -425,9 +425,9 @@ function AutoApartmentHeist.processHeistAward()
     local script = "fm_mission_controller"
 
     -- Ultimate Challenge
-    GLOBAL_SET_INT(FMMC_STRUCT.iDifficulity, DIFF_HARD)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
     -- First Person
-    GLOBAL_SET_INT(FMMC_STRUCT.iFixedCamera, 1)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iFixedCamera, 1)
     -- Member
     GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
     LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST

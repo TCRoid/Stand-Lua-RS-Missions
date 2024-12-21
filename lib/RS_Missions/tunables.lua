@@ -1,5 +1,5 @@
 -- Game Variables
--- 1.69-3274
+-- 1.70-3411
 
 --------------------------------
 --  Tunables
@@ -11,6 +11,7 @@ local TunablesI = {
     ["ACID_LAB_RESUPPLY_CRATE_VALUE"] = 32025,
     ["BIKER_RESUPPLY_PACKAGE_VALUE"] = 18227,
     ["BIKER_RESUPPLY_VEHICLE_VALUE"] = 18228,
+    ["SR_JUGGERNAUT_RESEARCH_REWARD"] = 31905,
 
     -- Freemode Mission Cash Reward
     ["TunerClientVehicleDeliveryPayment"] = {
@@ -50,6 +51,15 @@ local TunablesI = {
     ["XM22_DRUG_LAB_WORK_CASH_REWARD"] = 33154,
     ["VC_WORK_CASH_REWARD"] = 26641,
     ["VC_WORK_CHIP_REWARD"] = 26647,
+    ["SmugglerOperationCashReward"] = {
+        33003 + 1 + 0, -- SMUGGLER_OPERATION_MIN_REWARD_0
+        33003 + 1 + 1, -- SMUGGLER_OPERATION_MIN_REWARD_1
+        33006 + 1 + 0, -- SMUGGLER_OPERATION_MAX_REWARD_0
+        33006 + 1 + 1, -- SMUGGLER_OPERATION_MAX_REWARD_1
+        33009,         -- -464886572
+        33010,         -- 1818346009
+    },
+    ["SMUGGLER_OPERATION_BONUS_OBJECTIVE_REWARD"] = 33011,
 
     -- Heist Mission Cash Reward
     ["HeistFinalCashReward"] = {
@@ -214,6 +224,36 @@ local TunablesI = {
         19170, -- IMPEXP_SELL_BUYER1_OFFER_HARD
     },
 
+    -- Salvage Yard Robbery
+    ["SalvageYardRobberyID"] = {
+        33023 + 1 + 0, -- SALV23_VEHICLE_ROBBERY_0
+        33023 + 1 + 1, -- SALV23_VEHICLE_ROBBERY_1
+        33023 + 1 + 2, -- SALV23_VEHICLE_ROBBERY_2
+    },
+    ["SalvageYardRobberyCanKeep"] = {
+        33027 + 1 + 0, -- SALV23_VEHICLE_ROBBERY_CAN_KEEP_0
+        33027 + 1 + 1, -- SALV23_VEHICLE_ROBBERY_CAN_KEEP_1
+        33027 + 1 + 2, -- SALV23_VEHICLE_ROBBERY_CAN_KEEP_2
+    },
+    ["SalvageYardRobberyVehicleID"] = {
+        33031 + 1 + 0, -- SALV23_VEHICLE_ROBBERY_ID_0
+        33031 + 1 + 1, -- SALV23_VEHICLE_ROBBERY_ID_1
+        33031 + 1 + 2, -- SALV23_VEHICLE_ROBBERY_ID_2
+    },
+    ["SalvageYardRobberyValue"] = {
+        33035 + 1 + 0, -- SALV23_VEHICLE_ROBBERY_VALUE_0
+        33035 + 1 + 1, -- SALV23_VEHICLE_ROBBERY_VALUE_1
+        33035 + 1 + 2, -- SALV23_VEHICLE_ROBBERY_VALUE_2
+    },
+
+    -- Freemode Mission
+    ["BountyTargetsProcessCooldown"] = {
+        35537, -- 681684666
+        35538, -- 314999556
+        35539, -- -107622345
+    },
+
+    -- Business
     ["DisableBusinessRaid"] = {
         15620, -- EXEC_DISABLE_DEFEND_MISSIONS
         15621, -- EXEC_DISABLE_DEFEND_FLEEING
@@ -249,7 +289,6 @@ local TunablesI = {
         28353, -- HEIST3_HACKERS_PAIGE_CUT
     },
 
-
     ["MissionCooldowns"] = {
         15499, -- EXEC_BUY_COOLDOWN
         15500, -- EXEC_SELL_COOLDOWN
@@ -276,6 +315,7 @@ local TunablesI = {
         32183, -- BUNKER_SOURCE_RESEARCH_CD_TIME
         32184, -- NIGHTCLUB_SOURCE_GOODS_CD_TIME
         33141, -- JUGALLO_BOSS_WORK_COOLDOWN_TIME
+        34219, -- SMUGGLER_OPERATION_COOLDOWN
 
         24026, -- BB_CLUB_MANAGEMENT_CLUB_MANAGEMENT_MISSION_COOLDOWN
         24067, -- BB_SELL_MISSIONS_MISSION_COOLDOWN
@@ -483,26 +523,26 @@ function Tunables.RestoreFloatDefaults(tunable_list_name)
 end
 
 --- @param list table
-function Tunables.SaveIntDefaults_T(list)
+function Tunables.__SaveIntDefaults_T(list)
     for _, item in pairs(list) do
         if type(item) == "number" then
             TunableDefaults[item] = GLOBAL_GET_INT(g_sMPTunables + item)
         elseif type(item) == "table" then
-            Tunables.SaveIntDefaults_T(item)
+            Tunables.__SaveIntDefaults_T(item)
         end
     end
 end
 
 --- @param list table
-function Tunables.SaveFloatDefaults_T(list)
+function Tunables.__SaveFloatDefaults_T(list)
     for _, item in pairs(list) do
         if type(item) == "number" then
             TunableDefaults[item] = GLOBAL_GET_FLOAT(g_sMPTunables + item)
         elseif type(item) == "table" then
-            Tunables.SaveFloatDefaults_T(item)
+            Tunables.__SaveFloatDefaults_T(item)
         end
     end
 end
 
-Tunables.SaveIntDefaults_T(TunablesI)
-Tunables.SaveFloatDefaults_T(TunablesF)
+Tunables.__SaveIntDefaults_T(TunablesI)
+Tunables.__SaveFloatDefaults_T(TunablesF)

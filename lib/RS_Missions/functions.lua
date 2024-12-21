@@ -39,6 +39,16 @@ function get_label_text(label_name)
     return text
 end
 
+--- @param text string
+function draw_text(text)
+    directx.draw_text(0.5, 0.0, text, ALIGN_TOP_LEFT, 0.6, { r = 1, g = 0, b = 1, a = 1 })
+end
+
+--- @param text string
+function toast(text)
+    util.toast(text, TOAST_ALL)
+end
+
 --------------------------------
 -- Local Player Functions
 --------------------------------
@@ -96,6 +106,22 @@ function TP_INTO_VEHICLE(vehicle, isDriverSeat)
     end
 
     PED.SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, seat)
+end
+
+--- @param pickup Pickup
+--- @param attachToSelf boolean?
+function TP_PICKUP_TO_ME(pickup, attachToSelf)
+    if ENTITY.IS_ENTITY_ATTACHED(pickup) then
+        ENTITY.DETACH_ENTITY(pickup, true, true)
+        ENTITY.SET_ENTITY_VISIBLE(pickup, true, false)
+    end
+    OBJECT.SET_PICKUP_OBJECT_COLLECTABLE_IN_VEHICLE(pickup)
+
+    if attachToSelf then
+        OBJECT.ATTACH_PORTABLE_PICKUP_TO_PED(pickup, players.user_ped())
+    else
+        TP_ENTITY_TO_ME(pickup)
+    end
 end
 
 --- @param missionScript string
@@ -169,6 +195,19 @@ function UNLOCK_VEHICLE(vehicle)
     VEHICLE.SET_HELI_BLADES_FULL_SPEED(vehicle)
 end
 
+--- @param model string|integer
+--- @return string
+function GET_VEHICLE_DISPLAY_NAME_FROM_MODEL(model)
+    if not tonumber(model) then
+        model = util.joaat(model)
+    end
+    if not STREAMING.IS_MODEL_VALID(model) then
+        return "NULL"
+    end
+
+    return util.get_label_text(VEHICLE.GET_DISPLAY_NAME_FROM_VEHICLE_MODEL(model))
+end
+
 --------------------------------
 -- Business Functions
 --------------------------------
@@ -187,90 +226,90 @@ end
 --- @param iSaveSlot integer
 --- @return integer
 function GET_WAREHOUSE_PROPERTY_ID(iSaveSlot)
-    return STAT_GET_INT(ADD_MP_INDEX("PROP_WHOUSE_SLOT" .. iSaveSlot))
+    return STAT_GET_INT(MPX("PROP_WHOUSE_SLOT" .. iSaveSlot))
 end
 
 --- @param eFactoryID integer
 --- @return integer
 function GET_FACTORY_PROPERTY_ID(eFactoryID)
-    return STAT_GET_INT(ADD_MP_INDEX("FACTORYSLOT" .. eFactoryID))
+    return STAT_GET_INT(MPX("FACTORYSLOT" .. eFactoryID))
 end
 
 --- @param eFactoryID integer
 --- @return integer
 function GET_FACTORY_SUPPLIES(eFactoryID)
-    return STAT_GET_INT(ADD_MP_INDEX("MATTOTALFORFACTORY" .. eFactoryID))
+    return STAT_GET_INT(MPX("MATTOTALFORFACTORY" .. eFactoryID))
 end
 
 --- @param eFactoryID integer
 --- @return integer
 function GET_FACTORY_PRODUCT(eFactoryID)
-    return STAT_GET_INT(ADD_MP_INDEX("PRODTOTALFORFACTORY" .. eFactoryID))
+    return STAT_GET_INT(MPX("PRODTOTALFORFACTORY" .. eFactoryID))
 end
 
 --- @return integer
 function GET_OFFICE_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("PROP_OFFICE"))
+    return STAT_GET_INT(MPX("PROP_OFFICE"))
 end
 
 --- @return integer
 function GET_IMPORT_EXPORT_GARAGE_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("OWNED_IE_WAREHOUSE"))
+    return STAT_GET_INT(MPX("OWNED_IE_WAREHOUSE"))
 end
 
 --- @return integer
 function GET_HANGAR_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("HANGAR_OWNED"))
+    return STAT_GET_INT(MPX("HANGAR_OWNED"))
 end
 
 --- @return integer
 function GET_BUNKER_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("FACTORYSLOT5"))
+    return STAT_GET_INT(MPX("FACTORYSLOT5"))
 end
 
 --- @return integer
 function GET_NIGHTCLUB_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("NIGHTCLUB_OWNED"))
+    return STAT_GET_INT(MPX("NIGHTCLUB_OWNED"))
 end
 
 --- @return integer
 function GET_ARCADE_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("ARCADE_OWNED"))
+    return STAT_GET_INT(MPX("ARCADE_OWNED"))
 end
 
 --- @return integer
 function GET_AUTO_SHOP_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("AUTO_SHOP_OWNED"))
+    return STAT_GET_INT(MPX("AUTO_SHOP_OWNED"))
 end
 
 --- @return integer
 function GET_AGENCY_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("FIXER_HQ_OWNED"))
+    return STAT_GET_INT(MPX("FIXER_HQ_OWNED"))
 end
 
 --- @return integer
 function GET_SALVAGE_YARD_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("SALVAGE_YARD_OWNED"))
+    return STAT_GET_INT(MPX("SALVAGE_YARD_OWNED"))
 end
 
 --- @return integer
 function GET_FACILITY_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("DBASE_OWNED"))
+    return STAT_GET_INT(MPX("DBASE_OWNED"))
 end
 
 --- @return integer
 function GET_BIKER_CLUBHOUSE_PROPERTY_ID()
-    return STAT_GET_INT(ADD_MP_INDEX("PROP_CLUBHOUSE"))
+    return STAT_GET_INT(MPX("PROP_CLUBHOUSE"))
 end
 
 --- @return boolean
 function DOES_PLAYER_OWN_ACID_LAB()
-    return STAT_GET_INT(ADD_MP_INDEX("XM22_LAB_OWNED")) == util.joaat("brickade2") -- -1576586413
+    return STAT_GET_INT(MPX("XM22_LAB_OWNED")) == util.joaat("brickade2") -- -1576586413
 end
 
 --- @return boolean
 function DOES_PLAYER_OWN_KOSATKA()
-    return STAT_GET_INT(ADD_MP_INDEX("IH_SUB_OWNED")) == util.joaat("kosatka") -- 1336872304
+    return STAT_GET_INT(MPX("IH_SUB_OWNED")) == util.joaat("kosatka") -- 1336872304
 end
 
 --------------------------------
@@ -279,34 +318,28 @@ end
 
 --- @return boolean
 function IS_PLAYER_GANG_OPS_HEIST_ACTIVE()
-    local iStatInt = STAT_GET_INT(ADD_MP_INDEX("GANGOPS_HEIST_STATUS"))
+    local iStatInt = STAT_GET_INT(MPX("GANGOPS_HEIST_STATUS"))
+    return IS_ANY_BIT_SET(iStatInt, 0, 1, 2)
+
     -- GANG_OPS_BD_HEIST_STATUS_BITSET_IAA_STRAND_ACTIVE            0
     -- GANG_OPS_BD_HEIST_STATUS_BITSET_SUBMARINE_STRAND_ACTIVE      1
     -- GANG_OPS_BD_HEIST_STATUS_BITSET_MISSILE_SILO_STRAND_ACTIVE   2
-    if BIT_TEST(iStatInt, 0) or BIT_TEST(iStatInt, 1) or BIT_TEST(iStatInt, 2) then
-        return true
-    end
-    return false
 end
 
 --- @return boolean
 function IS_PLAYER_CASINO_HEIST_ACTIVE()
-    local iStatInt = STAT_GET_INT(ADD_MP_INDEX("CAS_HEIST_FLOW"))
+    local iStatInt = STAT_GET_INT(MPX("CAS_HEIST_FLOW"))
+    return BIT_TEST(iStatInt, 0)
+
     -- ciCASINO_HEIST_FLOW_STAT_BITSET__HEIST_ACTIVE    0
-    if BIT_TEST(iStatInt, 0) then
-        return true
-    end
-    return false
 end
 
 --- @return boolean
 function IS_PLAYER_ISLAND_HEIST_ACTIVE()
-    local iStatInt = STAT_GET_INT(ADD_MP_INDEX("H4_PROGRESS"))
+    local iStatInt = STAT_GET_INT(MPX("H4_PROGRESS"))
+    return BIT_TEST(iStatInt, 0)
+
     -- ciHEIST_ISLAND_PROGRESS_BITSET__ACTIVE   0
-    if BIT_TEST(iStatInt, 0) then
-        return true
-    end
-    return false
 end
 
 --------------------------------
@@ -356,6 +389,27 @@ function GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     end
 
     return nil
+end
+
+--- @param script string
+--- @param func function
+function SPOOF_SCRIPT(script, func)
+    if not IS_SCRIPT_RUNNING(script) then
+        return
+    end
+    if not util.request_script_host(script) then
+        return
+    end
+
+    util.yield()
+
+    util.spoof_script(script, function()
+        if not NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT() then
+            return
+        end
+
+        func(script)
+    end)
 end
 
 --------------------------------
@@ -576,9 +630,20 @@ end
 
 --- @param value integer
 --- @param position integer
---- @return integer
+--- @return boolean
 function BIT_TEST(value, position)
     return (value & (1 << position)) ~= 0
+end
+
+--- @param value integer
+--- @param toggle boolean
+--- @param position integer
+--- @return integer
+function TOGGLE_BIT(value, toggle, position)
+    if toggle then
+        return (value | (1 << position))
+    end
+    return (value & ~(1 << position))
 end
 
 --- @param value integer
@@ -603,6 +668,7 @@ function CLEAR_BITS(value, ...)
     return value
 end
 
+--- Checks if **all** specified bit positions are set to 1 in the given value.
 --- @param value integer
 --- @param ... positions
 --- @return boolean
@@ -616,13 +682,43 @@ function BITS_TEST(value, ...)
     return true
 end
 
+--- Checks if **any** of the specified bit positions are set to 1 in the given value.
+--- @param value integer
+--- @param ... positions
+--- @return boolean
+function IS_ANY_BIT_SET(value, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        if (value & (1 << position)) ~= 0 then
+            return true
+        end
+    end
+    return false
+end
+
+--- @param value integer
+--- @param toggle boolean
+--- @param ... positions
+--- @return integer
+function TOGGLE_BITS(value, toggle, ...)
+    local positions = { ... }
+    for _, position in ipairs(positions) do
+        if toggle then
+            value = value | (1 << position)
+        else
+            value = value & ~(1 << position)
+        end
+    end
+    return value
+end
+
 --------------------------------
 -- Stat Functions
 --------------------------------
 
 --- @param stat string
 ---@return string
-function ADD_MP_INDEX(stat)
+function MPX(stat)
     return "MP" .. util.get_char_slot() .. "_" .. stat
 end
 
@@ -644,12 +740,20 @@ function STAT_SET_STRING(stat, value)
     STATS.STAT_SET_STRING(util.joaat(stat), value, true)
 end
 
+local stat_value_ptr = memory.alloc_int()
+
 --- @param stat string
 ---@return integer
 function STAT_GET_INT(stat)
-    local ptr = memory.alloc_int()
-    STATS.STAT_GET_INT(util.joaat(stat), ptr, -1)
-    return memory.read_int(ptr)
+    STATS.STAT_GET_INT(util.joaat(stat), stat_value_ptr, -1)
+    return memory.read_int(stat_value_ptr)
+end
+
+--- @param stat string
+--- @param boolean
+function STAT_GET_BOOL(stat, value)
+    STATS.STAT_GET_BOOL(util.joaat(stat), stat_value_ptr, -1)
+    return memory.read_int(stat_value_ptr) ~= 0
 end
 
 --- @param stat string
@@ -718,4 +822,147 @@ function rs.delete_menu_list(menu_list)
     for _, command in pairs(menu_list) do
         menu.delete(command)
     end
+    menu.collect_garbage()
+end
+
+--- @param list CommandRef
+function rs.delete_menu_children(list)
+    local children = menu.get_children(list)
+    if #children == 0 then return end
+
+    for _, command in pairs(children) do
+        menu.delete(command)
+    end
+    menu.collect_garbage()
+end
+
+--------------------------------
+-- Script Patch Functions
+--------------------------------
+
+ScriptPatch = {
+    initialized = false,
+    patched = false,
+    scan_failed = false,
+
+    script = "",
+    pattern = "",
+    script_address = 0,
+
+    address = 0,
+    patch_data = {},
+    original_data = {}
+}
+ScriptPatch.__index = ScriptPatch
+
+function ScriptPatch:Enable()
+    if self.scan_failed then
+        return false
+    end
+
+    if self:_isNeedUpdate() then
+        if not self:_Update() then
+            return false
+        end
+    end
+
+    for _, item in pairs(self.patch_data) do
+        local _offset = item[1]
+        local _byte = item[2]
+
+        local _addr = self.address + _offset
+        memory.write_ubyte(_addr, _byte)
+    end
+
+    self.patched = true
+end
+
+function ScriptPatch:Disable()
+    if not self.patched then
+        return false
+    end
+
+    for _, item in pairs(self.original_data) do
+        local _offset = item[1]
+        local _byte = item[2]
+
+        local _addr = self.address + _offset
+        memory.write_ubyte(_addr, _byte)
+    end
+
+    self.patched = false
+end
+
+function ScriptPatch:_isNeedUpdate()
+    local script_address = memory.scan_script(self.script, "")
+    if self.script_address == script_address then
+        return false
+    end
+
+    self.script_address = script_address
+    return true
+end
+
+function ScriptPatch:_Update()
+    local addr = memory.scan_script(self.script, self.pattern)
+    if not addr or addr == 0 then
+        toast("Scan pattern failed!\n" .. self.script .. ": " .. self.pattern)
+        self.scan_failed = true
+        return false
+    end
+
+    self.address = addr
+    return true
+end
+
+--- @param script string|integer
+--- @param pattern string
+--- @param patch_data table<int, table>
+function ScriptPatch.New(script, pattern, patch_data)
+    local addr = memory.scan_script(script, pattern)
+    if not addr or addr == 0 then
+        toast("Scan pattern failed!\n" .. script .. ": " .. pattern)
+        return false
+    end
+
+    -- if offset then
+    --     if type(offset) == "number" then
+    --         addr = addr + offset
+    --     elseif type(offset) == "function" then
+    --         addr = offset(addr)
+    --     end
+    -- end
+
+    local original_data = {}
+
+    for _, item in pairs(patch_data) do
+        local _offset = item[1]
+        local _byte = item[2]
+
+        local _addr = addr + _offset
+        local ori_byte = memory.read_ubyte(_addr)
+        table.insert(original_data, { _offset, ori_byte })
+    end
+
+
+    local self = setmetatable({}, ScriptPatch)
+
+    self.script = script
+    self.pattern = pattern
+    self.script_address = memory.scan_script(script, "")
+
+    self.address = addr
+    self.patch_data = patch_data
+    self.original_data = original_data
+
+
+    -- local text = string.format("\nAddress: %x\nOriginal Bytes:\n", addr):upper()
+    -- for _, data in pairs(original_data) do
+    --     text = text .. string.format("%x: %x", data[1], data[2]):upper() .. "\n"
+    -- end
+    -- toast(text)
+
+
+    self.initialized = true
+    return self
 end

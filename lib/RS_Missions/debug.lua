@@ -8,48 +8,20 @@ local Heist_Mission = Menu_Root
 
 
 
-----------------------------------------
---    Bail Office
-----------------------------------------
-
-local Bail_Office <const> = menu.list(Heist_Mission, get_label_text("CELL_BAIL_OF"), {}, "")
-
-menu.list_action(Bail_Office, "启动差事: 头号通缉犯", {}, "", {
-    { -1814367299, "头号通缉犯：惠特尼" },
-    { -1443228923, "头号通缉犯：里伯曼" },
-    { -625494467, "头号通缉犯：奥尼尔" },
-    { -1381858108, "头号通缉犯：汤普森" },
-    { 1585225527, "头号通缉犯：宋" },
-    { -62594295, "头号通缉犯：加西亚" },
-}, function(value)
-    if IS_MISSION_CONTROLLER_SCRIPT_RUNNING() then
-        return
-    end
-
-    local Data = {
-        iRootContentID = value,
-        iMissionType = 0,        -- FMMC_TYPE_MISSION
-        iMissionEnteryType = 32, -- ciMISSION_ENTERY_TYPE_V2_CORONA
-    }
-
-    LAUNCH_MISSION(Data)
-    util.toast("请稍等...")
-end)
-
-
-
 
 ----------------------------------------
 --    Start Freemode Mission
 ----------------------------------------
 
-local Start_Freemode_Mission <const> = menu.list(Heist_Mission, "开始自由模式任务", {}, "")
+local Start_Freemode_Mission <const> = menu.list(Menu_Root, "开始自由模式任务", {}, "")
 
 local StartFreemodeMission = {
     iMission = 0,
     iVariation = -1,
 
     sendPlayer = 0,
+    playerBit = 0,
+    playerToggles = {}
 }
 
 
@@ -177,11 +149,15 @@ local FreemodeMissions = {
 menu.list_select(Start_Freemode_Mission, "选择任务", {}, "", FreemodeMissions, 0, function(value)
     StartFreemodeMission.iMission = value
 end)
+menu.slider(Start_Freemode_Mission, "设置任务", { "SFM_Mission" }, "", 0, 999, 0, 1, function(value)
+    StartFreemodeMission.iMission = value
+end)
 
 menu.slider(Start_Freemode_Mission, "Variation", {}, "",
     -1, 999, -1, 1, function(value)
         StartFreemodeMission.iVariation = value
     end)
+
 
 menu.list_select(Start_Freemode_Mission, "发送到玩家", {}, "", {
     { 0, "仅自己" },
@@ -189,6 +165,26 @@ menu.list_select(Start_Freemode_Mission, "发送到玩家", {}, "", {
     { 2, "全部玩家" }
 }, 0, function(value)
     StartFreemodeMission.sendPlayer = value
+end)
+
+local Start_Freemode_Mission_Player
+Start_Freemode_Mission_Player = menu.list(Start_Freemode_Mission, "选择玩家", {}, "", function()
+    rs.delete_menu_list(StartFreemodeMission.playerToggles)
+    StartFreemodeMission.playerToggles = {}
+    StartFreemodeMission.playerBit = 0
+
+    for _, pid in pairs(players.list(true, true, true)) do
+        local name = players.get_name(pid)
+        local menu_toggle = menu.toggle(Start_Freemode_Mission_Player, name, {}, "", function(toggle)
+            if toggle then
+                StartFreemodeMission.playerBit = SET_BIT(StartFreemodeMission.playerBit, pid)
+            else
+                StartFreemodeMission.playerBit = CLEAR_BIT(StartFreemodeMission.playerBit, pid)
+            end
+        end)
+
+        StartFreemodeMission.playerToggles[pid] = menu_toggle
+    end
 end)
 
 menu.action(Start_Freemode_Mission, "开始任务", {}, "", function()
@@ -214,7 +210,10 @@ menu.action(Start_Freemode_Mission, "开始任务", {}, "", function()
         end
     end
 
-    local playerBit = getPlayerBitSet(StartFreemodeMission.sendPlayer)
+    local playerBit = StartFreemodeMission.playerBit
+    if playerBit == 0 then
+        playerBit = getPlayerBitSet(StartFreemodeMission.sendPlayer)
+    end
 
     -- GB_NON_BOSS_CHALLENGE_REQUEST
     util.trigger_script_event(playerBit, {
@@ -237,21 +236,17 @@ local Instant_Finish_Test <const> = menu.list(Menu_Root, "Instant Finish Test", 
 
 menu.divider(Instant_Finish_Test, "fm_content Mission")
 
-local TestScript1 = "fm_content_smuggler_ops"
+local TestScript1 = "fm_content_smuggler_sell"
 
 menu.toggle_loop(Instant_Finish_Test, "Show Local Info", {}, "", function()
     local script = TestScript1
     if not IS_SCRIPT_RUNNING(script) then return end
 
-    local iLocalPart = LOCAL_GET_INT(script, 3427)
+    local t = {
+        ""
+    }
 
-    local text = string.format(
-        "PARTICIPANT_ID_TO_INT: %s\nLOCAL_PARTICIPANT_INDEX_AS_INT: %s\niGoodsToTransfer: %s",
-        NETWORK.PARTICIPANT_ID_TO_INT(),
-        iLocalPart,
-        LOCAL_GET_INT(script, 4267 + 1 + iLocalPart * 125 + 73)
-    )
-
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
@@ -260,13 +255,14 @@ menu.action(Instant_Finish_Test, "SET_MISSION_ENTITY_BIT", {}, "", function()
     local script = TestScript1
     if not IS_SCRIPT_RUNNING(script) then return end
 
-    local eBitset = 1
+    local eBitset = 4
+
     local iVar0 = math.floor(eBitset / 32) -- iBitSet
     local iVar1 = math.floor(eBitset % 32) -- iBitVal
     util.toast(string.format("iVar0: %s, iVar1: %s", iVar0, iVar1))
 
     local iMissionEntity = 0
-    local address = memory.script_local(script, 2310 + 31 + 1 + iMissionEntity * 42 + 11 + 1 + iVar0)
+    local address = memory.script_local(script, 6166 + 2 + 14 + 1 + iMissionEntity * 3 + 1 + iVar0)
     MISC.SET_BIT(address, iVar1)
 end)
 
@@ -274,8 +270,7 @@ menu.action(Instant_Finish_Test, "Set Local Variations", {}, "", function()
     local script = TestScript1
     if not IS_SCRIPT_RUNNING(script) then return end
 
-    local iLocalPart = LOCAL_GET_INT(script, 3427)
-    LOCAL_SET_INT(script, 4267 + 1 + iLocalPart * 125 + 73, 1)
+    LOCAL_SET_INT(script, 250 + 19, 3)
 end)
 
 menu.action(Instant_Finish_Test, "End Mission", {}, "", function()
@@ -283,16 +278,15 @@ menu.action(Instant_Finish_Test, "End Mission", {}, "", function()
     if not IS_SCRIPT_RUNNING(script) then return end
 
     -- SET_GAME_STATE(eGAMESTATE_END)
-    LOCAL_SET_INT(script, 1543 + 82, 3)
+    LOCAL_SET_INT(script, 6166 + 1278, 3)
 end)
 menu.action(Instant_Finish_Test, "Test Complete fm_content", {}, "", function()
     local script = TestScript1
     if not IS_SCRIPT_RUNNING(script) then return end
 
-    LOCAL_SET_BIT(script, 7600 + 1327 + 1 + 0, 0)
 
-    LOCAL_SET_BIT(script, 7523 + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
-    LOCAL_SET_INT(script, 7600 + 1270, 3)   -- SET_END_REASON(eENDREASON_MISSION_PASSED)
+    LOCAL_SET_BIT(script, 6056 + 1 + 0, 11) -- SET_GENERIC_BIT(eGENERICBITSET_I_WON)
+    LOCAL_SET_INT(script, 6166 + 1277, 3)   -- SET_END_REASON(eENDREASON_MISSION_PASSED)
 end)
 
 
@@ -355,13 +349,7 @@ menu.toggle_loop(Freemode_Test, "Show Local Info", {}, "", function()
 
 
     local t = {
-        "iLocalStage: " .. LOCAL_GET_INT(script, 495),
-        "idleTimer: " .. LOCAL_GET_INT(script, 1116),
-        "contactStruct.iBS: " .. LOCAL_GET_INT(script, 130 + 363),
-
-        --    "Connection_AttemptCurrentTime: " .. LOCAL_GET_INT(script, 104),
-        --    "Connection_AttemptStartTime: " .. LOCAL_GET_INT(script, 103),
-        --    "Connection_PauseLength: " .. LOCAL_GET_INT(script, 102),
+        ""
     }
 
     local text = table.concat(t, "\n")
@@ -369,274 +357,34 @@ menu.toggle_loop(Freemode_Test, "Show Local Info", {}, "", function()
 end)
 
 menu.toggle_loop(Freemode_Test, "Show Global Info", {}, "", function()
-    -- Global_2710523.f_8191
-    -- PIMenuData.iCurrentSelection
-
-    -- Global_2710428
-    -- g_iPIM_SubMenu
-
-    -- Global_4541816
-    -- g_iMenuCursorItem
-
-    -- Global_2672855.f_990.f_6
-    -- MPGlobals.PlayerInteractionData.iLaunchStage
-
-    -- Global_2710431
-    -- g_bPIM_ResetMenuNow
-
-    -- Global_2710523.f_8192, 1
-    -- PIMenuData.iMenuBitSet, biM_MenuSetup
-
-    -- Global_2710429
-    -- g_bPIM_SelectAvailable
-
-    -- local text = string.format(
-    --     "iCurrentSelection: %s, g_iPIM_SubMenu: %s, g_iMenuCursorItem: %s\nPlayerInteractionData.iLaunchStage: %s\nbiM_MenuSetup: %s, g_bPIM_SelectAvailable:%s\niBS_PauseMenuFlags: %s",
-    --     GLOBAL_GET_INT(2710523 + 8191),
-    --     GLOBAL_GET_INT(2710428),
-    --     GLOBAL_GET_INT(4541816),
-    --     GLOBAL_GET_INT(2672855 + 990 + 6),
-    --     GLOBAL_BIT_TEST(2710523 + 8192, 1),
-    --     GLOBAL_GET_INT(2710429),
-    --     GLOBAL_GET_INT(1574589)
-    -- )
-
     local t = {
-        "g_Cellphone.PhoneDS: " .. GLOBAL_GET_INT(20930 + 1), -- PDS_ONGOING_CALL = 9
-        "g_InboundCallWaitAccRej: " .. GLOBAL_GET_INT(20929), -- CALL_WAITING_TO_BE_ANSWERED = 1
-        "g_ConversationStatus: " .. GLOBAL_GET_INT(22286),    -- CONV_STATE_PLAYING = 4, CONV_STATE_PAUSE_ANSWERING_TIME = 3
-        "g_b_Is_MultipartRepliesInProgress: " .. GLOBAL_GET_INT(22544),
+        ""
     }
 
     local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
-menu.toggle_loop(Freemode_Test, "Show Contact Menu Quickly", {}, "", function()
-    local script = "am_contact_requests"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    if LOCAL_GET_INT(script, 495) == 0 then
-        if LOCAL_BIT_TEST(script, 130 + 363, 1) then
-            if not LOCAL_BIT_TEST(script, 130 + 363, 2) then
-                LOCAL_SET_BIT(script, 130 + 363, 2)
-
-                GLOBAL_SET_INT(22286, 0)
-            end
-        end
-    end
-end)
-
-menu.toggle_loop(Freemode_Test, "Show CUTSCENE", {}, "", function()
-    local text = string.format(
-        "IS_CUTSCENE_PLAYING: %s\nIS_CUTSCENE_ACTIVE: %s\nIS_PLAYER_IN_CUTSCENE: %s\nNETWORK_IS_IN_MP_CUTSCENE: %s",
-        CUTSCENE.IS_CUTSCENE_PLAYING(),
-        CUTSCENE.IS_CUTSCENE_ACTIVE(),
-        NETWORK.IS_PLAYER_IN_CUTSCENE(players.user()),
-        NETWORK.NETWORK_IS_IN_MP_CUTSCENE()
-    )
-    draw_text(text)
-end)
-menu.toggle_loop(Freemode_Test, "Show SESSION", {}, "", function()
-    local text = string.format(
-        "NETWORK_SESSION_IS_PRIVATE: %s\nNETWORK_IS_SESSION_ACTIVE: %s\nNETWORK_IS_IN_SESSION: %s\nNETWORK_IS_SESSION_STARTED: %s\nNETWORK_IS_SESSION_BUSY: %s",
-        NETWORK.NETWORK_SESSION_IS_PRIVATE(),
-        NETWORK.NETWORK_IS_SESSION_ACTIVE(),
-        NETWORK.NETWORK_IS_IN_SESSION(),
-        NETWORK.NETWORK_IS_SESSION_STARTED(),
-        NETWORK.NETWORK_IS_SESSION_BUSY()
-    )
-    draw_text(text)
-end)
-
-
-
-menu.action(Freemode_Test, "注册为CEO", {}, "", function()
-    local ePiStage = 1526
-
-    local g_iPIM_SubMenu = 2710428
-    local PIMenuData = {
-        iCurrentSelection = 2710523 + 8191
-    }
-    local g_bPIM_ResetMenuNow = 2710431
-
-
-    local script = "am_pi_menu"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    -- PLAYER_CONTROL, INPUT_INTERACTION_MENU
-    PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 244, 1.0)
-
-    repeat
-        util.yield()
-    until LOCAL_GET_INT(script, ePiStage) == 1
-
-    GLOBAL_SET_INT(g_iPIM_SubMenu, 116) -- REGISTER AS A BOSS
-    GLOBAL_SET_INT(PIMenuData.iCurrentSelection, 0)
-
-    GLOBAL_SET_BOOL(g_bPIM_ResetMenuNow, true)
-
-    util.yield(50)
-
-    -- FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT
-    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 176, 1.0)
-
-    repeat
-        util.yield()
-    until GLOBAL_GET_INT(g_iPIM_SubMenu) == 27 -- Start an Organization
-    GLOBAL_SET_INT(PIMenuData.iCurrentSelection, 0)
-
-    util.yield(10)
-
-    -- FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT
-    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 176, 1.0)
-
-    util.yield(10)
-
-    -- FRONTEND_CONTROL, INPUT_FRONTEND_ACCEPT
-    PAD.SET_CONTROL_VALUE_NEXT_FRAME(2, 201, 1.0)
-
-    util.yield(10)
-
-    if LOCAL_GET_INT(script, ePiStage) == 1 then
-        -- PLAYER_CONTROL, INPUT_INTERACTION_MENU
-        PAD.SET_CONTROL_VALUE_NEXT_FRAME(0, 244, 1.0)
-    end
-end)
-menu.action(Freemode_Test, "切换到 邀请战局", {}, "", function()
-    local g_Private_Players_FM_SESSION_Menu_Choice = 1575035
-    local g_PauseMenuMissionCreatorData = {
-        iBS_PauseMenuFlags = 1574589
-    }
-
-    -- FM_SESSION_MENU_CHOICE_JOIN_CLOSED_INVITE_ONLY
-    GLOBAL_SET_INT(g_Private_Players_FM_SESSION_Menu_Choice, 11)
-
-    -- bsPauseRequestingTransition, bsPauseMenuRequestingNewSession
-    GLOBAL_SET_BITS(g_PauseMenuMissionCreatorData.iBS_PauseMenuFlags, 0, 5)
-
-    util.yield(200)
-
-    GLOBAL_SET_INT(g_PauseMenuMissionCreatorData.iBS_PauseMenuFlags, 0)
-end)
 
 
 menu.action(Freemode_Test, "切换战局 到 虎鲸", {}, "", function()
     -- MP_SETTING_SPAWN_SUBMARINE
-    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 16)
+    STAT_SET_INT(MPX("SPAWN_LOCATION_SETTING"), 16)
 
     menu.trigger_commands("go inviteonly")
 end)
 menu.action(Freemode_Test, "切换战局 到 游戏厅", {}, "", function()
     -- MP_SETTING_SPAWN_ARCADE
-    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 15)
+    STAT_SET_INT(MPX("SPAWN_LOCATION_SETTING"), 15)
 
     menu.trigger_commands("go inviteonly")
 end)
 menu.action(Freemode_Test, "切换战局 到 设施", {}, "", function()
     -- MP_SETTING_SPAWN_DEFUNCT_BASE
-    STAT_SET_INT(ADD_MP_INDEX("SPAWN_LOCATION_SETTING"), 11)
+    STAT_SET_INT(MPX("SPAWN_LOCATION_SETTING"), 11)
 
     menu.trigger_commands("go inviteonly")
 end)
-
-
-menu.action(Freemode_Test, "直接拿取 夜总会 保险箱现金", {}, "", function()
-    local script = "am_mp_nightclub"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    -- "CLUB_SAFE_OPEN"
-
-    --[[
-        CLUB_MAINTAIN_POPULARITY_PAYOUT_COLLECTION(m_ServerBD.payoutSafeData, m_InteriorData.bSafeDoorsHidden)
-        func_6665(&(Local_181.f_32), &(Local_1251.f_1733));
-
-        ref_data.eStage = eStage
-        iParam0->f_4 = iParam1;
-
-        _CLUB_PAYOUT_COLLECTION_SET_STAGE(ref_data, CPCS_PAYOUT)
-        func_6667(iParam0, 3);
-    ]]
-
-    LOCAL_SET_INT(script, 181 + 32 + 4, 3) -- CPCS_PAYOUT
-end)
-menu.action(Freemode_Test, "直接拿取 事务所 保险箱现金", {}, "", function()
-    local script = "am_mp_fixer_hq"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    -- "OF_VAULT_SAFE_1"
-
-    --[[
-        MAINTAIN_CASH_SAFE(m_interiordata.m_CashSafe, m_ServerBD.niSafeDoor, m_interiordata.OwnerID)
-        func_7231(&(Local_527.f_469), &(Local_3885.f_2), Local_527.f_425);
-
-
-        SET_CASH_SAFE_LOCAL_BS(sData, BS_CASINO_APT_TRANSACTION_PENDING, TRUE)
-        func_7234(iParam0, 5, 1);
-
-        sData.eTransactionStage = PPTS_PENDING_MISSION
-        iParam0->f_94 = 1;
-
-        sData.iInitialSafeAmount = FIXER_AGENCY_PAYOUT_GET_CASH_STORED_IN_PROPERTY_SAFE(PLAYER_ID())
-        iParam0->f_5 = func_6522(PLAYER::PLAYER_ID());
-    ]]
-
-    local sCashSafe = 527 + 469
-    LOCAL_SET_INT(script, sCashSafe + 5, STAT_GET_INT(ADD_MP_INDEX("FIXER_SAFE_CASH_VALUE")))
-    LOCAL_SET_INT(script, sCashSafe + 94, 1)
-    LOCAL_SET_BIT(script, sCashSafe, 5)
-end)
-menu.action(Freemode_Test, "直接拿取 游戏厅 保险箱现金", {}, "", function()
-    local script = "am_mp_arcade"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    -- "ARCADE_PAY_ENTER_M"
-
-    --[[
-        MAINTAIN_ARCADE_OFFICE_SAFE(m_sSafe, m_ServerBD.niSafeDoor,
-			IS_BIT_SET(m_InteriorData.iBS, BS_ARCADE_CALLED_CLEAR_HELP))
-        func_7001(&uLocal_2918, &(Local_2031.f_72), BitTest(Local_798.f_0, 3));
-
-
-        _ARCADE_OFFICE_SAFE__SET_IS_TRANSACTION_PENDING(sInst, TRUE)
-		func_7023(uParam0, 1);
-            SET_BIT_ENUM(sInst.iBS, AOS_BS_TRANSACTION_PENDING)
-            func_7020(&(uParam0->f_69), 0);
-
-        sInst.eTransactionStage = PPTS_PENDING_MISSION
-		uParam0->f_1 = 1;
-
-        sInst.iInitialSafeAmount = ARCADE_PAYOUT_GET_CASH_STORED_IN_PROPERTY_SAFE()
-		uParam0->f_66 = func_6207();
-    ]]
-
-    local sCashSafe = 2918
-    LOCAL_SET_INT(script, sCashSafe + 66, STAT_GET_INT(ADD_MP_INDEX("ARCADE_SAFE_CASH_VALUE")))
-    LOCAL_SET_INT(script, sCashSafe + 1, 1)
-    LOCAL_SET_BIT(script, sCashSafe + 69, 0)
-end)
-
-
-
-
-
-
-menu.divider(Freemode_Test, "")
-menu.action(Freemode_Test, "iMaterialsTotal = 0", {}, "", function()
-    local pid = players.user()
-    for i = 0, 6 do
-        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 2, 0)
-    end
-end)
-menu.action(Freemode_Test, "iProductTotal = 100", {}, "", function()
-    local pid = players.user()
-    for i = 0, 6 do
-        GLOBAL_SET_INT(1845263 + 1 + pid * 877 + 267 + 195 + 1 + i * 13 + 1, 100)
-    end
-end)
-
 
 
 
@@ -669,9 +417,8 @@ menu.action(Freemode_Test, "Set Win (Multi)", {}, "", function()
 
     local iWinningSegment = LOCAL_GET_INT(script, sRaceData + 17)
 
-    STAT_SET_INT(ADD_MP_INDEX("INSIDETRACK_BET_HORSEID"), iWinningSegment)
+    STAT_SET_INT(MPX("INSIDETRACK_BET_HORSEID"), iWinningSegment)
 end)
-
 
 
 
@@ -689,13 +436,13 @@ end)
 local Test_Start_Mission <const> = menu.list(Menu_Root, "Start Mission Test", {}, "")
 
 menu.toggle_loop(Test_Start_Mission, "Show Global Info", {}, "", function()
-    local text = string.format(
-        "iActiveMission: %s\niMissionToLaunch: %s\niCurrentMissionType: %s",
-        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iActiveMission()),
-        GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()),
-        GLOBAL_GET_INT(GlobalplayerBD_FM.iCurrentMissionType())
-    )
+    local t = {
+        "iActiveMission: " .. GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iActiveMission()),
+        "iMissionToLaunch: " .. GLOBAL_GET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iMissionToLaunch()),
+        "iCurrentMissionType: " .. GLOBAL_GET_INT(GlobalplayerBD_FM.iCurrentMissionType())
+    }
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
@@ -710,7 +457,7 @@ menu.click_slider(Test_Start_Mission, "Start FMMC_TYPE Mission", { "fmmcStart" }
 end)
 
 
-menu.divider(Test_Start_Mission, "Job")
+menu.divider(Test_Start_Mission, "Job Mission")
 
 local TestStartRootContentID = menu.text_input(Test_Start_Mission, "Root Content ID (Hash)",
     { "rs_StartRootContentID" }, "", function(value) end)
@@ -764,26 +511,20 @@ local Job_Mission_Test <const> = menu.list(Menu_Root, "Job Mission Test", {}, ""
 
 
 menu.toggle_loop(Job_Mission_Test, "Show g_FMMC_STRUCT Info", {}, "", function()
-    local iRootContentID = GLOBAL_GET_INT(FMMC_STRUCT.iRootContentIDHash)
+    local iRootContentID = GLOBAL_GET_INT(g_FMMC_STRUCT.iRootContentIDHash)
     local iArrayPos = MISC.GET_CONTENT_ID_INDEX(iRootContentID)
 
-    local text = string.format(
-        "MissionName: %s, iRootContentIDHash: %s, iArrayPos: %s\ntl31LoadedContentID: %s\ntl23NextContentID: %s, %s, %s\niEndCutscene: %s",
-        GLOBAL_GET_STRING(FMMC_STRUCT.tl63MissionName),
-        iRootContentID,
-        iArrayPos,
 
-        GLOBAL_GET_STRING(FMMC_STRUCT.tl31LoadedContentID),
+    local t = {
+        "MissionName: " .. GLOBAL_GET_STRING(g_FMMC_STRUCT.tl63MissionName),
+        "iRootContentIDHash: " .. iRootContentID,
+        "iArrayPos: " .. iArrayPos,
+        "tl31LoadedContentID: " .. GLOBAL_GET_STRING(g_FMMC_STRUCT.tl31LoadedContentID),
+    }
 
-        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 0 * 6),
-        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 1 * 6),
-        GLOBAL_GET_STRING(FMMC_STRUCT.tl23NextContentID + 2 * 6),
-
-        GLOBAL_GET_INT(g_FMMC_STRUCT + 127643)
-    )
-
-    -- util.log(text)
+    local text = table.concat(t, "\n")
     draw_text(text)
+    -- util.log(text)
 end)
 
 menu.toggle_loop(Job_Mission_Test, "最小玩家数为1", {}, "强制任务单人可开", function()
@@ -797,32 +538,35 @@ menu.toggle_loop(Job_Mission_Test, "最小玩家数为1", {}, "强制任务单�
         return
     end
 
-    -- g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars[iArrayPos].iMinPlayers
-    if GLOBAL_GET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 69) > 1 then
-        GLOBAL_SET_INT(Globals.sMissionHeaderVars + iArrayPos * 89 + 69, 1)
+    if GLOBAL_GET_INT(g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars(iArrayPos).iMinPlayers) > 1 then
+        GLOBAL_SET_INT(g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars(iArrayPos).iMinPlayers, 1)
         LOCAL_SET_INT(script, sLaunchMissionDetails.iMinPlayers, 1)
+
+        GLOBAL_SET_INT(g_FMMC_ROCKSTAR_CREATED.sMissionHeaderVars(iArrayPos).iMaxNumberOfTeams, 1)
     end
 
-    GLOBAL_SET_INT(FMMC_STRUCT.iMinNumParticipants, 1)
-    for i = 0, 3 do
-        GLOBAL_SET_INT(FMMC_STRUCT.iNumPlayersPerTeam + i, 1)
-        GLOBAL_SET_INT(FMMC_STRUCT.iCriticalMinimumForTeam + i, 0)
-    end
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iMinNumParticipants, 1)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iNumPlayersPerTeam, 1)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iCriticalMinimumForTeam, 0)
+    -- for i = 0, 3 do
+    --     GLOBAL_SET_INT(g_FMMC_STRUCT.iNumPlayersPerTeam + i, 1)
+    --     GLOBAL_SET_INT(g_FMMC_STRUCT.iCriticalMinimumForTeam + i, 0)
+    -- end
 end)
 
 local SetMissionMaxTeams2 = menu.toggle_loop(Job_Mission_Test, "最大团队数为1", {}, "用于多团队任务", function()
-    GLOBAL_SET_INT(FMMC_STRUCT.iNumberOfTeams, 1)
-    GLOBAL_SET_INT(FMMC_STRUCT.iMaxNumberOfTeams, 1)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iNumberOfTeams, 1)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iMaxNumberOfTeams, 1)
 end)
 
 menu.click_slider(Job_Mission_Test, "设置最大团队数", {}, "", 1, 4, 2, 1, function(value)
     menu.set_value(SetMissionMaxTeams2, false)
 
-    GLOBAL_SET_INT(FMMC_STRUCT.iNumberOfTeams, value)
-    GLOBAL_SET_INT(FMMC_STRUCT.iMaxNumberOfTeams, value)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iNumberOfTeams, value)
+    GLOBAL_SET_INT(g_FMMC_STRUCT.iMaxNumberOfTeams, value)
 end)
 
-menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", function()
+menu.action(Job_Mission_Test, "Mission Finish", { "rsmFinish" }, "", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
 
@@ -856,12 +600,13 @@ menu.action(Job_Mission_Test, "Mission Finish", { "MissionFinish" }, "", functio
     LOCAL_SET_BITS(script, Locals[script].iServerBitSet, 9, 10, 11, 12, 16)
 end)
 
-menu.action(Job_Mission_Test, "Mission Failed", { "MissionFailed" }, "", function()
+menu.action(Job_Mission_Test, "Mission Failed", { "rsmFailed" }, "", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
 
     LOCAL_SET_BIT(script, Locals[script].iServerBitSet, 16, 20) -- SSBOOL_TEAM0_FAILED
 end)
+
 
 
 
@@ -920,69 +665,64 @@ local CORONA_STATUS = {
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
     -- Global_1845281[PLAYER::PLAYER_ID() /*883*/].f_193
     -- GlobalplayerBD_FM[NATIVE_TO_INT(PLAYER_ID())].eCoronaStatus
-    local eCoronaStatus = GLOBAL_GET_INT(1845281 + 1 + players.user() * 883 + 193)
+
+    local eCoronaStatus = GLOBAL_GET_INT(GlobalplayerBD_FM.eCoronaStatus())
     if CORONA_STATUS[eCoronaStatus] then
         eCoronaStatus = CORONA_STATUS[eCoronaStatus]
     end
 
 
-    local text = string.format(
-        "eCoronaStatus: %s\niSwitchState: %s, iArrayPos: %s, IsThisAStrandMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s\nHAS_NEXT_STRAND_MISSION_HAS_BEEN_DOWNLOADED: %s\nIS_NEXT_STRAND_MISSION_READY_TO_SET_UP: %s\nIS_STRAND_MISSION_READY_TO_START_DOWNLOAD: %s\niVoteStatus: %s, iCelebrationType: %s",
-        eCoronaStatus,
-
-        GLOBAL_GET_INT(2684504 + 43 + 3),   -- g_sTransitionSessionData.sStrandMissionData.iSwitchState
-        GLOBAL_GET_INT(2684504 + 43),       -- g_sTransitionSessionData.sStrandMissionData.iArrayPos
-        GLOBAL_GET_BOOL(2684504 + 43 + 57), -- g_sTransitionSessionData.sStrandMissionData.bIsThisAStrandMission
-
-        -- g_sTransitionSessionData.sStrandMissionData.iBitSet
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 0), -- ciSTRAND_BITSET_A_STRAND_MISSION_BEING_INITIALISED
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 6), -- ciSTRAND_BITSET_MISSION_HAS_BEEN_DOWNLOADED
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 7), -- ciSTRAND_BITSET_MISSION_READY_TO_SET_UP
-        GLOBAL_BIT_TEST(2684504 + 43 + 4, 8), -- ciSTRAND_BITSET_MISSION_READY_TO_START_DOWNLOAD
-
-        GLOBAL_GET_INT(1919969 + 9),          -- g_sFMMCEOM.iVoteStatus
-        GLOBAL_GET_INT(4718592 + 178859)      -- g_FMMC_STRUCT.iCelebrationType
-    )
-
-    draw_text(text)
-end)
-
-menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
-    local script = "fmmc_launcher"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
-
-    local __coronaMenuData = 17445
-    local __sLaunchMissionDetails = 19709
-
-    local text = string.format(
-        "iCurrentSelection: %s\niIntroStatus: %s, iLobbyStatus: %s, iInviteScreenStatus: %s, iInCoronaStatus: %s, iBettingStatus: %s, iLoadStatus: %s",
-        LOCAL_GET_INT(script, __coronaMenuData + 911), -- coronaMenuData.iCurrentSelection
-        LOCAL_GET_INT(script, __sLaunchMissionDetails),
-        LOCAL_GET_INT(script, __sLaunchMissionDetails + 4),
-        LOCAL_GET_INT(script, __sLaunchMissionDetails + 6),
-        LOCAL_GET_INT(script, __sLaunchMissionDetails + 7),
-        LOCAL_GET_INT(script, __sLaunchMissionDetails + 10),
-        LOCAL_GET_INT(script, __sLaunchMissionDetails + 11)
-    )
-
-    draw_text(text)
-end)
-
-
-menu.toggle_loop(Job_Mission_Test, "Show Global Info 2", {}, "", function()
     local t = {
-        "g_HeistPlanningClient.eHeistFlowState: " .. GLOBAL_GET_INT(1930926 + 2768),
-        "g_HeistPrePlanningClient.eHeistFlowState: " .. GLOBAL_GET_INT(1928993),
-        "g_HeistStrandClient.eHeistFlowState: " .. GLOBAL_GET_INT(1934106),
-        "g_HeistSharedClient.PlanningBoardIndex: " .. GLOBAL_GET_INT(1934536),
-        "g_HeistSharedClient.vBoardPosition: " .. v3.toString(GLOBAL_GET_VECTOR3(1934536 + 16)),
-        "Player Pos: " .. v3.toString(ENTITY.GET_ENTITY_COORDS(players.user_ped()))
+        "eCoronaStatus: " .. eCoronaStatus
     }
 
     local text = table.concat(t, "\n")
     draw_text(text)
+    -- util.log(text)
+end)
+
+menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
+    local script = "fmmc_launcher"
+    if not IS_SCRIPT_RUNNING(script) then return end
+
+    local __coronaMenuData = 17602
+    local __sLaunchMissionDetails = 19875
+
+    local __GlobalplayerBD_FM = 1845221 + 1 + players.user() * 889
+    -- local __g_sTransitionSessionData = 2684718
+
+    local t = {
+        "iLobbyStatus: " .. LOCAL_GET_INT(script, __sLaunchMissionDetails + 4),
+        "iCasinoHeistFinaleCoronaState: " .. LOCAL_GET_INT(script, __coronaMenuData + 2045),
+        "iFmLauncherGameState: " .. GLOBAL_GET_INT(__GlobalplayerBD_FM + 96),
+        "iTotalPlayersJoinedTeamDMScreen: " .. LOCAL_GET_INT(script, __coronaMenuData + 420),
+        "piJobLeader: " .. LOCAL_GET_INT(script, __coronaMenuData + 2229),
+        "g_sCasinoHeistData.piLeader: " .. GLOBAL_GET_INT(1965614 + 4356),
+    }
+
+    local text = table.concat(t, "\n")
+    draw_text(text)
+end)
+
+
+menu.toggle_loop(Job_Mission_Test, "IS_CORONA_BIT_SET", {}, "", function()
+    -- Global_2685658.f_1.f_2813[iVar0]
+    -- g_TransitionSessionNonResetVars.sTransVars.iCoronaBitSet[iBitSet]
+
+
+    local iCoronaBit = 234
+    local iBitSet = math.floor(iCoronaBit / 32)
+    local iBitVal = math.floor(iCoronaBit % 32)
+
+    local value = GLOBAL_BIT_TEST(2685658 + 1 + 2813 + 1 + iBitSet, iBitVal)
+    draw_text("IS_CORONA_BIT_SET: " .. value)
+end)
+menu.action(Job_Mission_Test, "SET_CORONA_BIT", {}, "", function()
+    local iCoronaBit = 234 -- CORONA_CASINO_HEIST_MAINTAIN_BOARDS
+    local iBitSet = math.floor(iCoronaBit / 32)
+    local iBitVal = math.floor(iCoronaBit % 32)
+
+    GLOBAL_SET_BIT(2685658 + 1 + 2813 + 1 + iBitSet, iBitVal)
 end)
 
 
@@ -996,18 +736,12 @@ end)
 menu.divider(Job_Mission_Test, "fm_mission_controller")
 
 menu.toggle_loop(Job_Mission_Test, "Show Global Info", {}, "", function()
-    local text = string.format(
-        "iCurrentGangopsMission: %s, eChosenApproachType: %s, bIsThisAStrandMission: %s\nbPassedFirstMission: %s, bPassedFirstStrandNoReset: %s, bLastMission: %s\nIS_A_STRAND_MISSION_BEING_INITIALISED: %s",
-        GLOBAL_GET_INT(2684312 + 26),
-        GLOBAL_GET_INT(1963911),
-        GLOBAL_GET_INT(2684312 + 43 + 57),
+    local t = {
+        "g_sCasinoHeistData.sFinaleData.sStateData.eState: " .. GLOBAL_GET_INT(1965614 + 1497 + 724)
+    }
 
-        GLOBAL_GET_INT(2684312 + 43 + 55),
-        GLOBAL_GET_INT(2684312 + 43 + 56),
-        GLOBAL_GET_INT(2684312 + 43 + 58),
-        GLOBAL_BIT_TEST(2684312 + 43 + 4, 0)
-    )
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
@@ -1016,101 +750,16 @@ menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     if not IS_SCRIPT_RUNNING(script) then return end
 
     local MC_serverBD = 19746
-    local MC_serverBD_4 = 28365
 
     local iTeam = 0
 
-    local text = string.format(
-        "iServerGameState: %s\niNextMission: %s\niEndCutscene: %s, iEndCutsceneNum[0]: %s\niCurrentHighestPriority[0]: %s",
-        LOCAL_GET_INT(script, MC_serverBD),
-        LOCAL_GET_INT(script, MC_serverBD + 1062),
-        LOCAL_GET_INT(script, MC_serverBD + 2687),
-        LOCAL_GET_INT(script, MC_serverBD + 1845 + 1 + iTeam),
-        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam)
-    )
+    local t = {
+        ""
+    }
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
-
-
-menu.action(Job_Mission_Test, "get mission vehicles", {}, "", function()
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    local MC_serverBD = 19746
-    local MC_serverBD_1 = 22960
-
-
-    local text = ""
-
-    util.spoof_script(script, function()
-        local iNumVehCreated = LOCAL_GET_INT(script, MC_serverBD + 244)
-        for i = 0, iNumVehCreated - 1 do
-            local niVehicle = LOCAL_GET_INT(script, MC_serverBD_1 + 834 + 81 + 1 + i)
-            if niVehicle ~= 0 and NETWORK.NETWORK_DOES_NETWORK_ID_EXIST(niVehicle) then
-                local vehicle = NETWORK.NETWORK_GET_ENTITY_FROM_NETWORK_ID(niVehicle)
-
-                local display_name = VEHICLE.GET_DISPLAY_NAME_FROM_VEHICLE_MODEL(ENTITY.GET_ENTITY_MODEL(vehicle))
-                text = text ..
-                    "\nniVehicle: " .. niVehicle .. ", Index: " .. vehicle .. ", Name: " .. get_label_text(display_name)
-            end
-        end
-    end)
-
-    toast(text)
-end)
-
-local function create_vehicle(hash, coords, heading)
-    local veh = VEHICLE.CREATE_VEHICLE(hash, coords.x, coords.y, coords.z, heading, true, true, false)
-
-    ENTITY.SET_ENTITY_AS_MISSION_ENTITY(veh, true, false)
-
-    NETWORK.NETWORK_REGISTER_ENTITY_AS_NETWORKED(veh)
-    local net_id = NETWORK.NETWORK_GET_NETWORK_ID_FROM_ENTITY(veh)
-    NETWORK.SET_NETWORK_ID_EXISTS_ON_ALL_MACHINES(net_id, true)
-    NETWORK.SET_NETWORK_ID_CAN_MIGRATE(net_id, true)
-    for _, pid in pairs(players.list()) do
-        NETWORK.SET_NETWORK_ID_ALWAYS_EXISTS_FOR_PLAYER(net_id, pid, true)
-    end
-
-    return veh, net_id
-end
-
-menu.action(Job_Mission_Test, "change mission vehicles to oppressor2", {}, "", function()
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then return end
-
-    local MC_serverBD_1 = 22960
-
-    util.spoof_script(script, function()
-        local hash = util.joaat("oppressor2")
-        util.request_model(hash)
-
-        for i = 0, 31, 1 do
-            local local_addr = MC_serverBD_1 + 834 + 81 + 1 + i
-            local niVehicle = LOCAL_GET_INT(script, local_addr)
-            if niVehicle ~= 0 and NETWORK.NETWORK_DOES_NETWORK_ID_EXIST(niVehicle) then
-                local vehicle = NETWORK.NETWORK_GET_ENTITY_FROM_NETWORK_ID(niVehicle)
-                local coords = ENTITY.GET_ENTITY_COORDS(vehicle)
-                local heading = ENTITY.GET_ENTITY_HEADING(vehicle)
-
-                TP_ENTITY(vehicle, v3(0, 0, -1000))
-                ENTITY.FREEZE_ENTITY_POSITION(vehicle)
-                ENTITY.SET_ENTITY_COLLISION(vehicle, false, false)
-
-                local veh, netid = create_vehicle(hash, coords, heading)
-
-                LOCAL_SET_INT(script, local_addr, netid)
-
-
-                -- local hash = ENTITY.GET_ENTITY_MODEL(vehicle)
-            end
-        end
-
-        STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
-    end)
-end)
-
 
 
 
@@ -1123,24 +772,17 @@ menu.divider(Job_Mission_Test, "fm_mission_controller_2020")
 
 menu.toggle_loop(Job_Mission_Test, "Show Local Info", {}, "", function()
     local script = "fm_mission_controller_2020"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
+    if not IS_SCRIPT_RUNNING(script) then return end
 
     local MC_serverBD = 50150
-    local MC_serverBD_4 = 59029
 
     local iTeam = 0
 
-    local text = string.format(
-        "iServerGameState: %s\niNextMission: %s\niEndCutscene: %s, iEndCutsceneNum[0]: %s\niCurrentHighestPriority[0]: %s",
-        LOCAL_GET_INT(script, MC_serverBD),
-        LOCAL_GET_INT(script, MC_serverBD + 1583),
-        LOCAL_GET_INT(script, MC_serverBD + 3016),
-        LOCAL_GET_INT(script, MC_serverBD + 2525 + 1 + iTeam),
-        LOCAL_GET_INT(script, MC_serverBD_4 + 1 + iTeam)
-    )
+    local t = {
+        ""
+    }
 
+    local text = table.concat(t, "\n")
     draw_text(text)
 end)
 
@@ -1201,38 +843,6 @@ end)
 
 
 menu.divider(Job_Mission_Test, "")
-menu.toggle_loop(Job_Mission_Test, "Show fm_mission_controller Script", {}, "", function()
-    local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
-    if script == nil then return end
-
-    local text = ""
-
-    util.spoof_script(script, function()
-        local isHost = NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT()
-        local getHost = players.get_name(NETWORK.NETWORK_GET_HOST_OF_THIS_SCRIPT())
-        local instanceId = NETWORK.NETWORK_GET_INSTANCE_ID_OF_THIS_SCRIPT()
-
-        text = string.format(
-            "Script: %s\nNETWORK_IS_HOST_OF_THIS_SCRIPT: %s\nNETWORK_GET_HOST_OF_THIS_SCRIPT: %s\nNETWORK_GET_INSTANCE_ID_OF_THIS_SCRIPT: %s",
-            script,
-            isHost,
-            getHost,
-            instanceId
-        )
-    end)
-
-    local getHost2 = players.get_name(NETWORK.NETWORK_GET_HOST_OF_SCRIPT(script, 0, 0))
-    local scriptHost = players.get_name(players.get_script_host())
-
-    text = string.format(
-        "%s\nNETWORK_GET_HOST_OF_SCRIPT: %s\nScript Host: %s",
-        text,
-        getHost2,
-        scriptHost
-    )
-
-    draw_text(text)
-end)
 menu.toggle_loop(Job_Mission_Test, "Show Script Host", {}, "", function()
     local text = ""
 
@@ -1263,11 +873,24 @@ menu.action(Job_Mission_Test, "成为任务脚本主机", {}, "", function()
     local script = GET_RUNNING_MISSION_CONTROLLER_SCRIPT()
     if script == nil then return end
 
-    if util.request_script_host(script) then
-        util.toast("成为任务脚本主机 成功")
-    else
+    if not util.request_script_host(script) then
         util.toast("成为任务脚本主机 失败")
+        return
     end
+
+    util.yield()
+
+    local isHost = false
+    util.spoof_script(script, function()
+        isHost = NETWORK.NETWORK_IS_HOST_OF_THIS_SCRIPT()
+    end)
+
+    if not isHost then
+        util.toast("成为任务脚本主机 失败")
+        return
+    end
+
+    util.toast("成为任务脚本主机 成功")
 end)
 
 
@@ -2223,22 +1846,27 @@ end)
 
 
 
-menu.action(Script_Event_Test, "BROADCST_SCRIPT_EVENT_HEIST_UPDATE_CUT_SINGLETON", {}, "", function()
-    local index = 0
-    local iHeistCutModifier = 100
-    local iCutTotal = 100                                    -- Not used.
 
-    local iUniqueSessionHash0 = GLOBAL_GET_INT(1916617 + 9)  -- GlobalServerBD_FM_events.iUniqueSessionHash0
-    local iUniqueSessionHash1 = GLOBAL_GET_INT(1916617 + 10) -- GlobalServerBD_FM_events.iUniqueSessionHash1
+menu.action(Menu_Root, "GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER", {}, "", function()
+    -- GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER(iMissionID, iSelectedSCWarehouse, eSelectedShipmentSize, eActiveContrabandType, bActivateSpecialItemMission)
 
-    util.trigger_script_event(util.get_session_players_bitflag(), {
-        1169323649, -- SCRIPT_EVENT_HEIST_UPDATE_CUT_SINGLETON
-        players.user(),
-        -1,
-        index,
-        iHeistCutModifier,
-        iCutTotal,
-        iUniqueSessionHash0,
-        iUniqueSessionHash1
-    })
+    GB_SET_PLAYER_CONTRABAND_MISSION_DATA(0, 10, 8, false)
+    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(167, -1, -1, 0)
 end)
+
+
+
+
+
+--- @param script string|integer
+--- @param pattern string
+--- @param patch function
+local function patch_script_byte(script, pattern, patch)
+    local addr = memory.scan_script(script, pattern)
+    if not addr or addr == 0 then
+        toast("Scan pattern failed!\n" .. script .. ": " .. pattern)
+        return
+    end
+
+    patch(addr)
+end
