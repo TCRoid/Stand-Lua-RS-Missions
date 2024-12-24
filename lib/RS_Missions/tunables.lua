@@ -428,7 +428,7 @@ local TunablesF = {
     ["XP_MULTIPLIER"] = 1,
 }
 
-g_sMPTunables = 262145
+local g_sMPTunables <const> = 262145
 
 --------------------------------
 --  Functions
@@ -461,6 +461,16 @@ end
 function Tunables.SetFloatList(tunable_list_name, value)
     for _, offset in pairs(TunablesF[tunable_list_name]) do
         GLOBAL_SET_FLOAT(g_sMPTunables + offset, value)
+    end
+end
+
+--- @param tunable_list_name string
+--- @param multiplier float
+function Tunables.SetIntListMultiplier(tunable_list_name, multiplier)
+    for _, offset in pairs(TunablesI[tunable_list_name]) do
+        local default_value = TunableDefaults[offset]
+        local new_value = default_value * multiplier
+        GLOBAL_SET_INT(g_sMPTunables + offset, new_value)
     end
 end
 

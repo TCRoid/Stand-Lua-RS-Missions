@@ -17,9 +17,9 @@ Globals = {
     end,
 
     -- GlobalplayerBD_FM_2[NATIVE_TO_INT(PLAYER_ID())]
-    GlobalplayerBD_FM_2 = function()
-        return 1882632 + 1 + players.user() * 146
-    end,
+    -- GlobalplayerBD_FM_2 = function()
+    --     return 1882632 + 1 + players.user() * 146
+    -- end,
 
     -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())]
     GlobalplayerBD_FM_3 = function()
@@ -32,7 +32,7 @@ Globals = {
     MPGlobalsAmbience = 2739811,
 
 
-    bBrowserVisible = 76498,
+    -- bBrowserVisible = 76498,
 
 
     -- g_FMMC_STRUCT_ENTITIES.sPlacedZones[iZone].iZoneTimer_EnableTime
@@ -100,7 +100,7 @@ MPGlobalsAmbience = {
         iMissionVariation = Globals.MPGlobalsAmbience + 5265 + 347
     },
 
-    BountyMostWantedPayment = 7116
+    BountyMostWantedPayment = Globals.MPGlobalsAmbience + 7116
 }
 
 
@@ -162,7 +162,7 @@ g_FMMC_STRUCT = {
     iNumPlayersPerTeam = _g_FMMC_STRUCT + 3529 + 1, -- +[0~3]
 
     iRootContentIDHash = _g_FMMC_STRUCT + 128476,
-    tl63MissionName = _g_FMMC_STRUCT + 127185,
+    tl63MissionName = _g_FMMC_STRUCT + 128483,
     tl31LoadedContentID = _g_FMMC_STRUCT + 128763,
     tl23NextContentID = _g_FMMC_STRUCT + 128791 + 1, -- +[0~5]*6
 
@@ -170,6 +170,9 @@ g_FMMC_STRUCT = {
     iCriticalMinimumForTeam = _g_FMMC_STRUCT + 180865 + 1 -- +[0~3]
 }
 
+----------------------------------------------------
+--    Transition Session Non Reset Vars
+----------------------------------------------------
 
 -- TRANSITION_SESSION_NON_RESET_VARS
 local _g_TransitionSessionNonResetVars = 2685658
@@ -187,7 +190,9 @@ g_TransitionSessionNonResetVars.sTransVars = {
     iCoronaBitSet = _sTransVars + 2813
 }
 
-
+----------------------------------------------------
+--    Transition Session Data
+----------------------------------------------------
 
 -- FMMC_TRANSITION_SESSION_DATA
 g_sTransitionSessionData = 2684718
@@ -201,7 +206,9 @@ sStrandMissionData = {
     bLastMission = _sStrandMissionData + 58
 }
 
-
+--------------------------------
+--    Apartment Heist
+--------------------------------
 
 -- HEIST_CLIENT_PRE_PLANNING_LOCAL_DATA
 local _g_HeistPrePlanningClient = 1929352
@@ -222,7 +229,9 @@ g_HeistSharedClient = {
     vBoardPosition = _g_HeistSharedClient + 16
 }
 
-
+--------------------------------
+--    Casino Heist
+--------------------------------
 
 -- CASINO_HEIST_MISSION_CONFIGURATION_DATA
 local _g_sCasinoHeistMissionConfigData = 1965580
@@ -263,7 +272,9 @@ g_sCasinoHeistMissionConfigData = {
     bHardMode = _g_sCasinoHeistMissionConfigData + 27
 }
 
-
+--------------------------------
+--    Island Heist
+--------------------------------
 
 -- HEIST_ISLAND_PLAYER_BD_DATA
 GlobalPlayerBD_HeistIsland = {
@@ -282,7 +293,9 @@ GlobalPlayerBD_NetHeistPlanningGeneric = {
     end
 }
 
-
+--------------------------------
+--    Source Cargo
+--------------------------------
 
 -- WAREHOUSE_CARGO_SOURCING_DATA_STRUCT
 local _g_sWarehouseCargoSourcingData = 1882747
@@ -303,6 +316,7 @@ g_sHangarCargoSourcingData = {
 g_sHangarCargoSourcingDataBitset = function()
     return Globals.GlobalplayerBD() + 204
 end
+
 
 
 
@@ -512,6 +526,7 @@ Locals = {
         iDropOffCount = 140 + 60 + 1,
         iTotalDropoffs = 140 + 60
     },
+
     ["fm_content_vehrob_arena"] = {
         iChallengeCondition = 7922 + 1343 + 14,
         iChallengeBitset = 7922 + 1341

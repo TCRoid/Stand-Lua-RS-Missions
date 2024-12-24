@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/12/21"
+local SCRIPT_VERSION <const> = "2024/12/24"
 
 local SUPPORT_GAME_VERSION <const> = "1.70-3411"
 
@@ -1380,7 +1380,7 @@ end)
 local Club_Source = menu.list(Nightclub_Business,
     string.format("%s (%s)", get_label_text("YOHN_OP1_T"), get_label_text("CELL_YOHAN_N")), {}, "")
 
-local ClubSource = {
+local ClubSourceVars = {
     eMissionVariation = -1,
     fAmountMultiplier = -1,
     eGoodsType = -1
@@ -1388,15 +1388,15 @@ local ClubSource = {
 
 menu.list_select(Club_Source, Lang.SelectMission, {}, "",
     Tables.ClubSource, -1, function(value)
-        ClubSource.eMissionVariation = value
+        ClubSourceVars.eMissionVariation = value
     end)
 
 rs.menu_slider(Club_Source, "获取货物数量倍数", {}, "", -1, 10, -1, 1, function(value)
-    ClubSource.fAmountMultiplier = value
+    ClubSourceVars.fAmountMultiplier = value
 end)
 menu.list_select(Club_Source, "选择货物类型", {}, "",
     Tables.GoodsType, -1, function(value)
-        ClubSource.eGoodsType = value
+        ClubSourceVars.eGoodsType = value
     end)
 menu.toggle_loop(Club_Source, "设置任务数据", {}, Lang.E_B_S_M, function()
     local script = "fm_content_club_source"
@@ -1404,16 +1404,12 @@ menu.toggle_loop(Club_Source, "设置任务数据", {}, Lang.E_B_S_M, function()
         return
     end
 
-    if ClubSource.fAmountMultiplier ~= -1 then
-        for _, offset in pairs(TunablesI["NightclubSourceRewardAmount"]) do
-            local default_value = TunableDefaults[offset]
-            local new_value = default_value * ClubSource.fAmountMultiplier
-            GLOBAL_SET_INT(g_sMPTunables + offset, new_value)
-        end
+    if ClubSourceVars.fAmountMultiplier ~= -1 then
+        Tunables.SetIntListMultiplier("NightclubSourceRewardAmount", ClubSourceVars.fAmountMultiplier)
     end
 
-    if ClubSource.eGoodsType ~= -1 then
-        LOCAL_SET_INT(script, Locals[script].eGoodsType, ClubSource.eGoodsType)
+    if ClubSourceVars.eGoodsType ~= -1 then
+        LOCAL_SET_INT(script, Locals[script].eGoodsType, ClubSourceVars.eGoodsType)
     end
 end, function()
     Tunables.RestoreIntDefaults("NightclubSourceRewardAmount")
@@ -1423,7 +1419,7 @@ menu.divider(Club_Source, "")
 
 menu.action(Club_Source, Labels.LaunchMission, {}, "", function()
     -- FMMC_TYPE_CLUB_SOURCE
-    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(301, ClubSource.eMissionVariation)
+    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(301, ClubSourceVars.eMissionVariation)
 end)
 
 
@@ -1454,18 +1450,18 @@ end)
 
 menu.divider(Nightclub_Business, Labels.Sell)
 
-local ClubSell = {
+local ClubSellVars = {
     eMissionVariation = -1,
     iSaleValue = -1
 }
 
 menu.list_select(Nightclub_Business, Lang.SelectMission, {}, "",
     Tables.NightclubSell, -1, function(value)
-        ClubSell.eMissionVariation = value
+        ClubSellVars.eMissionVariation = value
     end)
 menu.toggle_loop(Nightclub_Business, "设置出售任务数据", {}, Lang.E_B_S_M, function()
-    if ClubSell.eMissionVariation ~= -1 then
-        GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(ClubSell.eMissionVariation)
+    if ClubSellVars.eMissionVariation ~= -1 then
+        GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(ClubSellVars.eMissionVariation)
     end
 end)
 
@@ -1491,11 +1487,11 @@ end)
 menu.divider(Nightclub_Business, "出售价值")
 
 rs.menu_slider(Nightclub_Business, "货物单位价值", { "NightclubSaleValue" }, "", -1, 1000000, -1, 10000, function(value)
-    ClubSell.iSaleValue = value
+    ClubSellVars.iSaleValue = value
 end)
 menu.toggle_loop(Nightclub_Business, "设置出售价值", {}, "", function()
-    if ClubSell.iSaleValue ~= -1 then
-        Tunables.SetIntList("NightclubProductSaleValue", ClubSell.iSaleValue)
+    if ClubSellVars.iSaleValue ~= -1 then
+        Tunables.SetIntList("NightclubProductSaleValue", ClubSellVars.iSaleValue)
     end
 end, function()
     Tunables.RestoreIntDefaults("NightclubProductSaleValue")
@@ -1510,7 +1506,7 @@ end)
 
 local Biker_Business <const> = menu.list(Business_Mission, Labels.MotorcycleClub, {}, "")
 
-local MotorcycleClubVars = {
+local BikerVars = {
     Steal = {
         iResupplyValue = 60,
         eMissionVariation = -1
@@ -3484,10 +3480,12 @@ local function HANDLE_HEIST_ELITE_CHALLENGE(script, eEliteChallenge)
         return
     end
     if eEliteChallenge == 2 then
+        GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestarted, true)
         GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestartedDuringStrandMission, true)
         return
     end
 
+    GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestarted, false)
     GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestartedDuringStrandMission, false)
 
     GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
@@ -6308,7 +6306,7 @@ local SeiviceEarnThreshold = {
         { itemName = "SERVICE_EARN_JUGGALO_PHONE_MISSION", menuName = "达克斯工作" },
         { itemName = "SERVICE_EARN_FROM_FMBB_BOSS_WORK", menuName = "客户差事" },
         { itemName = "SERVICE_EARN_CASINO_MISSION_REWARD", menuName = "赌场工作" },
-        { itemName = "SERVICE_EARN_SMUGGLER_OPS", menuName = "SMUGGLER_OPS" },
+        { itemName = "SERVICE_EARN_SMUGGLER_OPS", menuName = "LSA 行动" },
         { itemName = "SERVICE_EARN_AVENGER_OPERATIONS", menuName = "AVENGER_OPERATIONS" },
     }
 }
