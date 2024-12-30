@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/12/24"
+local SCRIPT_VERSION <const> = "2024/12/30"
 
 local SUPPORT_GAME_VERSION <const> = "1.70-3411"
 
@@ -514,18 +514,6 @@ function GB_SET_PLAYER_GANG_BOSS_MISSION_VARIATION(iVariation, iSubvariation, iL
     if iLocation ~= nil then
         GLOBAL_SET_INT(MPGlobalsAmbience.sMagnateGangBossData.iMissionVariation + 2, iLocation)
     end
-end
-
---- @param iWarehouse integer
---- @param contrabandSize integer
---- @param contrabandType integer
---- @param bSpecialItem integer
-function GB_SET_PLAYER_CONTRABAND_MISSION_DATA(iWarehouse, contrabandSize, contrabandType, bSpecialItem)
-    local contrabandMissionData = GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData()
-    GLOBAL_SET_INT(contrabandMissionData.iMissionWarehouse, iWarehouse)
-    GLOBAL_SET_INT(contrabandMissionData.contrabandSize, contrabandSize)
-    GLOBAL_SET_INT(contrabandMissionData.contrabandType, contrabandType)
-    GLOBAL_SET_BOOL(contrabandMissionData.bSpecialItem, bSpecialItem)
 end
 
 ----------------------------------------
@@ -3849,42 +3837,20 @@ end)
 
 menu.divider(Casino_Heist, "")
 
-local patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION = ScriptPatch
+
+local patch_SOLO_CASINO_HEIST = ScriptPatch.New("fmmc_launcher", {
+    ["SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION"] = {
+        pattern = "2D 01 03 00 00 5D ? ? ? 2A 06 56 05 00 5D ? ? ? 20 2A 06 56 05 00 5D",
+        offset = 5,
+        patch_bytes = { 0x71, 0x2E, 0x01, 0x01 }
+    }
+})
+
 menu.toggle_loop(Casino_Heist, "修补单人赌场问题", {},
     "解决单人进行任务无法设置终章面板的问题\n确保在开始任务前开启功能\n[注意！完成任务后及时关闭功能，否则会影响到其它任务！]", function()
-        local script = "fmmc_launcher"
-        if not IS_SCRIPT_RUNNING(script) then
-            patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION.patched = false
-            return
-        end
-
-        if patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION.patched then
-            return
-        end
-
-        if not patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION.initialized then
-            if patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION.scan_failed then
-                return
-            end
-
-            local patcher = ScriptPatch.New(script,
-                "2D 01 03 00 00 5D ? ? ? 2A 06 56 05 00 5D ? ? ? 20 2A 06 56 05 00 5D", {
-                    { 0x5, 0x71 },
-                    { 0x6, 0x2E },
-                    { 0x7, 0x01 },
-                    { 0x8, 0x01 }
-                })
-
-            if not patcher then
-                patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION.scan_failed = true
-                return
-            end
-            patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION = patcher
-        end
-
-        patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION:Enable()
+        patch_SOLO_CASINO_HEIST:Enable()
     end, function()
-        patch_SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION:Disable()
+        patch_SOLO_CASINO_HEIST:Disable()
     end)
 
 
@@ -5114,7 +5080,7 @@ function StatEditor.getStatName()
     end
     stat = string.upper(stat)
 
-    if stat:sub(1, 4) == "MP0_" or stat:sub(0, 4) == "MP1_" then
+    if stat:sub(1, 4) == "MP0_" or stat:sub(1, 4) == "MP1_" then
         return stat
     end
     if stat:sub(1, 3) == "MP_" or stat:sub(1, 6) == "MPPLY_" then
@@ -5535,7 +5501,7 @@ menu.action(Doomsday_Heist_Setups, "读取", {}, "", function()
 end)
 
 menu.action(Doomsday_Heist_Setups, "写入", {}, "", function()
-    SET_HEIST_PREP_STAT_BY_TOGGLE_BIT_MENUS(MPX("GANGOPS_FLOW_MISSION_PROG"), DoomsdayHeistPrepVars.Prep.menuList)
+    SET_HEIST_PREP_STAT_BY_TOGGLE_BIT_MENUS(MPX("GANGOPS_FLOW_MISSION_PROG"), DoomsdayHeistPrepVars.Setup.menuList)
 
     RELOAD_HEIST_PLANNING_BOARD()
     util.toast("写入完成")
@@ -6122,7 +6088,7 @@ menu.action(Island_Heist_Prep_Secondary, "写入", {}, "", function()
     STAT_SET_INT(MPX("H4LOOT_WEED_C_SCOPED"), lootCompound.weed)
     STAT_SET_INT(MPX("H4LOOT_COKE_C_SCOPED"), lootCompound.coke)
     STAT_SET_INT(MPX("H4LOOT_GOLD_C_SCOPED"), lootCompound.gold)
-    STAT_SET_INT(MPX("H4LOOT_PAIN_SCOPEDT"), paintings)
+    STAT_SET_INT(MPX("H4LOOT_PAINT_SCOPED"), paintings)
     STAT_SET_INT(MPX("H4LOOT_CASH_I_SCOPED"), lootIsland.cash)
     STAT_SET_INT(MPX("H4LOOT_WEED_I_SCOPED"), lootIsland.weed)
     STAT_SET_INT(MPX("H4LOOT_COKE_I_SCOPED"), lootIsland.coke)

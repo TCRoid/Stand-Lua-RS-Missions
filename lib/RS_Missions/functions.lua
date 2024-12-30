@@ -837,132 +837,126 @@ function rs.delete_menu_children(list)
 end
 
 --------------------------------
--- Script Patch Functions
+-- Script Patch Function
 --------------------------------
 
 ScriptPatch = {
     initialized = false,
-    patched = false,
+    enabled = false,
     scan_failed = false,
 
     script = "",
-    pattern = "",
-    script_address = 0,
-
-    address = 0,
-    patch_data = {},
-    original_data = {}
+    script_address = 0
 }
 ScriptPatch.__index = ScriptPatch
 
+function ScriptPatch:Init()
+    for key, data in pairs(self.patch_data) do
+        local pattern = data.pattern
+        local offset = data.offset
+        local patch_bytes = data.patch_bytes
+
+        local addr = self.ScanPattern(self.script, pattern)
+        if not addr then
+            self.scan_failed = true
+            return false
+        end
+
+        addr = addr + offset
+
+        local original_bytes = {}
+        for i, patch_byte in pairs(patch_bytes) do
+            local patch_addr = addr + i - 1
+
+            table.insert(original_bytes, memory.read_ubyte(patch_addr))
+            memory.write_ubyte(patch_addr, patch_byte)
+        end
+
+        self.patch_data[key].address = addr
+        self.patch_data[key].original_bytes = original_bytes
+    end
+
+    self.script_address = memory.scan_script(self.script, "")
+    self.initialized = true
+
+    self.enabled = true
+end
+
 function ScriptPatch:Enable()
-    if self.scan_failed then
-        return false
+    if not IS_SCRIPT_RUNNING(self.script) then
+        self.enabled = false
+        return
+    end
+
+    if self.enabled or self.scan_failed then
+        return
+    end
+
+    if not self.initialized then
+        self:Init()
+        return
     end
 
     if self:_isNeedUpdate() then
-        if not self:_Update() then
-            return false
+        self.initialized = false
+        return
+    end
+
+    for key, data in pairs(self.patch_data) do
+        local addr = data.address
+        local patch_bytes = data.patch_bytes
+
+        for i, patch_byte in pairs(patch_bytes) do
+            local patch_addr = addr + i - 1
+            memory.write_ubyte(patch_addr, patch_byte)
         end
     end
 
-    for _, item in pairs(self.patch_data) do
-        local _offset = item[1]
-        local _byte = item[2]
-
-        local _addr = self.address + _offset
-        memory.write_ubyte(_addr, _byte)
-    end
-
-    self.patched = true
+    self.enabled = true
 end
 
 function ScriptPatch:Disable()
-    if not self.patched then
-        return false
+    if not self.enabled then
+        return
     end
 
-    for _, item in pairs(self.original_data) do
-        local _offset = item[1]
-        local _byte = item[2]
+    for key, data in pairs(self.patch_data) do
+        local addr = data.address
+        local original_bytes = data.original_bytes
 
-        local _addr = self.address + _offset
-        memory.write_ubyte(_addr, _byte)
+        for i, original_byte in pairs(original_bytes) do
+            local patch_addr = addr + i - 1
+            memory.write_ubyte(patch_addr, original_byte)
+        end
     end
 
-    self.patched = false
+    self.enabled = false
 end
 
 function ScriptPatch:_isNeedUpdate()
-    local script_address = memory.scan_script(self.script, "")
-    if self.script_address == script_address then
-        return false
-    end
-
-    self.script_address = script_address
-    return true
+    return self.script_address ~= memory.scan_script(self.script, "")
 end
 
-function ScriptPatch:_Update()
-    local addr = memory.scan_script(self.script, self.pattern)
-    if not addr or addr == 0 then
-        toast("Scan pattern failed!\n" .. self.script .. ": " .. self.pattern)
-        self.scan_failed = true
-        return false
-    end
-
-    self.address = addr
-    return true
-end
-
---- @param script string|integer
+--- @param script string
 --- @param pattern string
---- @param patch_data table<int, table>
-function ScriptPatch.New(script, pattern, patch_data)
+--- @return boolean|integer
+function ScriptPatch.ScanPattern(script, pattern)
     local addr = memory.scan_script(script, pattern)
     if not addr or addr == 0 then
-        toast("Scan pattern failed!\n" .. script .. ": " .. pattern)
+        util.toast("Scan pattern failed!\n" .. script .. ": " .. pattern, TOAST_ALL)
         return false
     end
+    return addr
+end
 
-    -- if offset then
-    --     if type(offset) == "number" then
-    --         addr = addr + offset
-    --     elseif type(offset) == "function" then
-    --         addr = offset(addr)
-    --     end
-    -- end
-
-    local original_data = {}
-
-    for _, item in pairs(patch_data) do
-        local _offset = item[1]
-        local _byte = item[2]
-
-        local _addr = addr + _offset
-        local ori_byte = memory.read_ubyte(_addr)
-        table.insert(original_data, { _offset, ori_byte })
-    end
-
-
+--- @param script string
+--- @param patch_data table
+--- @return ScriptPatch
+function ScriptPatch.New(script, patch_data)
     local self = setmetatable({}, ScriptPatch)
 
     self.script = script
-    self.pattern = pattern
-    self.script_address = memory.scan_script(script, "")
-
-    self.address = addr
     self.patch_data = patch_data
-    self.original_data = original_data
 
-
-    -- local text = string.format("\nAddress: %x\nOriginal Bytes:\n", addr):upper()
-    -- for _, data in pairs(original_data) do
-    --     text = text .. string.format("%x: %x", data[1], data[2]):upper() .. "\n"
-    -- end
-    -- toast(text)
-
-
-    self.initialized = true
     return self
 end

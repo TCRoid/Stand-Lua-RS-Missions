@@ -91,6 +91,17 @@ GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData = function()
     }
 end
 
+-- GUNRUNNING_MISSION_DATA
+GlobalplayerBD_FM_3.sMagnateGangBossData.gunrunningMissionData = function()
+    local _offset = GlobalplayerBD_FM_3.sMagnateGangBossData._ + 215
+    local _index = Globals.GlobalplayerBD_FM_3() + _offset
+
+    return {
+        eLocation = _index,
+        sDropOffData = _index + 1
+    }
+end
+
 
 
 -- MPGlobalsAmbienceStruct
