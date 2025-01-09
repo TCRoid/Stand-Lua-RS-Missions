@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2024/12/30"
+local SCRIPT_VERSION <const> = "2025/1/9"
 
 local SUPPORT_GAME_VERSION <const> = "1.70-3411"
 
@@ -1039,7 +1039,7 @@ menu.list_action(Hangar_Cargo_Type, "设置全部货物", {}, "", Tables.HangarP
             SET_PACKED_STAT_INT_CODE(statIndex, value)
         end
     end
-    util.toast("完成！")
+    toast_done()
 end)
 
 menu.action(Hangar_Cargo_Type, "刷新", {}, "", function()
@@ -2624,24 +2624,24 @@ menu.divider(Salvage_Yard_Robbery, Labels.PREP)
 
 --#region Salvage Yard Robbery Prep
 
-local Salvage_Yard_Robbery_Tunables = menu.list(Salvage_Yard_Robbery, "可调整项", {}, "确保在选择开启抢劫任务之前设置\n切换战局会失效")
+local Salvage_Yard_Robbery_Tunables <const> = menu.list(Salvage_Yard_Robbery, "可调整项", {}, Lang.E_B_S_H_TUN)
 
 menu.action(Salvage_Yard_Robbery_Tunables, "载具可保留", {}, "", function()
     Tunables.SetIntList("SalvageYardRobberyCanKeep", 1)
 
     RELOAD_HEIST_PLANNING_BOARD()
-    util.toast("完成")
+    toast_done()
 end)
-menu.click_slider(Salvage_Yard_Robbery_Tunables, "最大出售价值", {}, "", 0, 1000000, 300000, 50000, function(value)
+menu.click_slider(Salvage_Yard_Robbery_Tunables, "最大出售价值", {}, "", 0, 500000, 300000, 50000, function(value)
     Tunables.SetIntList("SalvageYardRobberyValue", value)
 
     RELOAD_HEIST_PLANNING_BOARD()
-    util.toast("完成")
+    toast_done()
 end)
 
 
 
-local Salvage_Yard_Robbery_Prep = menu.list(Salvage_Yard_Robbery, "前置编辑", {}, "")
+local Salvage_Yard_Robbery_Prep <const> = menu.list(Salvage_Yard_Robbery, "前置编辑", {}, "")
 
 menu.textslider(Salvage_Yard_Robbery_Prep, Labels.HeistPrep, {}, "", Tables.CompleteReset, function(value)
     if value == 1 then
@@ -2688,7 +2688,7 @@ SalvageYardRobberyVars.prep.robbery = menu.list_select(Salvage_Yard_Robbery_Prep
     Tables.SalvageYardRobbery, 0, function(value) end)
 
 SalvageYardRobberyVars.prep.saleValue = menu.slider(Salvage_Yard_Robbery_Prep, "最大出售价值", { "salvRobberyPrepValue" }, "",
-    0, 1000000, 0, 50000, function(value) end)
+    0, 5000000, 0, 50000, function(value) end)
 
 SalvageYardRobberyVars.prep.canKeep = menu.toggle(Salvage_Yard_Robbery_Prep, "可保留", {}, "", function(toggle) end)
 
@@ -2839,21 +2839,34 @@ end)
 
 menu.divider(FIB_Files, Labels.PREP)
 
-local FIB_Files_Prep <const> = menu.list(FIB_Files, "前置编辑", {}, "")
-
 --#region FIB Files Prep
+
+local FIB_Files_Tunables <const> = menu.list(FIB_Files, "可调整项", {}, Lang.E_B_S_H_TUN)
+
+menu.list_action(FIB_Files_Tunables, "重点档案", {}, "", Tables.FIBFiles, function(value)
+    Tunables.SetInt("HACKER24_FOCUS_ROBBERY", value)
+    toast_done()
+end)
+menu.click_slider(FIB_Files_Tunables, "报酬", {}, "",
+    0, 1000000, 300000, 50000, function(value)
+        Tunables.SetIntList("FIB Files Reward", value)
+        toast_done()
+    end)
+
+
+local FIB_Files_Prep <const> = menu.list(FIB_Files, "前置编辑", {}, "")
 
 menu.list_action(FIB_Files_Prep, "设置当前任务", {}, "", Tables.FIBFiles, function(value)
     STAT_SET_INT(MPX("HACKER24_ACTIVE_ROB"), value)
 
-    util.toast("完成！")
+    toast_done()
 end)
 menu.textslider(FIB_Files_Prep, Labels.HeistPrep, {}, "", Tables.CompleteReset, function(value)
     local iStatInt = STAT_GET_INT(MPX("HACKER24_GEN_BS"))
     iStatInt = TOGGLE_BITS(iStatInt, (value == 1), 2, 3, 4)
     STAT_SET_INT(MPX("HACKER24_GEN_BS"), iStatInt)
 
-    util.toast("完成！")
+    toast_done()
 end)
 
 --#endregion
@@ -3475,8 +3488,10 @@ local function HANDLE_HEIST_ELITE_CHALLENGE(script, eEliteChallenge)
 
     GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestarted, false)
     GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bHasQuickRestartedDuringStrandMission, false)
+    GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAnyPlayerDiedDuringMission, false)
 
     GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
+
     LOCAL_SET_INT(script, Locals[script].iTeamKills, 150)
     LOCAL_SET_INT(script, Locals[script].iTeamHeadshots, 150)
 end
@@ -3501,7 +3516,7 @@ menu.action(Apartment_Heist, "所有前置任务可开启", {}, "取消任务面
     end
 
     RELOAD_HEIST_PLANNING_BOARD()
-    util.toast("完成")
+    toast_done()
 end)
 
 
@@ -3513,39 +3528,82 @@ local ApartmentHeistVars = {
     iCashTotalTake = -1,
 }
 
-menu.list_action(Apartment_Heist, "完成奖章挑战", {}, "进行任务时使用", Tables.HeistAwards, function(value)
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
-    end
 
-    if value == 3 then
+local Apartment_Heist_Award <const> = menu.list(Apartment_Heist, "奖章挑战", {}, "")
+
+menu.textslider(Apartment_Heist_Award, Labels.All, {}, "", { Labels.Complete, Labels.Reset }, function(value)
+    if value == 1 then
+        local script = "fm_mission_controller"
+        if not IS_SCRIPT_RUNNING(script) then
+            util.toast("在任务结束之前使用")
+            return
+        end
+
         -- Ultimate Challenge
         GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
-    elseif value == 4 then
         -- First Person
         GLOBAL_SET_INT(g_FMMC_STRUCT.iFixedCamera, 1)
-    elseif value == 5 then
         -- Member
         GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
         LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST
+
+
+        local HeistAwardCompleteBitset = 268435455 -- 2^28-1
+        for _, item in pairs(Tables.HeistAwardsStats) do
+            STAT_SET_INT(item[1], HeistAwardCompleteBitset)
+        end
+    else
+        for _, item in pairs(Tables.HeistAwardsStats) do
+            STAT_SET_INT(item[1], 0)
+            STAT_SET_BOOL(item[2], false)
+            -- Same Team
+            STAT_SET_INT("MPPLY_HEISTTEAMPROGRESSCOUNTER", 0)
+        end
     end
 
-    local HeistAwardCompleteBitset = 268435455 -- 2^28-1
-    local stats = Tables.HeistAwardsStats[value]
-    STAT_SET_INT(stats[1], HeistAwardCompleteBitset)
+    toast_done()
 end)
 
-menu.list_action(Apartment_Heist, "清空奖章挑战记录", {}, "", Tables.HeistAwards, function(value)
-    local stats = Tables.HeistAwardsStats[value]
-    STAT_SET_INT(stats[1], 0)
-    STAT_SET_BOOL(stats[2], false)
+for _, item in pairs(Tables.HeistAwards) do
+    menu.textslider(Apartment_Heist_Award, item[2], {}, "", { Labels.Complete, Labels.Reset }, function(value)
+        local index = item[1]
 
-    if value == 2 then
-        -- Same Team
-        STAT_SET_INT("MPPLY_HEISTTEAMPROGRESSCOUNTER", 0)
-    end
-end)
+        if value == 1 then
+            local script = "fm_mission_controller"
+            if not IS_SCRIPT_RUNNING(script) then
+                util.toast("在任务结束之前使用")
+                return
+            end
+
+            if index == 3 then
+                -- Ultimate Challenge
+                GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
+            elseif index == 4 then
+                -- First Person
+                GLOBAL_SET_INT(g_FMMC_STRUCT.iFixedCamera, 1)
+            elseif index == 5 then
+                -- Member
+                GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAmIHeistLeader, false)
+                LOCAL_CLEAR_BIT(script, Locals[script].iClientBitSet(), 20) -- PBBOOL_HEIST_HOST
+            end
+
+            local HeistAwardCompleteBitset = 268435455 -- 2^28-1
+            local stats = Tables.HeistAwardsStats[index]
+            STAT_SET_INT(stats[1], HeistAwardCompleteBitset)
+        else
+            local stats = Tables.HeistAwardsStats[index]
+            STAT_SET_INT(stats[1], 0)
+            STAT_SET_BOOL(stats[2], false)
+
+            if index == 2 then
+                -- Same Team
+                STAT_SET_INT("MPPLY_HEISTTEAMPROGRESSCOUNTER", 0)
+            end
+        end
+
+        toast_done()
+    end)
+end
 
 
 menu.list_select(Apartment_Heist, Labels.EliteChallenge, {}, "", Tables.EliteChallenge, 0, function(value)
@@ -3647,25 +3705,70 @@ local DoomsdayHeistVars = {
     iCashReward = -1,
 }
 
-menu.list_action(Doomsday_Heist, "完成奖章挑战", {}, "进行任务时使用\n不是全部有效", Tables.GangopsAwards, function(value)
-    local script = "fm_mission_controller"
-    if not IS_SCRIPT_RUNNING(script) then
-        return
+
+local Doomsday_Heist_Award <const> = menu.list(Doomsday_Heist, "奖章挑战", {}, "")
+
+menu.textslider(Doomsday_Heist_Award, Labels.All, {}, "", { Labels.Complete, Labels.Reset }, function(value)
+    if value == 1 then
+        local script = "fm_mission_controller"
+        if not IS_SCRIPT_RUNNING(script) then
+            util.toast("在任务结束之前使用")
+            return
+        end
+
+        GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
+        GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAnyPlayerDiedDuringMission, false)
+
+        GLOBAL_SET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iNumGoonsInGang(), 3)
+
+        local GangopsAwardCompleteBitset = 536870911 -- 2^29-1
+        for _, item in pairs(Tables.GangopsAwardsStats) do
+            STAT_SET_INT(item[1], GangopsAwardCompleteBitset)
+        end
+    else
+        for _, item in pairs(Tables.GangopsAwardsStats) do
+            STAT_SET_INT(item[1], 0)
+            STAT_SET_BOOL(item[2], false)
+        end
     end
 
-    local GangopsAwardCompleteBitset = 536870911 -- 2^29-1
-    local stats = Tables.GangopsAwardsStats[value]
-    STAT_SET_INT(stats[1], GangopsAwardCompleteBitset)
-
-    GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
-    GLOBAL_SET_INT(g_TransitionSessionNonResetVars.bAnyPlayerDiedDuringMission, 0)
+    toast_done()
 end)
 
-menu.list_action(Doomsday_Heist, "清空奖章挑战记录", {}, "", Tables.GangopsAwards, function(value)
-    local stats = Tables.GangopsAwardsStats[value]
-    STAT_SET_INT(stats[1], 0)
-    STAT_SET_BOOL(stats[2], false)
-end)
+for _, item in pairs(Tables.GangopsAwards) do
+    menu.textslider(Doomsday_Heist_Award, item[2], {}, "", { Labels.Complete, Labels.Reset }, function(value)
+        local index = item[1]
+
+        if value == 1 then
+            local script = "fm_mission_controller"
+            if not IS_SCRIPT_RUNNING(script) then
+                util.toast("在任务结束之前使用")
+                return
+            end
+
+            if index == 2 or index == 3 or index == 4 then
+                GLOBAL_SET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iNumGoonsInGang(), index - 1)
+            end
+
+            if index == 5 or index == 6 or index == 7 then
+                GLOBAL_SET_INT(g_FMMC_STRUCT.iDifficulity, DIFF_HARD)
+                GLOBAL_SET_BOOL(g_TransitionSessionNonResetVars.bAnyPlayerDiedDuringMission, false)
+
+                GLOBAL_SET_INT(GlobalplayerBD_FM_3.sMagnateGangBossData.iNumGoonsInGang(), index - 4)
+            end
+
+            local GangopsAwardCompleteBitset = 536870911 -- 2^29-1
+            local stats = Tables.GangopsAwardsStats[index]
+            STAT_SET_INT(stats[1], GangopsAwardCompleteBitset)
+        else
+            local stats = Tables.GangopsAwardsStats[index]
+            STAT_SET_INT(stats[1], 0)
+            STAT_SET_BOOL(stats[2], false)
+        end
+
+        toast_done()
+    end)
+end
 
 
 menu.list_select(Doomsday_Heist, Labels.EliteChallenge, {}, "", Tables.EliteChallenge, 0, function(value)
@@ -3842,7 +3945,7 @@ local patch_SOLO_CASINO_HEIST = ScriptPatch.New("fmmc_launcher", {
     ["SHOULD_CORONA_JOB_LAUNCH_AFTER_TRANSITION"] = {
         pattern = "2D 01 03 00 00 5D ? ? ? 2A 06 56 05 00 5D ? ? ? 20 2A 06 56 05 00 5D",
         offset = 5,
-        patch_bytes = { 0x71, 0x2E, 0x01, 0x01 }
+        patch_bytes = ScriptFunc.ReturnBool(false, 1)
     }
 })
 
@@ -4123,6 +4226,13 @@ rs.menu_slider(Island_Heist, "主要目标价值", { "IslandHeistTargetValue" },
         IslandHeistVars.iTargetValue = value
     end)
 
+menu.click_slider(Island_Heist, "拿取财物收入", {}, "",
+    0, 2550000, 0, 50000, function(value)
+        FM_MISSION_CONTROLLER.SPOOF_SCRIPT(function(script)
+            LOCAL_SET_INT(script, Locals[script].sMissionContinuityVars.iGrabbedCashTotalTake, value)
+        end)
+    end)
+
 
 menu.toggle(Island_Heist, "重置前置任务面板", {}, "不重置则可以直接重复进行终章", function(toggle)
     IslandHeistVars.bResetPrepStats = toggle
@@ -4344,7 +4454,7 @@ menu.list_action(Tuner_Robbery_Prep, "设置当前合约", {}, "", Tables.TunerR
     STAT_SET_INT(MPX("TUNER_CURRENT"), value)
 
     RELOAD_HEIST_PLANNING_BOARD()
-    util.toast("完成！")
+    toast_done()
 end)
 menu.textslider(Tuner_Robbery_Prep, Labels.HeistPrep, {}, "", Tables.CompleteReset, function(value)
     local iStatInt = STAT_GET_INT(MPX("TUNER_GEN_BS"))
@@ -4352,7 +4462,7 @@ menu.textslider(Tuner_Robbery_Prep, Labels.HeistPrep, {}, "", Tables.CompleteRes
     STAT_SET_INT(MPX("TUNER_GEN_BS"), iStatInt)
 
     RELOAD_HEIST_PLANNING_BOARD()
-    util.toast("完成！")
+    toast_done()
 end)
 
 --#endregion
@@ -4440,7 +4550,7 @@ menu.textslider(Fixer_VIP, "全部前置", {}, "", Tables.CompleteReset, functio
         STAT_SET_INT(MPX("FIXER_STORY_BS"), 0)
         STAT_SET_INT(MPX("FIXER_STORY_STRAND"), -1)
     end
-    util.toast("完成")
+    toast_done()
 end)
 
 menu.list_action(Fixer_VIP, Labels.LaunchMission, {}, "", Tables.FixerVIP, function(value)
@@ -6190,7 +6300,7 @@ menu.list_action(Chicken_Factory_Raid_Prep, "选择武器", {}, "", {
 }, function(value)
     SET_PACKED_STAT_BOOL_CODE(51019, value)
     SET_PACKED_STAT_BOOL_CODE(51020, 7)
-    util.toast("完成")
+    toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "选择装备", {}, "", {
     { 0, get_label_text("CBR3_G_S10"), {}, get_label_text("CBR3_G_S10H") },
@@ -6199,20 +6309,20 @@ menu.list_action(Chicken_Factory_Raid_Prep, "选择装备", {}, "", {
 }, function(value)
     SET_PACKED_STAT_BOOL_CODE(51021, value)
     SET_PACKED_STAT_BOOL_CODE(51022, 7)
-    util.toast("完成")
+    toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "选择载具", {}, "", {
     { 3, get_label_text("JUGULAR") },
     { 4, get_label_text("SUGOI") }
 }, function(value)
     SET_PACKED_STAT_BOOL_CODE(51023, value)
-    util.toast("完成")
+    toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "触发警觉", {}, "", {
     { 1, "是" }, { 0, "否" }
 }, function(value)
     SET_PACKED_STAT_BOOL_CODE(42108, value == 1)
-    util.toast("完成")
+    toast_done()
 end)
 
 menu.divider(Chicken_Factory_Raid_Prep, "")
@@ -6221,7 +6331,7 @@ menu.textslider(Chicken_Factory_Raid_Prep, "全部前置", {}, "", Tables.Comple
     value = (value == 1) and -1 or 0
 
     STAT_SET_INT(MPX("SALV23_INST_PROG"), value)
-    util.toast("完成")
+    toast_done()
 end)
 
 menu.action(Chicken_Factory_Raid_Prep, "读取", {}, "", function()
@@ -6267,13 +6377,17 @@ local SeiviceEarnThreshold = {
         { itemName = "SERVICE_EARN_SALVAGE_YARD_ROBBERY_FINALE", menuName = "回收站抢劫" },
         { itemName = "SERVICE_EARN_SALVAGE_YARD_SELL_VEH", menuName = "回收站出售载具" },
         { itemName = "SERVICE_EARN_HACKER_ROBBERY_FINALE", menuName = "FIB 档案" },
+
         { itemName = "SERVICE_EARN_AGENCY_SECURITY_CONTRACT", menuName = "安保合约" },
         { itemName = "SERVICE_EARN_AGENCY_PAYPHONE_HIT", menuName = "电话暗杀" },
         { itemName = "SERVICE_EARN_JUGGALO_PHONE_MISSION", menuName = "达克斯工作" },
         { itemName = "SERVICE_EARN_FROM_FMBB_BOSS_WORK", menuName = "客户差事" },
         { itemName = "SERVICE_EARN_CASINO_MISSION_REWARD", menuName = "赌场工作" },
         { itemName = "SERVICE_EARN_SMUGGLER_OPS", menuName = "LSA 行动" },
-        { itemName = "SERVICE_EARN_AVENGER_OPERATIONS", menuName = "AVENGER_OPERATIONS" },
+        { itemName = "SERVICE_EARN_AVENGER_OPERATIONS", menuName = "颠覆计划" },
+
+        { itemName = "SERVICE_EARN_ARMS_TRAFFICKING", menuName = "ARMS_TRAFFICKING" },
+        { itemName = "SERVICE_EARN_OSCAR_GUZMAN_MISSION", menuName = "OSCAR_GUZMAN_MISSION" },
     }
 }
 

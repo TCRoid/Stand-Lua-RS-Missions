@@ -67,15 +67,15 @@ GlobalplayerBD_FM_3.sMagnateGangBossData = {
 
     -- GlobalplayerBD_FM_3[NATIVE_TO_INT(PLAYER_ID())].sMagnateGangBossData.
 
+    iNumGoonsInGang = function()
+        return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 19
+    end,
     iMissionToLaunch = function()
         return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 32
     end,
     iActiveMission = function()
         return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 33
     end,
-    iNumGoonsInGang = function()
-        return Globals.GlobalplayerBD_FM_3() + GlobalplayerBD_FM_3.sMagnateGangBossData._ + 19
-    end
 }
 
 -- CONTRABAND_MISSION_DATA
@@ -360,20 +360,18 @@ Locals = {
     --------  Heist Mission  --------
 
     ["fm_mission_controller"] = {
-        iNextMission = 19781 + 1062,
-        iTeamScore = 19781 + 1232 + 1, -- +[0~3]
-
         iServerGameState = 19781,
         iServerBitSet = 19781 + 1,
         iServerBitSet1 = 19781 + 2,
 
-        iCashGrabTotalDrop = 19781 + 2685,
-        iCashGrabTotalTake = 19781 + 2686,
-
-        iTeamKills = 19781 + 1725 + 1,
-        iTeamHeadshots = 19781 + 1740 + 1,
+        iNextMission = 19781 + 1062,
+        iTeamScore = 19781 + 1232 + 1, -- +[0~3]
 
         iTotalMissionEndTime = 19781 + 987,
+        iTeamKills = 19781 + 1725 + 1,
+        iTeamHeadshots = 19781 + 1740 + 1,
+        iCashGrabTotalDrop = 19781 + 2685,
+        iCashGrabTotalTake = 19781 + 2686,
 
         iClientBitSet = function()
             -- MC_playerBD[PARTICIPANT_ID_TO_INT()].iClientBitSet
@@ -394,16 +392,20 @@ Locals = {
         stZoneTimers = 60654 + 1 + 0 * 2, -- casino vault
     },
     ["fm_mission_controller_2020"] = {
-        iNextMission = 52171 + 1589,
-        iTeamScore = 52171 + 1776 + 1, -- +[0~3]
-
         iServerGameState = 52171,
         iServerBitSet = 52171 + 1,
         iServerBitSet1 = 52171 + 2,
 
+        iNextMission = 52171 + 1589,
+        iTeamScore = 52171 + 1776 + 1, -- +[0~3]
+
         iTotalMissionEndTime = 52171 + 1496,
+
+        -- FMMC_MISSION_CONTINUITY_VARS
         sMissionContinuityVars = {
-            iTotalMissionTime = 55623 + 1518 + 29
+            iTotalMissionTime = 55623 + 1518 + 29,
+            iGrabbedCashTotalDropped = 55623 + 1518 + 52,
+            iGrabbedCashTotalTake = 55623 + 1518 + 53
         },
 
 

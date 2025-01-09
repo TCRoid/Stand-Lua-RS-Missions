@@ -6,6 +6,7 @@ Labels = {
     Other = get_label_text("PIM_THMISC"),
     Complete = get_label_text("AWARD_COMPLETE"),
     Reset = get_label_text("PIM_CRST"),
+    All = get_label_text("MP_CHAT_ALL"),
 
     NONE = get_label_text("CELEB_NONE"),
 
@@ -94,6 +95,7 @@ Labels.LaunchMissionByHangar = string.format("%s (%s %s)", Labels.LaunchMission,
 Lang = {
     O_W_F_INS_FIN = "仅在使用直接完成任务功能时生效",
     E_B_S_M = "确保在开始任务前启用本选项",
+    E_B_S_H_TUN = "确保在选择开启抢劫任务之前设置\n切换战局会失效",
 
     SelectMission = "选择任务",
     CashReward = "收入奖励",
@@ -648,6 +650,7 @@ Tables = {
         { 3,  "Supply Line",  {}, "" },
         { 4,  "Drug Lord",    {}, "" },
     },
+    
     CasinoWork = {
         { -1, Labels.RANDOM,                {}, "" },
         { 0,  get_label_text("GBC_ST_BP"),  {}, "" }, -- CSV_BAD_PRESS
@@ -667,19 +670,20 @@ Tables = {
         { 14, get_label_text("GBC_ST_TC"),  {}, "" }, -- CSV_TRACKING_CHIPS
         { 15, get_label_text("GBC_ST_UTI"), {}, "" }, -- CSV_UNDER_THE_INFLUENCE
     },
+
     SmugglerOperation = {
         { -1, Labels.RANDOM,                   {}, "" },
-        { 0,  get_label_text("AOT_SMU_MIS_1"), {}, "" },
-        { 1,  get_label_text("AOT_SMU_MIS_2"), {}, "" },
-        { 2,  get_label_text("AOT_SMU_MIS_3"), {}, "" },
+        { 0,  get_label_text("AOT_SMU_MIS_1"), {}, "" }, -- Direct Action
+        { 1,  get_label_text("AOT_SMU_MIS_2"), {}, "" }, -- Surgical Strike
+        { 2,  get_label_text("AOT_SMU_MIS_3"), {}, "" }, -- Whistleblower
     },
 
     SalvageYardRobbery = {
-        { 0, get_label_text("SAL23_ENDS_R0"), {}, "" },
-        { 1, get_label_text("SAL23_ENDS_R1"), {}, "" },
-        { 2, get_label_text("SAL23_ENDS_R2"), {}, "" },
-        { 3, get_label_text("SAL23_ENDS_R3"), {}, "" },
-        { 4, get_label_text("SAL23_ENDS_R4"), {}, "" },
+        { 0, get_label_text("SAL23_ENDS_R0"), {}, "" }, -- The Cargo Ship Robbery
+        { 1, get_label_text("SAL23_ENDS_R1"), {}, "" }, -- The Gangbanger Robbery
+        { 2, get_label_text("SAL23_ENDS_R2"), {}, "" }, -- The Duggan Robbery
+        { 3, get_label_text("SAL23_ENDS_R3"), {}, "" }, -- The Podium Robber
+        { 4, get_label_text("SAL23_ENDS_R4"), {}, "" }, -- The McTony Robbery
     },
 
     FIBFiles = {

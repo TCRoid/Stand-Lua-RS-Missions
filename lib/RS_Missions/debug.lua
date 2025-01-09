@@ -143,6 +143,7 @@ local FreemodeMissions = {
     { 337, "保金办公室悬赏目标", {}, "" },
     { 338, "玛德拉索雇凶", {}, "" },
     { 339, "派遣工作", {}, "" },
+    { 351, "Arms_Trafficking", {}, "" },
 }
 
 
@@ -1848,33 +1849,33 @@ end)
 
 
 
-local function GB_SET_PLAYER_CONTRABAND_MISSION_DATA(iWarehouse, contrabandSize, contrabandType, bSpecialItem)
-    local contrabandMissionData = GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData()
-    GLOBAL_SET_INT(contrabandMissionData.iMissionWarehouse, iWarehouse)
-    GLOBAL_SET_INT(contrabandMissionData.contrabandSize, contrabandSize)
-    GLOBAL_SET_INT(contrabandMissionData.contrabandType, contrabandType)
-    GLOBAL_SET_BOOL(contrabandMissionData.bSpecialItem, bSpecialItem)
-end
+-- local function GB_SET_PLAYER_CONTRABAND_MISSION_DATA(iWarehouse, contrabandSize, contrabandType, bSpecialItem)
+--     local contrabandMissionData = GlobalplayerBD_FM_3.sMagnateGangBossData.contrabandMissionData()
+--     GLOBAL_SET_INT(contrabandMissionData.iMissionWarehouse, iWarehouse)
+--     GLOBAL_SET_INT(contrabandMissionData.contrabandSize, contrabandSize)
+--     GLOBAL_SET_INT(contrabandMissionData.contrabandType, contrabandType)
+--     GLOBAL_SET_BOOL(contrabandMissionData.bSpecialItem, bSpecialItem)
+-- end
 
-menu.action(Menu_Root, "GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER", {}, "", function()
-    -- GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER(iMissionID, iSelectedSCWarehouse, eSelectedShipmentSize, eActiveContrabandType, bActivateSpecialItemMission)
+-- menu.action(Menu_Root, "GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER", {}, "", function()
+--     -- GB_BOSS_REQUEST_CONTRABAND_MISSION_LAUNCH_FROM_SERVER(iMissionID, iSelectedSCWarehouse, eSelectedShipmentSize, eActiveContrabandType, bActivateSpecialItemMission)
 
-    GB_SET_PLAYER_CONTRABAND_MISSION_DATA(0, 10, 8, false)
-    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(167, -1, -1, 0)
-end)
+--     GB_SET_PLAYER_CONTRABAND_MISSION_DATA(0, 10, 8, false)
+--     GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(167, -1, -1, 0)
+-- end)
 
 
-local function GB_SET_PLAYER_GUNRUNNING_MISSION_DATA(eLocation)
-    local gunrunningMissionData = GlobalplayerBD_FM_3.sMagnateGangBossData.gunrunningMissionData()
-    GLOBAL_SET_INT(gunrunningMissionData.eLocation, eLocation)
-end
+-- local function GB_SET_PLAYER_GUNRUNNING_MISSION_DATA(eLocation)
+--     local gunrunningMissionData = GlobalplayerBD_FM_3.sMagnateGangBossData.gunrunningMissionData()
+--     GLOBAL_SET_INT(gunrunningMissionData.eLocation, eLocation)
+-- end
 
-menu.action(Menu_Root, "GB_BOSS_REQUEST_GUNRUNNING_MISSION_LAUNCH_FROM_SERVER", {}, "", function()
-    -- GB_BOSS_REQUEST_GUNRUNNING_MISSION_LAUNCH_FROM_SERVER(INT iMission, FREEMODE_DELIVERY_LOCATION eLocation = FREEMODE_DELIVERY_LOCATION_CITY)
+-- menu.action(Menu_Root, "GB_BOSS_REQUEST_GUNRUNNING_MISSION_LAUNCH_FROM_SERVER", {}, "", function()
+--     -- GB_BOSS_REQUEST_GUNRUNNING_MISSION_LAUNCH_FROM_SERVER(INT iMission, FREEMODE_DELIVERY_LOCATION eLocation = FREEMODE_DELIVERY_LOCATION_CITY)
 
-    GB_SET_PLAYER_GUNRUNNING_MISSION_DATA(0)
-    GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(225, -1, -1, -1)
-end)
+--     GB_SET_PLAYER_GUNRUNNING_MISSION_DATA(0)
+--     GB_BOSS_REQUEST_MISSION_LAUNCH_FROM_SERVER(225, -1, -1, -1)
+-- end)
 
 
 

@@ -246,6 +246,19 @@ local TunablesI = {
         33035 + 1 + 2, -- SALV23_VEHICLE_ROBBERY_VALUE_2
     },
 
+    -- FIB Files
+    ["HACKER24_FOCUS_ROBBERY"] = 35979,
+    ["FIB Files Reward"] = {
+        35980, -- HACKER24_ROBBERY_CARGO_PLANE_REWARD
+        35981, -- HACKER24_ROBBERY_CARGO_PLANE_REWARD_FOCUS
+        35982, -- HACKER24_ROBBERY_FORT_ZANCUDO_REWARD
+        35983, -- HACKER24_ROBBERY_FORT_ZANCUDO_REWARD_FOCUS
+        35984, -- HACKER24_ROBBERY_PENTHOUSE_REWARD
+        35985, -- HACKER24_ROBBERY_PENTHOUSE_REWARD_FOCUS
+        35986, -- HACKER24_ROBBERY_WHISTLEBLOWER_REWARD
+        35987, -- HACKER24_ROBBERY_WHISTLEBLOWER_REWARD_FOCUS
+    },
+
     -- Freemode Mission
     ["BountyTargetsProcessCooldown"] = {
         35537, -- 681684666
@@ -307,16 +320,6 @@ local TunablesI = {
         22436, -- SMUG_STEAL_ADDITIONAL_CRATE_COOLDOWN_TIME
         22474, -- SMUG_SELL_SELL_COOLDOWN_TIMER
 
-        26794, -- VC_WORK_REQUEST_COOLDOWN
-        31038, -- FIXER_SECURITY_CONTRACT_COOLDOWN_TIME
-        31118, -- REQUEST_FRANKLIN_PAYPHONE_HIT_COOLDOWN
-        31892, -- EXPORT_CARGO_LAUNCH_CD_TIME
-        32005, -- SUM2_BUNKER_DUNELOADER_TIMER
-        32183, -- BUNKER_SOURCE_RESEARCH_CD_TIME
-        32184, -- NIGHTCLUB_SOURCE_GOODS_CD_TIME
-        33141, -- JUGALLO_BOSS_WORK_COOLDOWN_TIME
-        34219, -- SMUGGLER_OPERATION_COOLDOWN
-
         24026, -- BB_CLUB_MANAGEMENT_CLUB_MANAGEMENT_MISSION_COOLDOWN
         24067, -- BB_SELL_MISSIONS_MISSION_COOLDOWN
         31880, -- NC_TROUBLEMAKER_MIN_DELAY_IN_MINUTES
@@ -334,6 +337,17 @@ local TunablesI = {
 
         18571, -- BIKER_CLUB_WORK_COOLDOWN_GLOBAL
         31870, -- BIKER_RESUPPLY_MISSION_COOLDOWN
+
+        26794, -- VC_WORK_REQUEST_COOLDOWN
+        31038, -- FIXER_SECURITY_CONTRACT_COOLDOWN_TIME
+        31118, -- REQUEST_FRANKLIN_PAYPHONE_HIT_COOLDOWN
+        31892, -- EXPORT_CARGO_LAUNCH_CD_TIME
+        32005, -- SUM2_BUNKER_DUNELOADER_TIMER
+        32183, -- BUNKER_SOURCE_RESEARCH_CD_TIME
+        32184, -- NIGHTCLUB_SOURCE_GOODS_CD_TIME
+        33141, -- JUGALLO_BOSS_WORK_COOLDOWN_TIME
+        34219, -- SMUGGLER_OPERATION_COOLDOWN
+        36098, -- HACK24_ARMS_TRAFFICKING_COOLDOWN_TIME
     },
     ["HeistCooldowns"] = {
         4382,  -- ON_CALL_HEIST_COOLDOWN
@@ -368,6 +382,8 @@ local TunablesI = {
         31036, -- FIXER_STORY_COOLDOWN_POSIX
         33064, -- SALV23_VEH_ROB_COOLDOWN_TIME
         33065, -- SALV23_CFR_COOLDOWN_TIME
+        36022, -- HACK24_MFM_COOLDOWN_TIME
+        36080, -- HACKER24_ROBBERY_COOLDOWN_TIME
     },
     ["RequestCooldowns"] = {
         11708, -- PEGASUS_CRIM_COOL_DOWN
@@ -481,22 +497,9 @@ end
 local TunableDefaults = {}
 
 --- @param tunable_name string
-function Tunables.SaveIntDefault(tunable_name)
-    local offset = TunablesI[tunable_name]
-    TunableDefaults[offset] = GLOBAL_GET_INT(g_sMPTunables + offset)
-end
-
---- @param tunable_name string
 function Tunables.RestoreIntDefault(tunable_name)
     local offset = TunablesI[tunable_name]
     GLOBAL_SET_INT(g_sMPTunables + offset, TunableDefaults[offset])
-end
-
---- @param tunable_list_name string
-function Tunables.SaveIntDefaults(tunable_list_name)
-    for name, offset in pairs(TunablesI[tunable_list_name]) do
-        TunableDefaults[offset] = GLOBAL_GET_INT(g_sMPTunables + offset)
-    end
 end
 
 --- @param tunable_list_name string
@@ -507,22 +510,9 @@ function Tunables.RestoreIntDefaults(tunable_list_name)
 end
 
 --- @param tunable_name string
-function Tunables.SaveFloatDefault(tunable_name)
-    local offset = TunablesF[tunable_name]
-    TunableDefaults[offset] = GLOBAL_GET_FLOAT(g_sMPTunables + offset)
-end
-
---- @param tunable_name string
 function Tunables.RestoreFloatDefault(tunable_name)
     local offset = TunablesF[tunable_name]
     GLOBAL_GET_FLOAT(g_sMPTunables + offset, TunableDefaults[offset])
-end
-
---- @param tunable_list_name string
-function Tunables.SaveFloatDefaults(tunable_list_name)
-    for name, offset in pairs(TunablesF[tunable_list_name]) do
-        TunableDefaults[offset] = GLOBAL_GET_FLOAT(g_sMPTunables + offset)
-    end
 end
 
 --- @param tunable_list_name string
