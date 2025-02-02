@@ -8,7 +8,7 @@ if not util.is_session_started() or util.is_session_transition_active() then
     return false
 end
 
-local SCRIPT_VERSION <const> = "2025/1/9"
+local SCRIPT_VERSION <const> = "2025/2/2"
 
 local SUPPORT_GAME_VERSION <const> = "1.70-3411"
 
@@ -6298,8 +6298,8 @@ menu.list_action(Chicken_Factory_Raid_Prep, "选择武器", {}, "", {
     { 1, get_label_text("CBR3_G_S01"), {}, get_label_text("CBR3_G_S01H") },
     { 2, get_label_text("CBR3_G_S02"), {}, get_label_text("CBR3_G_S02H") },
 }, function(value)
-    SET_PACKED_STAT_BOOL_CODE(51019, value)
-    SET_PACKED_STAT_BOOL_CODE(51020, 7)
+    SET_PACKED_STAT_INT_CODE(51019, value)
+    SET_PACKED_STAT_INT_CODE(51020, 7)
     toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "选择装备", {}, "", {
@@ -6307,15 +6307,22 @@ menu.list_action(Chicken_Factory_Raid_Prep, "选择装备", {}, "", {
     { 1, get_label_text("CBR3_G_S11"), {}, get_label_text("CBR3_G_S11H") },
     { 2, get_label_text("CBR3_G_S12"), {}, get_label_text("CBR3_G_S12H") },
 }, function(value)
-    SET_PACKED_STAT_BOOL_CODE(51021, value)
-    SET_PACKED_STAT_BOOL_CODE(51022, 7)
+    SET_PACKED_STAT_INT_CODE(51021, value)
+    SET_PACKED_STAT_INT_CODE(51022, 7)
     toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "选择载具", {}, "", {
+    { 0, get_label_text("TULIP") },
+    { 1, get_label_text("MOONBEAM2") },
+    { 2, get_label_text("IMPALER6") },
     { 3, get_label_text("JUGULAR") },
-    { 4, get_label_text("SUGOI") }
+    { 4, get_label_text("SUGOI") },
+    { 5, get_label_text("RAIDEN") },
+    { 6, get_label_text("PATRIOT3") },
+    { 7, get_label_text("TERMINUS") },
+    { 8, get_label_text("SQUADDIE") },
 }, function(value)
-    SET_PACKED_STAT_BOOL_CODE(51023, value)
+    SET_PACKED_STAT_INT_CODE(51023, value)
     toast_done()
 end)
 menu.list_action(Chicken_Factory_Raid_Prep, "触发警觉", {}, "", {
